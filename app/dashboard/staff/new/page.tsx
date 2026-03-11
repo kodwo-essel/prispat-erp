@@ -32,7 +32,6 @@ export default function EnlistStaffPage() {
         // Construct the body according to Staff model
         const body = {
             name: data.name,
-            staffId: data.staffId || `ST-${Math.floor(1000 + Math.random() * 9000)}`,
             role: data.role,
             department: data.department,
             accessLevel: data.accessLevel,
@@ -95,16 +94,6 @@ export default function EnlistStaffPage() {
                                     placeholder="Firstname Lastname"
                                     className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
                                     required
-                                />
-                            </div>
-
-                            <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Personnel ID (Optional)</label>
-                                <input
-                                    name="staffId"
-                                    type="text"
-                                    placeholder="ST-000"
-                                    className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
                                 />
                             </div>
 

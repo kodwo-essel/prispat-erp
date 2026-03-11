@@ -17,9 +17,21 @@ export async function POST(request: Request) {
         await dbConnect();
         const body = await request.json();
 
+        // Securely generate an unpredictable Personnel ID (ST-XXXXXXXX)
+        const crypto = require("crypto");
+        let staffId = "";
+        let isUnique = false;
+
+        while (!isUnique) {
+            staffId = `ST-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+            const existing = await Staff.findOne({ staffId });
+            if (!existing) isUnique = true;
+        }
+
         // Create staff with initial audit log
         const personnel = await Staff.create({
             ...body,
+            staffId,
             auditLogs: [{
                 action: "Officer Enrolled",
                 timestamp: new Date(),

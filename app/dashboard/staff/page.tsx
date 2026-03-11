@@ -93,8 +93,8 @@ export default function StaffPage() {
                                         {person.name.charAt(0)}
                                     </div>
                                     <span className={`text-[8px] font-black px-2 py-1 rounded-sm border uppercase tracking-widest ${person.accessLevel === 'Admin' ? 'bg-red-50 text-red-700 border-red-100' :
-                                            person.accessLevel === 'Manager' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
-                                                'bg-slate-50 text-slate-700 border-slate-100'
+                                        person.accessLevel === 'Manager' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                            'bg-slate-50 text-slate-700 border-slate-100'
                                         }`}>
                                         {person.accessLevel}
                                     </span>
@@ -104,10 +104,10 @@ export default function StaffPage() {
 
                                 <div className="mt-6 space-y-3">
                                     <div className="flex items-center gap-3 text-xs text-secondary">
-                                        <Mail size={12} className="text-slate-400" /> {person.email}
+                                        <Mail size={12} className="text-slate-400" /> {person.credentials?.email}
                                     </div>
                                     <div className="flex items-center gap-3 text-xs text-secondary">
-                                        <Phone size={12} className="text-slate-400" /> {person.phone}
+                                        <Phone size={12} className="text-slate-400" /> {person.phone || 'N/A'}
                                     </div>
                                     <div className="flex items-center gap-3 text-xs text-secondary">
                                         <Shield size={12} className="text-slate-400" /> Clearance: {person.status}

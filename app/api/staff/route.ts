@@ -17,8 +17,16 @@ export async function POST(request: Request) {
         await dbConnect();
         const body = await request.json();
 
-        // In a real app, we would hash the password here
-        const personnel = await Staff.create(body);
+        // Create staff with initial audit log
+        const personnel = await Staff.create({
+            ...body,
+            auditLogs: [{
+                action: "Officer Enrolled",
+                timestamp: new Date(),
+                ip: "INTERNAL",
+                performedBy: body.performedBy || "System Admin"
+            }]
+        });
         return NextResponse.json({ success: true, data: personnel }, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });

@@ -1,7 +1,8 @@
 import Sidebar from "./components/Sidebar";
 import UserMenu from "./components/UserMenu";
 import MobileRestriction from "./components/MobileRestriction";
-import { Search, Clock, Leaf } from "lucide-react";
+import Clock from "./components/Clock";
+import { Search, Leaf } from "lucide-react";
 
 export default function DashboardLayout({
     children,
@@ -43,10 +44,7 @@ export default function DashboardLayout({
                             </div>
 
                             <div className="flex items-center gap-6">
-                                <div className="text-right hidden md:block">
-                                    <div className="text-[10px] font-black text-primary uppercase tracking-tighter">11 MAR 2026</div>
-                                    <div className="text-[9px] text-secondary font-bold uppercase tracking-widest">11:58 AM GMT</div>
-                                </div>
+                                <Clock />
 
                                 <UserMenu />
                             </div>

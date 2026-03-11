@@ -111,7 +111,7 @@ export default function CustomersPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Link href={`/ dashboard / customers / ${cust._id} `} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                        <Link href={`/dashboard/customers/${cust._id}`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                                             Manage <ArrowRight size={10} />
                                         </Link>
                                     </td>

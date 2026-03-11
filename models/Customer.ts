@@ -14,6 +14,14 @@ const CustomerSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        email: {
+            type: String,
+            required: true,
+        },
+        phone: {
+            type: String,
+            required: true,
+        },
         creditLimit: {
             type: Number,
             required: true,

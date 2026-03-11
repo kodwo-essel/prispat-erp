@@ -19,6 +19,10 @@ const StaffSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        phone: {
+            type: String,
+            required: true,
+        },
         accessLevel: {
             type: String,
             enum: ["Root", "Administrator", "Officer", "Technical"],
@@ -46,6 +50,7 @@ const StaffSchema = new mongoose.Schema(
                 action: String,
                 timestamp: { type: Date, default: Date.now },
                 ip: String,
+                performedBy: String,
             },
         ],
     },

@@ -18,6 +18,7 @@ import {
     AlertTriangle,
     FlaskConical,
     BarChart3,
+    Plus,
     Loader2
 } from "lucide-react";
 
@@ -26,6 +27,9 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
     const [item, setItem] = useState<any>(null);
     const [activities, setActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [updateLoading, setUpdateLoading] = useState(false);
+    const [allSuppliers, setAllSuppliers] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchItemData = async () => {
@@ -50,6 +54,13 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                         setActivities(related);
                     }
                 }
+
+                // Fetch all suppliers for the dropdown
+                const supRes = await fetch("/api/suppliers");
+                const supJson = await supRes.json();
+                if (supJson.success) {
+                    setAllSuppliers(supJson.data);
+                }
             } catch (error) {
                 console.error("Failed to fetch item details:", error);
             } finally {
@@ -59,6 +70,30 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
 
         fetchItemData();
     }, [id]);
+
+    const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setUpdateLoading(true);
+        const formData = new FormData(e.currentTarget);
+        const body = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch(`/api/inventory/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const json = await res.json();
+            if (json.success) {
+                setItem(json.data);
+                setIsEditModalOpen(false);
+            }
+        } catch (error) {
+            console.error("Update failed:", error);
+        } finally {
+            setUpdateLoading(false);
+        }
+    };
 
     const calculateHealthIndex = () => {
         if (!item) return 0;
@@ -106,11 +141,79 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                     <button className="flex items-center gap-2 text-xs font-bold text-secondary border border-border px-4 py-2 rounded-sm hover:bg-slate-50 transition-colors uppercase tracking-wider">
                         <Printer size={14} /> Label Print
                     </button>
-                    <button className="btn-primary flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
+                    <button
+                        onClick={() => setIsEditModalOpen(true)}
+                        className="btn-primary flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
+                    >
                         <Edit3 size={14} /> Modify Asset
                     </button>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-lg rounded-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="bg-muted p-6 border-b border-border flex justify-between items-center">
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Modify Tactical Asset</h3>
+                            <button onClick={() => setIsEditModalOpen(false)} className="text-secondary hover:text-primary transition-colors">
+                                <Plus size={20} className="rotate-45" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleUpdate} className="p-8 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Asset Name</label>
+                                    <input name="name" defaultValue={item.name} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Category</label>
+                                    <select name="category" defaultValue={item.category} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary">
+                                        <option>Herbicide</option>
+                                        <option>Fertilizer</option>
+                                        <option>Pesticide</option>
+                                        <option>Equipment</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Current Stock</label>
+                                    <input name="stock" type="number" defaultValue={item.stock} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Unit Price (₵)</label>
+                                    <input name="unitPrice" type="number" defaultValue={item.unitPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Hazard Class</label>
+                                    <select name="hazardClass" defaultValue={item.hazardClass} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary">
+                                        <option>Level 1</option>
+                                        <option>Level 2</option>
+                                        <option>Level 3</option>
+                                        <option>Extreme</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase text-secondary">Verified Supplier</label>
+                                <select name="supplier" defaultValue={item.supplier} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary">
+                                    {allSuppliers.map((sup) => (
+                                        <option key={sup._id} value={sup.name}>{sup.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex gap-4 pt-4">
+                                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 border border-border py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors">Discard</button>
+                                <button type="submit" disabled={updateLoading} className="flex-1 btn-primary py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                                    {updateLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                                    Commit Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -201,8 +304,8 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                         <tr key={log._id} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${log.type === 'Revenue' ? 'bg-green-50 text-green-700' :
-                                                        log.type === 'Expense' ? 'bg-orange-50 text-orange-700' :
-                                                            'bg-blue-50 text-blue-700'
+                                                    log.type === 'Expense' ? 'bg-orange-50 text-orange-700' :
+                                                        'bg-blue-50 text-blue-700'
                                                     }`}>
                                                     {log.type}
                                                 </span>

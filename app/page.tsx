@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Leaf } from "lucide-react";
 
 export default function Home() {
   return (
@@ -9,11 +10,11 @@ export default function Home() {
         <div className="mx-auto flex max-w-7-xl items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center bg-primary text-white font-bold rounded">
-              A
+              <Leaf size={24} />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-bold tracking-tight text-primary leading-tight">
-                AGROCHEM CENTRAL
+                PRISPAT PRIME
               </span>
               <span className="text-[10px] uppercase tracking-widest text-secondary font-semibold">
                 National Distribution Network
@@ -63,7 +64,7 @@ export default function Home() {
               <div className="aspect-[4/3] overflow-hidden rounded-sm border border-border shadow-sm">
                 <div className="h-full w-full bg-muted flex items-center justify-center border-l-[8px] border-primary">
                   <div className="text-center p-12">
-                    <div className="mb-4 text-4xl opacity-20 font-bold italic">AGROCHEM</div>
+                    <div className="mb-4 text-4xl opacity-20 font-bold italic">PRISPAT PRIME</div>
                     <p className="text-sm text-secondary italic">Secure Enterprise Environment</p>
                   </div>
                 </div>
@@ -79,7 +80,7 @@ export default function Home() {
       <footer className="bg-muted border-t border-border py-12 px-6 md:px-12">
         <div className="mx-auto max-w-7-xl flex flex-col md:flex-row justify-between items-start gap-8">
           <div className="flex flex-col gap-4">
-            <div className="text-sm font-bold text-primary">AGROCHEM CENTRAL</div>
+            <div className="text-sm font-bold text-primary">PRISPAT PRIME</div>
             <p className="text-xs text-secondary max-w-xs">
               Authorized distribution partner for national agrochemical supply.
               Direct oversight and compliance monitoring systems integrated.

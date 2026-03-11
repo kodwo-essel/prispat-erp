@@ -12,7 +12,8 @@ import {
     CircleDollarSign,
     ChevronLeft,
     ChevronRight,
-    LogOut
+    LogOut,
+    Leaf
 } from "lucide-react";
 
 const navItems = [
@@ -44,10 +45,11 @@ export default function Sidebar() {
             {/* Branding */}
             <div className={`p-6 border-b border-white/10 flex items-center ${isCollapsed ? "justify-center" : "gap-3"}`}>
                 <div className="h-8 w-8 bg-white/10 rounded-sm flex items-center justify-center shrink-0">
-                    <span className="font-black text-lg">A</span>
+                    <Leaf size={18} className="text-white" />
                 </div>
                 {!isCollapsed && (
-                    <div className="font-bold tracking-tight text-sm uppercase">Agrochem<br /><span className="opacity-60 text-[10px]">Central Portal</span></div>
+                    <div className="font-bold tracking-tight text-sm uppercase">Prispat Prime<br />
+                        <span className="opacity-60 text-[10px]">Portal</span></div>
                 )}
             </div>
 
@@ -62,8 +64,8 @@ export default function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 group relative ${isActive
-                                    ? "bg-white/15 text-white font-bold"
-                                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                                ? "bg-white/15 text-white font-bold"
+                                : "text-white/60 hover:bg-white/5 hover:text-white"
                                 }`}
                         >
                             {isActive && (

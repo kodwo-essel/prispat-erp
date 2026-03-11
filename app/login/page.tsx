@@ -7,7 +7,7 @@ export default function LoginPage() {
                 {/* Top Header Information */}
                 <div className="bg-primary px-8 py-6 text-white text-center">
                     <div className="mb-2 text-2xl font-bold tracking-tight">SECURE ACCESS PORTAL</div>
-                    <div className="text-[10px] uppercase tracking-[0.2em] opacity-80">Agrochem Central Unified Platform</div>
+                    <div className="text-[10px] uppercase tracking-[0.2em] opacity-80">Prispat Prime Unified Platform</div>
                 </div>
 
                 {/* Login Form */}

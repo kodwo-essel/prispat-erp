@@ -1,10 +1,13 @@
+import Link from "next/link";
 import {
     Users,
     Building2,
     Key,
     UserCheck,
     MoreHorizontal,
-    Plus
+    Plus,
+    ShieldAlert,
+    History
 } from "lucide-react";
 
 export default function StaffPage() {
@@ -25,12 +28,12 @@ export default function StaffPage() {
                     <p className="text-sm text-secondary mt-1">Registry of authorized personnel, system roles, and departmental permissions.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
-                        Audit Access Logs
-                    </button>
-                    <button className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
+                    <Link href="/dashboard/staff/audit" className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
+                        <History size={14} /> Audit Access Logs
+                    </Link>
+                    <Link href="/dashboard/staff/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
                         <Plus size={14} /> Enlist New Personnel
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -104,9 +107,9 @@ export default function StaffPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                    <Link href={`/dashboard/staff/${p.id}`} className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                                         Manage
-                                    </button>
+                                    </Link>
                                 </td>
                             </tr>
                         ))}

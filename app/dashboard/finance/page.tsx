@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
     FileText,
     Plus,
@@ -9,7 +10,8 @@ import {
     ArrowDownRight,
     PieChart,
     Download,
-    Clock
+    Clock,
+    ExternalLink
 } from "lucide-react";
 
 export default function FinancePage() {
@@ -30,12 +32,12 @@ export default function FinancePage() {
                     <p className="text-sm text-secondary mt-1">Official financial records for distribution revenue, procurement costs, and institutional audits.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
+                    <button className="flex items-center gap-2 text-xs font-bold text-secondary border border-border px-4 py-2 rounded-sm hover:bg-slate-50 transition-colors uppercase tracking-wider">
                         <Download size={14} /> Monthly Audit Export
                     </button>
-                    <button className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
+                    <Link href="/dashboard/finance/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
                         <Plus size={14} /> Record Transaction
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -83,17 +85,17 @@ export default function FinancePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white border border-border rounded-sm shadow-sm overflow-hidden text-sm">
                     <div className="bg-muted px-6 py-4 border-b border-border flex items-center justify-between">
-                        <h3 className="text-xs font-bold uppercase tracking-widest">Recent Financial Operations</h3>
-                        <button className="text-[10px] font-bold text-primary uppercase hover:underline">View All</button>
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-primary">Recent Financial Operations</h3>
+                        <Link href="/dashboard/finance/ledger" className="text-[10px] font-bold text-primary uppercase hover:underline">View All</Link>
                     </div>
                     <table className="w-full text-left">
                         <thead>
                             <tr className="border-b border-border text-secondary">
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase">ID</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase">Entity / Operation</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase">Category</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase">Amount</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase">Status</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">ID</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Entity / Operation</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Category</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest">Amount</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-right">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -104,17 +106,22 @@ export default function FinancePage() {
                                         <div className="font-bold text-primary">{tx.entity}</div>
                                         <div className="text-[10px] text-secondary tabular-nums">{tx.date}</div>
                                     </td>
-                                    <td className="px-6 py-4 text-[10px] font-medium text-secondary">{tx.type}</td>
-                                    <td className={`px-6 py-4 font-bold tabular-nums ${tx.amount.startsWith('+') ? 'text-green-600' : 'text-primary'}`}>
+                                    <td className="px-6 py-4 text-[10px] font-black text-secondary uppercase tracking-tighter">{tx.type}</td>
+                                    <td className={`px-6 py-4 font-black tabular-nums ${tx.amount.startsWith('+') ? 'text-green-600' : 'text-primary'}`}>
                                         {tx.amount}
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-sm border uppercase ${tx.status === 'Settled' ? 'bg-green-50 text-green-700 border-green-200' :
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex flex-col items-end gap-1.5">
+                                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-sm border uppercase tracking-widest ${tx.status === 'Settled' ? 'bg-green-50 text-green-700 border-green-200' :
                                                 tx.status === 'Pending' ? 'bg-orange-50 text-orange-700 border-orange-200' :
                                                     'bg-red-50 text-red-700 border-red-200'
-                                            }`}>
-                                            {tx.status}
-                                        </span>
+                                                }`}>
+                                                {tx.status}
+                                            </span>
+                                            <Link href={`/dashboard/finance/${tx.id}`} className="text-[9px] font-bold text-primary flex items-center gap-1 hover:underline uppercase">
+                                                View <ExternalLink size={8} />
+                                            </Link>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

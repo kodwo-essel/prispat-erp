@@ -1,5 +1,6 @@
 import Sidebar from "./components/Sidebar";
-import { Search, Clock } from "lucide-react";
+import UserMenu from "./components/UserMenu";
+import { Search, Clock, Leaf } from "lucide-react";
 
 export default function DashboardLayout({
     children,
@@ -16,8 +17,11 @@ export default function DashboardLayout({
                 {/* Top Header */}
                 <header className="h-16 bg-white border-b border-border px-8 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-4">
+                        <div className="h-8 w-8 bg-primary/10 rounded-sm flex items-center justify-center text-primary">
+                            <Leaf size={16} />
+                        </div>
                         <h2 className="text-xs font-bold uppercase tracking-widest text-secondary">
-                            Agrochem Central <span className="mx-2 opacity-20">|</span>
+                            Prispat Prime <span className="mx-2 opacity-20">|</span>
                             <span className="text-primary">System Core</span>
                         </h2>
                         <div className="bg-green-50 text-green-600 text-[9px] font-bold px-2 py-0.5 rounded-full border border-green-100 uppercase tracking-tighter">
@@ -35,11 +39,13 @@ export default function DashboardLayout({
                             />
                         </div>
 
-                        <div className="flex items-center gap-3 border-l border-border pl-6">
-                            <div className="text-right">
-                                <div className="text-[10px] font-bold text-primary uppercase text-sm">11 MAR 2026</div>
-                                <div className="text-[9px] text-secondary font-medium uppercase">10:45 AM GMT</div>
+                        <div className="flex items-center gap-6">
+                            <div className="text-right hidden md:block">
+                                <div className="text-[10px] font-black text-primary uppercase tracking-tighter">11 MAR 2026</div>
+                                <div className="text-[9px] text-secondary font-bold uppercase tracking-widest">11:58 AM GMT</div>
                             </div>
+
+                            <UserMenu />
                         </div>
                     </div>
                 </header>
@@ -53,7 +59,7 @@ export default function DashboardLayout({
 
                 {/* Footer Area */}
                 <footer className="h-10 bg-white border-t border-border px-8 flex items-center justify-between text-[10px] font-bold text-secondary uppercase tracking-widest shrink-0">
-                    <div>© 2026 Agrochem Central Distribution</div>
+                    <div>© 2026 Prispat Prime Distribution</div>
                     <div className="flex gap-6">
                         <span className="hover:text-primary cursor-help">Technical Support</span>
                         <span className="hover:text-primary cursor-help">Audit Trails</span>

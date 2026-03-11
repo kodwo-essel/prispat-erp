@@ -9,7 +9,6 @@ const InventorySchema = new mongoose.Schema(
         sku: {
             type: String,
             required: [true, "Please provide a unique SKU"],
-            unique: true,
         },
         category: {
             type: String,
@@ -54,5 +53,8 @@ const InventorySchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+// Prevent duplicate entries for the same product in the same batch
+InventorySchema.index({ sku: 1, batchId: 1 }, { unique: true });
 
 export default mongoose.models.Inventory || mongoose.model("Inventory", InventorySchema);

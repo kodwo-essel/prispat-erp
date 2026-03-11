@@ -34,7 +34,11 @@ export async function POST(request: Request) {
         await Supply.create(supplyEntry);
 
         // 2. Update the aggregate Inventory state
-        let inventoryItem = await Inventory.findOne({ sku: body.sku });
+        let inventoryItem = await Inventory.findOne({
+            sku: body.sku,
+            supplier: body.supplier,
+            batchId: body.batchId
+        });
 
         if (inventoryItem) {
             // Increment existing stock

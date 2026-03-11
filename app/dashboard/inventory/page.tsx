@@ -140,28 +140,30 @@ export default function InventoryPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-muted border-b border-border">
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">SKU / ID</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Product Name</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Primary Supplier</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Stock Level</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Hazard</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">SKU / Batch</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Product Name</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Supplier</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Stock</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Pricing</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Expiry</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Status</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filteredInventory.map((item) => (
                                 <tr key={item._id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{item.sku}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-bold text-primary tabular-nums">{item.sku}</div>
+                                        <div className="text-[9px] font-mono text-secondary mt-0.5">{item.batchId}</div>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-semibold text-primary">{item.name}</div>
-                                        <div className="text-[10px] text-secondary mt-0.5">Verified Batch Asset</div>
+                                        <div className="text-[9px] text-secondary mt-0.5 uppercase tracking-tighter">{item.category} • {item.hazardClass || 'Safe'}</div>
                                     </td>
-                                    <td className="px-6 py-4 text-xs text-secondary">{item.category}</td>
                                     <td className="px-6 py-4">
                                         <div className="text-[10px] font-bold text-primary uppercase tracking-tight">
-                                            {item.supplier || 'Standard Batch'}
+                                            {item.supplier}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -169,14 +171,16 @@ export default function InventoryPage() {
                                         <div className="text-[10px] text-secondary">{item.unit}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${item.hazardClass === 'Level 4' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                            item.hazardClass === 'Level 3' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                                                item.hazardClass === 'Level 2' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                                                    item.hazardClass === 'Level 1' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                                        'bg-slate-50 text-slate-500 border border-slate-100'
-                                            }`}>
-                                            {item.hazardClass || 'None'}
-                                        </span>
+                                        <div className="text-xs font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString() || '0'}</div>
+                                        <div className="text-[9px] text-secondary">per {item.unit.replace(/s$/, '')}</div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-medium text-secondary tabular-nums">
+                                            {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}
+                                        </div>
+                                        {item.expiryDate && new Date(item.expiryDate) < new Date() && (
+                                            <div className="text-[8px] font-bold text-red-500 uppercase">Expired</div>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">

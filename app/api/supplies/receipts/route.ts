@@ -49,10 +49,11 @@ export async function POST(req: Request) {
             });
 
             // Update/Create Aggregate Inventory
-            // We now track unique items PER SUPPLIER
+            // We now track unique items PER BATCH
             let inventoryItem = await Inventory.findOne({
                 sku: item.sku,
-                supplier: supplier
+                supplier: supplier,
+                batchId: item.batchId
             });
 
             if (inventoryItem) {

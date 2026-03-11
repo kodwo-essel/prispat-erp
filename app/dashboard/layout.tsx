@@ -34,20 +34,8 @@ export default function DashboardLayout({
                         </div>
 
                         <div className="flex items-center gap-6">
-                            <div className="relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary opacity-40 group-focus-within:opacity-100 transition-opacity" size={14} />
-                                <input
-                                    type="text"
-                                    placeholder="REGISTRY SEARCH [ALT+/]"
-                                    className="bg-muted border border-border rounded-sm py-1.5 pl-9 pr-4 text-[10px] w-64 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all uppercase tracking-wider font-medium"
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-6">
-                                <Clock />
-
-                                <UserMenu />
-                            </div>
+                            <Clock />
+                            <UserMenu />
                         </div>
                     </header>
 

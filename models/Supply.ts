@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const InventorySchema = new mongoose.Schema(
+const SupplySchema = new mongoose.Schema(
     {
         name: {
             type: String,
@@ -9,16 +9,14 @@ const InventorySchema = new mongoose.Schema(
         sku: {
             type: String,
             required: [true, "Please provide a unique SKU"],
-            unique: true,
         },
         category: {
             type: String,
             required: [true, "Please provide a category"],
         },
-        stock: {
+        quantity: {
             type: Number,
-            required: [true, "Please provide the stock quantity"],
-            default: 0,
+            required: [true, "Please provide the received quantity"],
         },
         unit: {
             type: String,
@@ -36,23 +34,22 @@ const InventorySchema = new mongoose.Schema(
             type: Date,
             required: [true, "Please provide the expiry date"],
         },
-        status: {
-            type: String,
-            enum: ["In Stock", "Out of Stock", "Low Inventory", "Decommissioned"],
-            default: "In Stock",
-        },
         supplier: {
-            type: String, // Can be refined to a Reference later
-            required: [true, "Please provide the supplier name"],
+            type: String,
+            required: true,
         },
         unitPrice: {
             type: Number,
             default: 0,
         },
+        arrivalDate: {
+            type: Date,
+            default: Date.now,
+        }
     },
     {
         timestamps: true,
     }
 );
 
-export default mongoose.models.Inventory || mongoose.model("Inventory", InventorySchema);
+export default mongoose.models.Supply || mongoose.model("Supply", SupplySchema);

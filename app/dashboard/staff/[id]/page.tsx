@@ -261,7 +261,7 @@ export default function StaffManagementPage({ params }: { params: Promise<{ id: 
                                 <Shield size={16} className="text-primary" />
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-primary">Role-Based Access Control (RBAC)</h3>
                             </div>
-                            <span className="text-[10px] font-bold text-secondary uppercase italic">Cleared for {person.accessLevel} protocol</span>
+                            <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">Cleared for {person.accessLevel} protocol</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
@@ -332,31 +332,24 @@ export default function StaffManagementPage({ params }: { params: Promise<{ id: 
 
                 {/* Right: Personal & Identifiers */}
                 <div className="flex flex-col gap-6">
-                    <section className="bg-slate-900 text-white p-6 rounded-sm shadow-lg flex flex-col gap-6">
-                        <div className="flex items-center gap-2 border-b border-white/10 pb-4">
-                            <Fingerprint size={18} className="text-primary" />
-                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/80">Digital Identification</h3>
+                    <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-6">
+                        <div className="flex items-center gap-2 border-b border-border pb-4">
+                            <Shield size={18} className="text-primary" />
+                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Digital Identification</h3>
                         </div>
 
                         <div className="flex flex-col gap-5">
                             <div className="flex flex-col gap-1">
-                                <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Official Email</span>
-                                <span className="text-sm font-bold truncate">{person.credentials?.email}</span>
+                                <span className="text-[8px] font-black uppercase text-secondary tracking-widest">Official Email</span>
+                                <span className="text-sm font-bold truncate text-slate-700">{person.credentials?.email}</span>
                             </div>
                             <div className="flex flex-col gap-1">
-                                <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Secure Phone</span>
-                                <span className="text-sm font-bold truncate">{person.phone || 'N/A'}</span>
+                                <span className="text-[8px] font-black uppercase text-secondary tracking-widest">Secure Phone</span>
+                                <span className="text-sm font-bold truncate text-slate-700">{person.phone || 'N/A'}</span>
                             </div>
                             <div className="flex flex-col gap-1">
-                                <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Staff Identification</span>
-                                <span className="text-sm font-bold">{person.staffId}</span>
-                            </div>
-                            <div className="flex flex-col gap-2 mt-2">
-                                <div className="text-[8px] font-black uppercase text-white/40 tracking-widest mb-1">MFA Recovery Status</div>
-                                <div className="h-1.5 w-full bg-white/10 rounded-full">
-                                    <div className="h-full bg-primary w-full shadow-[0_0_8px_rgba(234,179,8,0.5)]" />
-                                </div>
-                                <span className="text-[9px] font-bold text-primary uppercase tracking-widest text-right">SECURED</span>
+                                <span className="text-[8px] font-black uppercase text-secondary tracking-widest">Staff Identification</span>
+                                <span className="text-sm font-bold text-primary tabular-nums tracking-widest">{person.staffId}</span>
                             </div>
                         </div>
                     </section>
@@ -364,15 +357,11 @@ export default function StaffManagementPage({ params }: { params: Promise<{ id: 
                     <div className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-4">
                         <div className="flex items-center gap-2 mb-2">
                             <Lock size={16} className="text-slate-900" />
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-secondary">Advanced Security</h3>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-secondary">Access Control</h3>
                         </div>
-                        <button className="w-full bg-muted border border-border py-4 rounded-sm flex flex-col items-center gap-1 hover:bg-slate-100 transition-all border-dashed">
-                            <Key size={20} className="text-primary opacity-60" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Reset Passwords & Tokens</span>
-                        </button>
-                        <button className="w-full bg-muted border border-border py-4 rounded-sm flex flex-col items-center gap-1 hover:bg-slate-100 transition-all border-dashed">
-                            <Fingerprint size={20} className="text-primary opacity-60" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Update Biometric Auth</span>
+                        <button className="w-full bg-muted border border-border py-4 rounded-sm flex flex-col items-center gap-1 hover:bg-slate-100 transition-all border-dashed group">
+                            <Key size={20} className="text-primary opacity-60 group-hover:opacity-100 transition-opacity" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Reset Officer Password</span>
                         </button>
                     </div>
                 </div>

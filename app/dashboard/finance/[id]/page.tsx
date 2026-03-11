@@ -118,7 +118,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
 
                         <div className="flex flex-col gap-3 py-6 border-t border-dashed border-border">
                             <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Fiscal Annotation</span>
-                            <p className="text-xs leading-relaxed text-secondary font-medium italic italic-serif">
+                            <p className="text-xs leading-relaxed text-secondary font-medium">
                                 "{tx.description}"
                             </p>
                         </div>

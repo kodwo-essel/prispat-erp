@@ -18,6 +18,8 @@ import {
 export default function StaffPage() {
     const [staff, setStaff] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [roleFilter, setRoleFilter] = useState("All Roles");
 
     useEffect(() => {
         const fetchStaff = async () => {
@@ -36,6 +38,17 @@ export default function StaffPage() {
 
         fetchStaff();
     }, []);
+
+    const filteredStaff = staff.filter(person => {
+        const matchesSearch =
+            person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (person.staffId && person.staffId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            person.role.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesRole = roleFilter === "All Roles" || person.role === roleFilter;
+
+        return matchesSearch && matchesRole;
+    });
 
     return (
         <div className="flex flex-col gap-6">
@@ -64,9 +77,15 @@ export default function StaffPage() {
                             type="text"
                             placeholder="Search by Name, Officer ID or Role..."
                             className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <select className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary">
+                    <select
+                        className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                        value={roleFilter}
+                        onChange={(e) => setRoleFilter(e.target.value)}
+                    >
                         <option>All Roles</option>
                         <option>Admin</option>
                         <option>Inventory Manager</option>
@@ -85,7 +104,7 @@ export default function StaffPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-                    {staff.map((person) => (
+                    {filteredStaff.map((person) => (
                         <div key={person._id} className="bg-white border border-border rounded-sm shadow-sm overflow-hidden flex flex-col group">
                             <div className="p-6">
                                 <div className="flex items-start justify-between mb-4">

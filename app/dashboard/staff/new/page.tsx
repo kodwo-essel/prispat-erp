@@ -10,7 +10,6 @@ import {
     Building2,
     Mail,
     Phone,
-    Fingerprint,
     Loader2,
     ShieldCheck
 } from "lucide-react";
@@ -174,43 +173,43 @@ export default function EnlistStaffPage() {
 
                 {/* Security & Access Sidebar */}
                 <div className="flex flex-col gap-6">
-                    <section className="bg-slate-900 text-white p-6 rounded-sm shadow-lg">
-                        <div className="flex items-center gap-2 border-b border-white/10 pb-4 mb-4">
+                    <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-6">
+                        <div className="flex items-center gap-2 border-b border-border pb-4 mb-2">
                             <Shield size={18} className="text-primary" />
-                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">System Privileges</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900">System Privileges</h3>
                         </div>
 
                         <div className="flex flex-col gap-4">
                             <div className="flex flex-col gap-2">
-                                <label className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Access Protocol Level</label>
-                                <select name="accessLevel" className="w-full bg-white/10 border border-white/20 px-3 py-2 rounded-sm text-xs focus:outline-none text-white">
-                                    <option value="Officer" className="text-slate-900">Officer (Read/Write)</option>
-                                    <option value="Technical" className="text-slate-900">Technical (Maintenance)</option>
-                                    <option value="Administrator" className="text-slate-900">Administrator (Dept Head)</option>
-                                    <option value="Root" className="text-slate-900 font-bold">Root (System Core)</option>
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-widest">Access Protocol Level</label>
+                                <select name="accessLevel" className="w-full bg-muted border border-border px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary text-slate-700 font-bold">
+                                    <option value="Officer">Officer (Read/Write)</option>
+                                    <option value="Technical">Technical (Maintenance)</option>
+                                    <option value="Administrator">Administrator (Dept Head)</option>
+                                    <option value="Root">Root (System Core)</option>
                                 </select>
                             </div>
-                            <div className="flex flex-col gap-1 p-3 bg-white/5 border border-white/10 rounded-sm">
-                                <div className="text-[8px] font-bold text-white/40 uppercase tracking-widest">Security Warning</div>
-                                <p className="text-[10px] text-white/70 leading-relaxed">Level 4+ permits data deletion and financial record overrides. Authenticate via biometric token required.</p>
+                            <div className="flex flex-col gap-1 p-3 bg-muted border border-border rounded-sm">
+                                <div className="text-[8px] font-bold text-secondary uppercase tracking-widest">Security Protocol</div>
+                                <p className="text-[10px] text-slate-600 leading-relaxed">Level 4+ permits data deletion and financial record overrides. High-level authorization required.</p>
                             </div>
                         </div>
                     </section>
 
                     <section className="bg-white border border-border p-5 rounded-sm flex flex-col gap-4">
                         <div className="flex items-center gap-2 mb-2">
-                            <Fingerprint size={16} className="text-primary" />
-                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-secondary">Onboarding Checklist</h3>
+                            <ShieldCheck size={16} className="text-primary" />
+                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-secondary">Deployment Checklist</h3>
                         </div>
                         <div className="flex flex-col gap-3">
                             <label className="flex items-center gap-2 text-[10px] font-bold text-secondary cursor-pointer">
-                                <input type="checkbox" className="rounded-sm border-border" /> Contract Signed
+                                <input type="checkbox" className="rounded-sm border-border text-primary" /> Contract Executed
                             </label>
                             <label className="flex items-center gap-2 text-[10px] font-bold text-secondary cursor-pointer">
-                                <input type="checkbox" className="rounded-sm border-border" /> NDAs Appoved
+                                <input type="checkbox" className="rounded-sm border-border text-primary" /> Identity Verified
                             </label>
                             <label className="flex items-center gap-2 text-[10px] font-bold text-secondary cursor-pointer">
-                                <input type="checkbox" className="rounded-sm border-border" /> Credentials Assigned
+                                <input type="checkbox" className="rounded-sm border-border text-primary" /> Access Node Assigned
                             </label>
                         </div>
                     </section>

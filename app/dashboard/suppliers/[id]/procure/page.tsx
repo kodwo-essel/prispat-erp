@@ -162,7 +162,7 @@ export default function ProcurementPage({ params }: { params: Promise<{ id: stri
                                 <Truck size={14} className="text-primary" />
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Lead Time Impact</span>
                             </div>
-                            <p className="text-[10px] text-white/40 leading-relaxed italic">
+                            <p className="text-[10px] text-white/40 leading-relaxed">
                                 Bulk orders from this vendor typically arrive within 4-6 business days to the Central Distribution Node.
                             </p>
                         </div>

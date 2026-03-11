@@ -4,14 +4,29 @@ import { useState, useEffect } from "react";
 
 export default function Clock() {
     const [time, setTime] = useState(new Date());
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const timer = setInterval(() => {
             setTime(new Date());
         }, 1000);
 
         return () => clearInterval(timer);
     }, []);
+
+    if (!mounted) {
+        return (
+            <div className="text-right hidden md:block">
+                <div className="text-[10px] font-black text-primary uppercase tracking-tighter opacity-0">
+                    00 XXX 0000
+                </div>
+                <div className="text-[9px] text-secondary font-bold uppercase tracking-widest whitespace-nowrap opacity-0">
+                    00:00:00 XX XXX
+                </div>
+            </div>
+        );
+    }
 
     const formatDate = (date: Date) => {
         const options: Intl.DateTimeFormatOptions = {

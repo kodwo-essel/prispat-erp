@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
     LayoutDashboard,
     Package,
@@ -13,21 +13,60 @@ import {
     ChevronLeft,
     ChevronRight,
     LogOut,
-    Leaf
+    Leaf,
+    Settings as SettingsIcon,
+    Loader2,
+    ShoppingBag,
+    History
 } from "lucide-react";
 
 const navItems = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
     { href: "/dashboard/inventory", label: "Inventory", icon: Package },
     { href: "/dashboard/suppliers", label: "Suppliers", icon: Truck },
+    { href: "/dashboard/suppliers/supplies", label: "Supplies", icon: History },
     { href: "/dashboard/customers", label: "Customers", icon: Users },
+    { href: "/dashboard/sales", label: "Sales & Dispatch", icon: ShoppingBag },
     { href: "/dashboard/staff", label: "Staff", icon: UserCircle },
     { href: "/dashboard/finance", label: "Finance", icon: CircleDollarSign },
+    { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 export default function Sidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const res = await fetch("/api/auth/me");
+                const data = await res.json();
+                if (data.success) {
+                    setUser(data.user);
+                }
+            } catch (error) {
+                console.error("Failed to fetch user:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUser();
+    }, []);
+
+    const handleSignOut = async () => {
+        try {
+            const res = await fetch("/api/auth/logout", { method: "POST" });
+            const data = await res.json();
+            if (data.success) {
+                router.push("/login");
+            }
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    };
 
     return (
         <aside
@@ -37,9 +76,9 @@ export default function Sidebar() {
             {/* Sidebar Toggle */}
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="absolute -right-3 top-20 bg-white text-primary border border-border rounded-full p-1 shadow-md hover:bg-slate-50 transition-colors z-10"
+                className="absolute -right-4 top-20 bg-white text-primary border border-border rounded-full p-2 shadow-md hover:bg-slate-50 transition-colors z-10"
             >
-                {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+                {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </button>
 
             {/* Branding */}
@@ -87,19 +126,31 @@ export default function Sidebar() {
 
             {/* User Area */}
             <div className={`p-4 border-t border-white/10 flex flex-col gap-4 bg-black/10`}>
-                <div className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"}`}>
-                    <div className="h-8 w-8 rounded-full bg-slate-500 border border-white/20 shrink-0 flex items-center justify-center text-[10px] font-bold">
-                        JD
+                {loading ? (
+                    <div className="flex items-center justify-center p-2">
+                        <Loader2 size={16} className="animate-spin opacity-40" />
                     </div>
-                    {!isCollapsed && (
-                        <div className="overflow-hidden">
-                            <div className="text-[10px] font-bold text-white truncate uppercase tracking-tight">John Doe</div>
-                            <div className="text-[8px] text-white/50 truncate uppercase font-medium">Administrator</div>
+                ) : (
+                    <Link
+                        href="/dashboard/profile"
+                        className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} hover:opacity-80 transition-opacity`}
+                    >
+                        <div className="h-8 w-8 rounded-full bg-primary-dark border border-white/20 shrink-0 flex items-center justify-center text-[10px] font-bold bg-slate-800">
+                            {user?.name?.split(" ").map((n: string) => n[0]).join("") || "JD"}
                         </div>
-                    )}
-                </div>
+                        {!isCollapsed && (
+                            <div className="overflow-hidden text-left">
+                                <div className="text-[10px] font-bold text-white truncate uppercase tracking-tight">{user?.name || "Unauthorized"}</div>
+                                <div className="text-[8px] text-white/50 truncate uppercase font-medium">{user?.role || "Restricted Access"}</div>
+                            </div>
+                        )}
+                    </Link>
+                )}
                 {!isCollapsed && (
-                    <button className="flex items-center gap-2 text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors mb-2">
+                    <button
+                        onClick={handleSignOut}
+                        className="flex items-center gap-2 text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors mb-2"
+                    >
                         <LogOut size={12} /> Sign Out
                     </button>
                 )}

@@ -15,6 +15,8 @@ import {
 export default function CustomersPage() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [regionFilter, setRegionFilter] = useState("All Regions");
 
     useEffect(() => {
         const fetchCustomers = async () => {
@@ -33,6 +35,17 @@ export default function CustomersPage() {
 
         fetchCustomers();
     }, []);
+
+    const filteredCustomers = customers.filter(cust => {
+        const matchesSearch =
+            cust.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            cust.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            cust.contact.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesRegion = regionFilter === "All Regions" || cust.region === regionFilter;
+
+        return matchesSearch && matchesRegion;
+    });
 
     return (
         <div className="flex flex-col gap-6">
@@ -61,9 +74,15 @@ export default function CustomersPage() {
                             type="text"
                             placeholder="Search by Name, Region or Primary Contact..."
                             className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <select className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary">
+                    <select
+                        className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                        value={regionFilter}
+                        onChange={(e) => setRegionFilter(e.target.value)}
+                    >
                         <option>All Regions</option>
                         <option>Greater Accra</option>
                         <option>Ashanti</option>
@@ -94,7 +113,7 @@ export default function CustomersPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {customers.map((cust) => (
+                            {filteredCustomers.map((cust) => (
                                 <tr key={cust._id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-primary">{cust.name}</div>
@@ -123,7 +142,7 @@ export default function CustomersPage() {
 
                 {/* Pagination Placeholder */}
                 <div className="px-6 py-3 bg-muted border-t border-border flex items-center justify-between mt-auto">
-                    <div className="text-[10px] text-secondary italic">Accessing Central Customer Database.</div>
+                    <div className="text-[10px] text-secondary">Accessing Central Customer Database.</div>
                     <div className="flex items-center gap-4">
                         <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
                             <ChevronLeft size={12} /> Previous

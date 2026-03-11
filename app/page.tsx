@@ -63,8 +63,8 @@ export default function Home() {
               <div className="aspect-[4/3] overflow-hidden rounded-sm border border-border shadow-sm">
                 <div className="h-full w-full bg-muted flex items-center justify-center border-l-[8px] border-primary">
                   <div className="text-center p-12">
-                    <div className="mb-4 text-4xl opacity-20 font-bold italic">PRISPAT PRIME</div>
-                    <p className="text-sm text-secondary italic">Secure Enterprise Environment</p>
+                    <div className="mb-4 text-4xl opacity-20 font-bold uppercase tracking-widest text-[#22c55e]">PRISPAT PRIME</div>
+                    <p className="text-sm text-secondary font-medium">Secure Enterprise Environment</p>
                   </div>
                 </div>
               </div>

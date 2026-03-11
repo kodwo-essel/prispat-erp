@@ -151,7 +151,7 @@ export default function DashboardPage() {
                                 </div>
                             ))
                         ) : (
-                            <div className="text-[10px] text-secondary italic">No recent activities recorded.</div>
+                            <div className="text-[10px] text-secondary">No recent activities recorded.</div>
                         )}
                     </div>
 

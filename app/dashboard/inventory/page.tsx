@@ -9,12 +9,33 @@ import {
     ArrowRight,
     ChevronLeft,
     ChevronRight,
-    Loader2
+    Loader2,
+    History
 } from "lucide-react";
+import { exportToCSV } from "@/lib/exportUtils";
 
 export default function InventoryPage() {
     const [inventory, setInventory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("All Categories");
+    const [statusFilter, setStatusFilter] = useState("All Statuses");
+
+    const handleExport = () => {
+        const exportData = filteredInventory.map(item => ({
+            SKU: item.sku,
+            Name: item.name,
+            Category: item.category,
+            Stock: item.stock,
+            Unit: item.unit,
+            Hazard: item.hazardClass || "None",
+            Status: item.status,
+            BatchID: item.batchId,
+            ExpiryDate: item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A",
+            Supplier: item.supplier
+        }));
+        exportToCSV(exportData, `Inventory_Manifest_${new Date().toISOString().split('T')[0]}.csv`);
+    };
 
     useEffect(() => {
         const fetchInventory = async () => {
@@ -34,6 +55,18 @@ export default function InventoryPage() {
         fetchInventory();
     }, []);
 
+    const filteredInventory = inventory.filter(item => {
+        const matchesSearch =
+            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (item.chemical && item.chemical.toLowerCase().includes(searchQuery.toLowerCase()));
+
+        const matchesCategory = categoryFilter === "All Categories" || item.category === categoryFilter;
+        const matchesStatus = statusFilter === "All Statuses" || item.status === statusFilter;
+
+        return matchesSearch && matchesCategory && matchesStatus;
+    });
+
     return (
         <div className="flex flex-col gap-6">
             {/* Header Area */}
@@ -43,7 +76,13 @@ export default function InventoryPage() {
                     <p className="text-sm text-secondary mt-1">Authorized stock ledger for all nationwide distribution centers.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
+                    <Link href="/dashboard/suppliers/supplies" className="flex items-center gap-2 text-xs font-bold text-secondary border border-border px-4 py-2 rounded-sm hover:bg-muted uppercase tracking-wider transition-colors">
+                        <History size={14} /> Inbound History
+                    </Link>
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors"
+                    >
                         <FileText size={14} /> Export Manifest (CSV)
                     </button>
                     <Link href="/dashboard/inventory/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
@@ -61,23 +100,33 @@ export default function InventoryPage() {
                             type="text"
                             placeholder="Search by SKU, Name or Chemical..."
                             className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <select className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary">
+                    <select
+                        className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                    >
                         <option>All Categories</option>
                         <option>Herbicide</option>
                         <option>Fertilizer</option>
                         <option>Insecticide</option>
                         <option>Fungicide</option>
                     </select>
-                    <select className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary">
+                    <select
+                        className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
                         <option>All Statuses</option>
                         <option>In Stock</option>
-                        <option>Low Stock</option>
-                        <option>Critical</option>
+                        <option>Low Inventory</option>
+                        <option>Critical Outage</option>
                     </select>
                 </div>
-                <div className="text-xs text-secondary font-medium">Showing {inventory.length} records</div>
+                <div className="text-xs text-secondary font-medium">Showing {filteredInventory.length} records</div>
             </div>
 
             {/* Inventory Table */}
@@ -94,6 +143,7 @@ export default function InventoryPage() {
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">SKU / ID</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Product Name</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Primary Supplier</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Stock Level</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Hazard</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
@@ -101,14 +151,19 @@ export default function InventoryPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {inventory.map((item) => (
+                            {filteredInventory.map((item) => (
                                 <tr key={item._id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{item.sku}</td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-semibold text-primary">{item.name}</div>
-                                        <div className="text-[10px] text-secondary mt-0.5">Verified Standard Batch</div>
+                                        <div className="text-[10px] text-secondary mt-0.5">Verified Batch Asset</div>
                                     </td>
                                     <td className="px-6 py-4 text-xs text-secondary">{item.category}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-[10px] font-bold text-primary uppercase tracking-tight">
+                                            {item.supplier || 'Standard Batch'}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-primary tabular-nums">{item.stock}</div>
                                         <div className="text-[10px] text-secondary">{item.unit}</div>

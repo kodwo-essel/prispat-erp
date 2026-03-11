@@ -166,7 +166,7 @@ export default function RecordTransactionPage() {
                             <div className="flex flex-col gap-6 py-8 border-y border-dashed border-border">
                                 <div className="flex flex-col gap-2">
                                     <div className="text-[8px] font-black text-secondary uppercase tracking-widest">Invoiced Entity</div>
-                                    <div className="text-sm font-bold text-primary italic underline decoration-primary/20 underline-offset-4 capitalize">
+                                    <div className="text-sm font-bold text-primary underline decoration-primary/20 underline-offset-4 capitalize">
                                         {formData.entity || "DRAFT ENTITY"}
                                     </div>
                                 </div>
@@ -191,7 +191,7 @@ export default function RecordTransactionPage() {
 
                                 <div className="flex flex-col gap-2 opacity-60">
                                     <div className="text-[8px] font-black text-secondary uppercase tracking-widest">Record Annotation</div>
-                                    <p className="text-[10px] font-medium leading-relaxed italic truncate-3-lines">
+                                    <p className="text-[10px] font-medium leading-relaxed truncate-3-lines">
                                         {formData.description || "No specific annotation provided for this fiscal entry."}
                                     </p>
                                 </div>

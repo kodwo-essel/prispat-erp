@@ -13,10 +13,25 @@ import {
     ChevronRight,
     Loader2
 } from "lucide-react";
+import { exportToCSV } from "@/lib/exportUtils";
 
 export default function FinancePage() {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const handleExport = () => {
+        const exportData = transactions.map(tx => ({
+            TransactionID: tx.txId,
+            Entity: tx.entity,
+            Category: tx.category,
+            Nature: tx.type,
+            Amount: tx.amount,
+            Date: new Date(tx.date).toLocaleDateString(),
+            Status: tx.status,
+            Reference: tx.reference || "N/A"
+        }));
+        exportToCSV(exportData, `Fiscal_Audit_Ledger_${new Date().toISOString().split('T')[0]}.csv`);
+    };
 
     useEffect(() => {
         const fetchFinance = async () => {
@@ -73,8 +88,11 @@ export default function FinancePage() {
                     <p className="text-sm text-secondary mt-1">Real-time recording of institutional revenue and expenditure.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
-                        <Download size={14} /> Download Ledger (PDF)
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors"
+                    >
+                        <Download size={14} /> Export Ledger (CSV)
                     </button>
                     <Link href="/dashboard/finance/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
                         <Plus size={14} /> Record Transaction
@@ -188,7 +206,7 @@ export default function FinancePage() {
 
                 {/* Pagination Placeholder */}
                 <div className="px-6 py-3 bg-muted border-t border-border flex items-center justify-between mt-auto">
-                    <div className="text-[10px] text-secondary italic">Restricted View: Audit trail logged for current session.</div>
+                    <div className="text-[10px] text-secondary">Restricted View: Audit trail logged for current session.</div>
                     <div className="flex items-center gap-4">
                         <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
                             <ChevronLeft size={12} /> Previous

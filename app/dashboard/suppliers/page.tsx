@@ -6,7 +6,8 @@ import {
     Plus,
     Search,
     FileText,
-    ShieldCheck, // Retained as it's used in the component
+    History,
+    ShieldCheck,
     MoreVertical, // Retained as it's used in the component
     ChevronLeft,
     ChevronRight,
@@ -16,6 +17,8 @@ import {
 export default function SuppliersPage() {
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("All Categories");
 
     useEffect(() => {
         const fetchSuppliers = async () => {
@@ -35,6 +38,17 @@ export default function SuppliersPage() {
         fetchSuppliers();
     }, []);
 
+    const filteredSuppliers = suppliers.filter(sup => {
+        const matchesSearch =
+            sup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            sup.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            sup.contactPerson.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesCategory = categoryFilter === "All Categories" || sup.category === categoryFilter;
+
+        return matchesSearch && matchesCategory;
+    });
+
     return (
         <div className="flex flex-col gap-6">
             {/* Header Area */}
@@ -44,6 +58,9 @@ export default function SuppliersPage() {
                     <p className="text-sm text-secondary mt-1">Registry of authorized agrochemical manufacturers and regional wholesalers.</p>
                 </div>
                 <div className="flex gap-3">
+                    <Link href="/dashboard/suppliers/supplies" className="flex items-center gap-2 text-xs font-bold text-secondary border border-border px-4 py-2 rounded-sm hover:bg-muted uppercase tracking-wider transition-colors">
+                        <History size={14} /> Supply Registry
+                    </Link>
                     <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
                         <FileText size={14} /> Audit Report
                     </button>
@@ -62,9 +79,15 @@ export default function SuppliersPage() {
                             type="text"
                             placeholder="Find manufacturer or local agent..."
                             className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <select className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary">
+                    <select
+                        className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                    >
                         <option>All Categories</option>
                         <option>Agrochemicals</option>
                         <option>Fertilizers</option>
@@ -95,7 +118,7 @@ export default function SuppliersPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {suppliers.map((sup) => (
+                            {filteredSuppliers.map((sup) => (
                                 <tr key={sup._id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">

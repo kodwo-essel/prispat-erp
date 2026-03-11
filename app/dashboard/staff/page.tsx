@@ -1,120 +1,140 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-    Users,
-    Building2,
-    Key,
-    UserCheck,
-    MoreHorizontal,
     Plus,
-    ShieldAlert,
-    History
+    Search,
+    FileText,
+    Shield,
+    Mail,
+    Phone,
+    ArrowRight,
+    ChevronLeft,
+    ChevronRight,
+    Loader2
 } from "lucide-react";
 
 export default function StaffPage() {
-    const staff = [
-        { id: "HR-101", name: "Officer James Doe", role: "Primary Administrator", dept: "Executive", access: "Root", status: "Active" },
-        { id: "HR-102", name: "Sarah Mensah", role: "Warehouse Supervisor", dept: "Logistics", access: "Limited", status: "Active" },
-        { id: "HR-103", name: "Kofi Annan", role: "Procurement Officer", dept: "Supply Chain", access: "Standard", status: "On Leave" },
-        { id: "HR-104", name: "Elena Gilbert", role: "Finance Manager", dept: "Accounts", access: "Financial", status: "Active" },
-        { id: "HR-105", name: "Samuel Laryea", role: "Sales Representative", dept: "Distribution", access: "Read-Only", status: "Active" },
-    ];
+    const [staff, setStaff] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStaff = async () => {
+            try {
+                const res = await fetch("/api/staff");
+                const json = await res.json();
+                if (json.success) {
+                    setStaff(json.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch staff:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStaff();
+    }, []);
 
     return (
         <div className="flex flex-col gap-6">
             {/* Header Area */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Staff & Access Control Hub</h1>
-                    <p className="text-sm text-secondary mt-1">Registry of authorized personnel, system roles, and departmental permissions.</p>
+                    <h1 className="text-2xl font-bold">National Personnel Directorate</h1>
+                    <p className="text-sm text-secondary mt-1">Authorized database of all regional officers and administrative staff.</p>
                 </div>
                 <div className="flex gap-3">
-                    <Link href="/dashboard/staff/audit" className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
-                        <History size={14} /> Audit Access Logs
-                    </Link>
+                    <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
+                        <FileText size={14} /> Personnel Report
+                    </button>
                     <Link href="/dashboard/staff/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
-                        <Plus size={14} /> Enlist New Personnel
+                        <Plus size={14} /> New Officer Enrolment
                     </Link>
                 </div>
             </div>
 
-            {/* HR Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between">
-                    <div>
-                        <div className="text-[10px] font-bold text-secondary uppercase tracking-widest">Active Personnel</div>
-                        <div className="text-2xl font-bold text-primary mt-1">24</div>
+            {/* Filters Bar */}
+            <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-grow">
+                    <div className="relative flex-grow max-sm">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
+                        <input
+                            type="text"
+                            placeholder="Search by Name, Officer ID or Role..."
+                            className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
+                        />
                     </div>
-                    <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center text-primary">
-                        <UserCheck size={20} />
-                    </div>
+                    <select className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary">
+                        <option>All Roles</option>
+                        <option>Admin</option>
+                        <option>Inventory Manager</option>
+                        <option>Finance Officer</option>
+                        <option>Regional Director</option>
+                    </select>
                 </div>
-                <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between">
-                    <div>
-                        <div className="text-[10px] font-bold text-secondary uppercase tracking-widest">Departments</div>
-                        <div className="text-2xl font-bold text-primary mt-1">6</div>
-                    </div>
-                    <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center text-primary">
-                        <Building2 size={20} />
-                    </div>
-                </div>
-                <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between">
-                    <div>
-                        <div className="text-[10px] font-bold text-secondary uppercase tracking-widest">Pending Access Requests</div>
-                        <div className="text-2xl font-bold text-orange-600 mt-1">3</div>
-                    </div>
-                    <div className="h-10 w-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-600">
-                        <Key size={20} />
-                    </div>
-                </div>
+                <div className="text-xs text-secondary font-medium">Clearance required for sensitive data</div>
             </div>
 
-            {/* Staff Table */}
-            <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-muted border-b border-border">
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Personnel ID</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Full Name / Position</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Department</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Access Level</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Settings</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {staff.map((p) => (
-                            <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{p.id}</td>
-                                <td className="px-6 py-4">
-                                    <div className="text-xs font-semibold text-primary">{p.name}</div>
-                                    <div className="text-[10px] text-secondary mt-0.5">{p.role}</div>
-                                </td>
-                                <td className="px-6 py-4 text-xs text-secondary">{p.dept}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`text-[9px] font-bold px-2 py-0.5 border rounded-sm uppercase ${p.access === 'Root' ? 'bg-primary text-white border-primary' :
-                                        p.access === 'Financial' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                            p.access === 'Standard' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                                                'bg-muted text-secondary border-border'
-                                        }`}>
-                                        {p.access}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`h-1.5 w-1.5 rounded-full ${p.status === 'Active' ? 'bg-green-500' : 'bg-orange-400'
-                                            }`}></span>
-                                        <span className="text-xs font-medium text-secondary">{p.status}</span>
+            {/* Staff Grid */}
+            {loading ? (
+                <div className="bg-white border border-border rounded-sm shadow-sm p-40 flex flex-col items-center justify-center gap-4 text-slate-400">
+                    <Loader2 size={32} className="animate-spin text-primary" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Accessing Secure Personnel Records...</span>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                    {staff.map((person) => (
+                        <div key={person._id} className="bg-white border border-border rounded-sm shadow-sm overflow-hidden flex flex-col group">
+                            <div className="p-6">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="h-14 w-14 bg-muted border border-border rounded-sm flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner">
+                                        {person.name.charAt(0)}
                                     </div>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <Link href={`/dashboard/staff/${p.id}`} className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
-                                        Manage
-                                    </Link>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                    <span className={`text-[8px] font-black px-2 py-1 rounded-sm border uppercase tracking-widest ${person.accessLevel === 'Admin' ? 'bg-red-50 text-red-700 border-red-100' :
+                                            person.accessLevel === 'Manager' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                                'bg-slate-50 text-slate-700 border-slate-100'
+                                        }`}>
+                                        {person.accessLevel}
+                                    </span>
+                                </div>
+                                <h3 className="text-sm font-bold text-primary">{person.name}</h3>
+                                <p className="text-[10px] font-bold text-secondary uppercase tracking-widest mt-1">{person.role}</p>
+
+                                <div className="mt-6 space-y-3">
+                                    <div className="flex items-center gap-3 text-xs text-secondary">
+                                        <Mail size={12} className="text-slate-400" /> {person.email}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-xs text-secondary">
+                                        <Phone size={12} className="text-slate-400" /> {person.phone}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-xs text-secondary">
+                                        <Shield size={12} className="text-slate-400" /> Clearance: {person.status}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-auto border-t border-border p-3 bg-muted group-hover:bg-slate-50 transition-colors">
+                                <Link href={`/dashboard/staff/${person._id}`} className="flex items-center justify-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest">
+                                    Manage Personnel Profile <ArrowRight size={12} />
+                                </Link>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Pagination Placeholder */}
+            <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between">
+                <div className="text-[10px] text-secondary">Authorized Personnel Directory • Nationwide Access Enabled</div>
+                <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
+                        <ChevronLeft size={14} /> Previous
+                    </button>
+                    <button className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">
+                        Next <ChevronRight size={14} />
+                    </button>
+                </div>
             </div>
         </div>
     );

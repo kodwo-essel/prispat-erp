@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     Plus,
@@ -6,18 +9,30 @@ import {
     ArrowRight,
     ChevronLeft,
     ChevronRight,
-    Package
+    Loader2
 } from "lucide-react";
 
 export default function InventoryPage() {
-    const inventory = [
-        { id: "SKU-001", name: "Glyphosate 480SL", category: "Herbicide", stock: 1420, unit: "Liters", status: "In Stock", hazard: "Level 2" },
-        { id: "SKU-002", name: "Paraquat-Dichloride", category: "Herbicide", stock: 12, unit: "Cases", status: "Critical", hazard: "Level 4" },
-        { id: "SKU-003", name: "NPK 15-15-15", category: "Fertilizer", stock: 850, unit: "Bags", status: "In Stock", hazard: "None" },
-        { id: "SKU-004", name: "Abamectin 1.8EC", category: "Insecticide", stock: 45, unit: "Bottles", status: "Low Stock", hazard: "Level 3" },
-        { id: "SKU-005", name: "Mancozeb 80WP", category: "Fungicide", stock: 210, unit: "Kg", status: "In Stock", hazard: "Level 1" },
-        { id: "SKU-006", name: "Urea 46% N", category: "Fertilizer", stock: 1100, unit: "Bags", status: "In Stock", hazard: "None" },
-    ];
+    const [inventory, setInventory] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchInventory = async () => {
+            try {
+                const res = await fetch("/api/inventory");
+                const json = await res.json();
+                if (json.success) {
+                    setInventory(json.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch inventory:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchInventory();
+    }, []);
 
     return (
         <div className="flex flex-col gap-6">
@@ -66,62 +81,69 @@ export default function InventoryPage() {
             </div>
 
             {/* Inventory Table */}
-            <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-muted border-b border-border">
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">SKU / ID</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Product Name</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Stock Level</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Hazard</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
-                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {inventory.map((item) => (
-                            <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{item.id}</td>
-                                <td className="px-6 py-4">
-                                    <div className="text-xs font-semibold text-primary">{item.name}</div>
-                                    <div className="text-[10px] text-secondary mt-0.5">Verified Standard Batch</div>
-                                </td>
-                                <td className="px-6 py-4 text-xs text-secondary">{item.category}</td>
-                                <td className="px-6 py-4">
-                                    <div className="text-xs font-bold text-primary tabular-nums">{item.stock}</div>
-                                    <div className="text-[10px] text-secondary">{item.unit}</div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${item.hazard === 'Level 4' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                            item.hazard === 'Level 3' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                                                item.hazard === 'Level 2' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                                                    item.hazard === 'Level 1' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                                        'bg-slate-50 text-slate-500 border border-slate-100'
-                                        }`}>
-                                        {item.hazard || 'None'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`h-1.5 w-1.5 rounded-full ${item.status === 'In Stock' ? 'bg-green-500' :
-                                                item.status === 'Low Stock' ? 'bg-orange-500' : 'bg-red-500'
-                                            }`}></span>
-                                        <span className="text-xs font-medium text-secondary">{item.status}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <Link href={`/dashboard/inventory/${item.id}`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
-                                        Manage <ArrowRight size={10} />
-                                    </Link>
-                                </td>
+            <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+                {loading ? (
+                    <div className="flex-grow flex flex-col items-center justify-center gap-4 text-slate-400">
+                        <Loader2 size={32} className="animate-spin text-primary" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Accessing Secure Records...</span>
+                    </div>
+                ) : (
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-muted border-b border-border">
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">SKU / ID</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Product Name</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Stock Level</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Hazard</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {inventory.map((item) => (
+                                <tr key={item._id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{item.sku}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-semibold text-primary">{item.name}</div>
+                                        <div className="text-[10px] text-secondary mt-0.5">Verified Standard Batch</div>
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-secondary">{item.category}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-bold text-primary tabular-nums">{item.stock}</div>
+                                        <div className="text-[10px] text-secondary">{item.unit}</div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${item.hazardClass === 'Level 4' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                            item.hazardClass === 'Level 3' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
+                                                item.hazardClass === 'Level 2' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                                                    item.hazardClass === 'Level 1' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                                        'bg-slate-50 text-slate-500 border border-slate-100'
+                                            }`}>
+                                            {item.hazardClass || 'None'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`h-1.5 w-1.5 rounded-full ${item.status === 'In Stock' ? 'bg-green-500' :
+                                                item.status === 'Low Inventory' ? 'bg-orange-500' : 'bg-red-500'
+                                                }`}></span>
+                                            <span className="text-xs font-medium text-secondary">{item.status}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <Link href={`/dashboard/inventory/${item._id}`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                            Manage <ArrowRight size={10} />
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
 
                 {/* Pagination Placeholder */}
-                <div className="px-6 py-3 bg-muted border-t border-border flex items-center justify-between">
+                <div className="px-6 py-3 bg-muted border-t border-border flex items-center justify-between mt-auto">
                     <div className="text-[10px] text-secondary">Authorized access: Records reflect latest sync with Central Hub.</div>
                     <div className="flex items-center gap-4">
                         <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
@@ -129,9 +151,8 @@ export default function InventoryPage() {
                         </button>
                         <div className="flex items-center gap-2">
                             <span className="h-6 w-6 bg-primary text-white text-[10px] flex items-center justify-center font-bold rounded-sm shadow-sm">1</span>
-                            <span className="h-6 w-6 text-primary text-[10px] flex items-center justify-center font-bold rounded-sm hover:bg-white/50 cursor-pointer">2</span>
                         </div>
-                        <button className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">
+                        <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
                             Next <ChevronRight size={12} />
                         </button>
                     </div>

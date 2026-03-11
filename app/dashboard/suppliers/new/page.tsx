@@ -9,7 +9,6 @@ import {
     User,
     Mail,
     Phone,
-    FileText,
     CreditCard,
     CheckCircle2
 } from "lucide-react";

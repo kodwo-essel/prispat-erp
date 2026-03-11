@@ -15,6 +15,7 @@ const OrderSchema = new mongoose.Schema(
             {
                 sku: String,
                 name: String,
+                batchId: String,
                 quantity: Number,
                 unitPrice: Number,
                 total: Number,

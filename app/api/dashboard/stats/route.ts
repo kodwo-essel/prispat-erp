@@ -26,18 +26,36 @@ export async function GET() {
 
         const alerts: any[] = [];
 
-        // Expiry Alerts
-        const expiringItems = inventoryItems.filter(item =>
-            item.expiryDate && new Date(item.expiryDate) < threeMonthsFromNow
-        );
-        expiringItems.forEach(item => {
-            const diffDays = Math.ceil((new Date(item.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-            alerts.push({
-                type: "EXPIRY",
-                title: `EXPIRY WARNING: ${item.name}`,
-                description: `${item.stock} ${item.unit} expiring in ${diffDays} days.`,
-                severity: diffDays < 30 ? "high" : "medium"
-            });
+        // Expiry Alerts (3 Tiers: 30/60/90 days)
+        const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+        const sixtyDays = 60 * 24 * 60 * 60 * 1000;
+        const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+
+        inventoryItems.forEach(item => {
+            if (!item.expiryDate) return;
+            const expiry = new Date(item.expiryDate).getTime();
+            const diffMs = expiry - now.getTime();
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffMs < ninetyDays && item.stock > 0) {
+                let severity: "high" | "medium" | "low" = "low";
+                let prefix = "WATCHLIST";
+
+                if (diffMs < thirtyDays) {
+                    severity = "high";
+                    prefix = "CRITICAL EXPIRY";
+                } else if (diffMs < sixtyDays) {
+                    severity = "medium";
+                    prefix = "URGENT EXPIRY";
+                }
+
+                alerts.push({
+                    type: "EXPIRY",
+                    title: `${prefix}: ${item.name}`,
+                    description: `${item.stock} ${item.unit} (${item.batchId}) expiring in ${diffDays} days.`,
+                    severity
+                });
+            }
         });
 
         // Low Stock Alerts

@@ -55,6 +55,7 @@ export default function DashboardPage() {
         switch (severity) {
             case "high": return "border-red-600 text-red-600";
             case "medium": return "border-orange-500 text-orange-500";
+            case "low": return "border-blue-500 text-blue-500";
             default: return "border-slate-400 text-slate-400";
         }
     };

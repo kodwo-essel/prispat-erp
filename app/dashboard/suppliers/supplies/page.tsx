@@ -12,8 +12,10 @@ import {
     Loader2,
     Plus,
     FileText,
-    History
+    History,
+    Printer
 } from "lucide-react";
+import ReceiptPrintView from "./components/ReceiptPrintView";
 
 export default function SupplyRegistryPage() {
     const [view, setView] = useState<"receipts" | "items">("receipts");
@@ -21,6 +23,7 @@ export default function SupplyRegistryPage() {
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -177,10 +180,16 @@ export default function SupplyRegistryPage() {
                                             <div className="text-xs font-black text-primary tabular-nums">₵{r.totalAmount.toLocaleString()}</div>
                                             <div className="text-[10px] text-secondary uppercase">Gross Value</div>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => setSelectedReceipt(r)}
+                                                className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight border border-primary text-primary hover:bg-primary/5 flex items-center gap-1.5 transition-colors"
+                                            >
+                                                <Printer size={10} /> Export
+                                            </button>
                                             <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${r.status === 'Received' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                    r.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' :
-                                                        'bg-slate-50 text-slate-500 border-slate-100'
+                                                r.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' :
+                                                    'bg-slate-50 text-slate-500 border-slate-100'
                                                 }`}>
                                                 {r.status}
                                             </span>
@@ -227,6 +236,14 @@ export default function SupplyRegistryPage() {
                     Total {view === "receipts" ? "Receipts" : "Items"}: {view === "receipts" ? filteredReceipts.length : filteredItems.length}
                 </div>
             </div>
+
+            {/* Print View Overlay */}
+            {selectedReceipt && (
+                <ReceiptPrintView
+                    receipt={selectedReceipt}
+                    onClose={() => setSelectedReceipt(null)}
+                />
+            )}
         </div>
     );
 }

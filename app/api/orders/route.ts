@@ -20,21 +20,21 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { customer, items, totalAmount, recordedBy } = body;
 
-        // 1. Validate Stock Availability
+        // 1. Validate Stock Availability (Batch-Specific)
         for (const item of items) {
-            const invItem = await Inventory.findOne({ sku: item.sku });
+            const invItem = await Inventory.findOne({ sku: item.sku, batchId: item.batchId });
             if (!invItem || invItem.stock < item.quantity) {
                 return NextResponse.json({
                     success: false,
-                    error: `Insufficient stock for ${item.name} (${item.sku}). Available: ${invItem?.stock || 0}`
+                    error: `Insufficient stock for ${item.name} (Batch: ${item.batchId}). Available: ${invItem?.stock || 0}`
                 }, { status: 400 });
             }
         }
 
-        // 2. Perform Atomic Inventory Reductions
+        // 2. Perform Atomic Inventory Reductions (Batch-Specific)
         for (const item of items) {
             await Inventory.findOneAndUpdate(
-                { sku: item.sku },
+                { sku: item.sku, batchId: item.batchId },
                 { $inc: { stock: -item.quantity } }
             );
         }

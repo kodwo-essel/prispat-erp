@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
     Plus,
     ShieldCheck,
@@ -26,12 +27,12 @@ export default function SuppliersPage() {
                     <p className="text-sm text-secondary mt-1">Registry of authorized agrochemical manufacturers and regional wholesalers.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
+                    <Link href="/dashboard/suppliers/audit" className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
                         <ClipboardCheck size={14} /> Audit Supplier Performance
-                    </button>
-                    <button className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
+                    </Link>
+                    <Link href="/dashboard/suppliers/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
                         <Plus size={14} /> Onboard New Supplier
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -101,16 +102,16 @@ export default function SuppliersPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${sup.status === 'Approved' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                            sup.status === 'On Probation' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                                                'bg-slate-50 text-slate-500 border border-slate-100'
+                                        sup.status === 'On Probation' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
+                                            'bg-slate-50 text-slate-500 border border-slate-100'
                                         }`}>
                                         {sup.status}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                    <Link href={`/dashboard/suppliers/${sup.id}/procure`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                                         Procure <ExternalLink size={10} />
-                                    </button>
+                                    </Link>
                                 </td>
                             </tr>
                         ))}

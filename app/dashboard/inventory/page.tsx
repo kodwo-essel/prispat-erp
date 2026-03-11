@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
     Plus,
     Search,
@@ -30,9 +31,9 @@ export default function InventoryPage() {
                     <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
                         <FileText size={14} /> Export Manifest (CSV)
                     </button>
-                    <button className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
+                    <Link href="/dashboard/inventory/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
                         <Plus size={14} /> Record New Arrival
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -110,9 +111,9 @@ export default function InventoryPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                    <Link href={`/dashboard/inventory/${item.id}`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                                         Manage <ArrowRight size={10} />
-                                    </button>
+                                    </Link>
                                 </td>
                             </tr>
                         ))}

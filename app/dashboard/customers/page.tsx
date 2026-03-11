@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
     Plus,
     FileText,
@@ -27,12 +28,12 @@ export default function CustomersPage() {
                     <p className="text-sm text-secondary mt-1">Unified database of authorized retailers, cooperatives, and individual smallholder farmers.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
+                    <Link href="/dashboard/customers/debtors" className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
                         <FileText size={14} /> Generate Debtor Report
-                    </button>
-                    <button className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
+                    </Link>
+                    <Link href="/dashboard/customers/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
                         <UserPlus size={14} /> Register New Client
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -96,17 +97,17 @@ export default function CustomersPage() {
                                 <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{cust.balance}</td>
                                 <td className="px-6 py-4">
                                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${cust.credit === 'Premium' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                                            cust.credit === 'Standard' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                                cust.credit === 'Restricted' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                                    'bg-slate-50 text-slate-500 border border-slate-100'
+                                        cust.credit === 'Standard' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                            cust.credit === 'Restricted' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                'bg-slate-50 text-slate-500 border border-slate-100'
                                         }`}>
                                         {cust.credit}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                    <Link href={`/dashboard/customers/${cust.id}`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                                         Open Profile <ArrowRight size={10} />
-                                    </button>
+                                    </Link>
                                 </td>
                             </tr>
                         ))}

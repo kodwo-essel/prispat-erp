@@ -19,17 +19,18 @@ import {
     ShoppingBag,
     History
 } from "lucide-react";
+import { hasPermission } from "@/lib/permissions";
 
 const navItems = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/dashboard/inventory", label: "Inventory", icon: Package },
-    { href: "/dashboard/suppliers", label: "Suppliers", icon: Truck },
-    { href: "/dashboard/suppliers/supplies", label: "Supplies", icon: History },
-    { href: "/dashboard/customers", label: "Customers", icon: Users },
-    { href: "/dashboard/sales", label: "Sales & Dispatch", icon: ShoppingBag },
-    { href: "/dashboard/staff", label: "Staff", icon: UserCircle },
-    { href: "/dashboard/finance", label: "Finance", icon: CircleDollarSign },
-    { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon },
+    { href: "/dashboard/inventory", label: "Inventory", icon: Package, permission: "VIEW_INVENTORY" },
+    { href: "/dashboard/suppliers", label: "Suppliers", icon: Truck, permission: "VIEW_SUPPLIERS" },
+    { href: "/dashboard/suppliers/supplies", label: "Supplies", icon: History, permission: "VIEW_SUPPLIERS" },
+    { href: "/dashboard/customers", label: "Customers", icon: Users, permission: "VIEW_CUSTOMERS" },
+    { href: "/dashboard/sales", label: "Sales & Dispatch", icon: ShoppingBag, permission: "VIEW_CUSTOMERS" },
+    { href: "/dashboard/staff", label: "Staff", icon: UserCircle, permission: "VIEW_STAFF" },
+    { href: "/dashboard/finance", label: "Finance", icon: CircleDollarSign, permission: "VIEW_FINANCE" },
+    { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon, permission: "MANAGE_SETTINGS" },
 ];
 
 export default function Sidebar() {
@@ -94,34 +95,36 @@ export default function Sidebar() {
 
             {/* Navigation */}
             <nav className="flex-grow py-6 px-3 flex flex-col gap-1">
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    const Icon = item.icon;
+                {navItems
+                    .filter(item => !item.permission || hasPermission(user, item.permission as any))
+                    .map((item) => {
+                        const isActive = pathname === item.href;
+                        const Icon = item.icon;
 
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 group relative ${isActive
-                                ? "bg-white/15 text-white font-bold"
-                                : "text-white/60 hover:bg-white/5 hover:text-white"
-                                }`}
-                        >
-                            {isActive && (
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full" />
-                            )}
-                            <Icon size={18} className={`shrink-0 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`} />
-                            {!isCollapsed && <span className="text-xs uppercase tracking-widest leading-none">{item.label}</span>}
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 group relative ${isActive
+                                    ? "bg-white/15 text-white font-bold"
+                                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                                    }`}
+                            >
+                                {isActive && (
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full" />
+                                )}
+                                <Icon size={18} className={`shrink-0 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`} />
+                                {!isCollapsed && <span className="text-xs uppercase tracking-widest leading-none">{item.label}</span>}
 
-                            {/* Tooltip for collapsed mode */}
-                            {isCollapsed && (
-                                <div className="absolute left-full ml-4 px-2 py-1 bg-primary text-white text-[10px] uppercase tracking-wider rounded-sm opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-xl border border-white/10">
-                                    {item.label}
-                                </div>
-                            )}
-                        </Link>
-                    );
-                })}
+                                {/* Tooltip for collapsed mode */}
+                                {isCollapsed && (
+                                    <div className="absolute left-full ml-4 px-2 py-1 bg-primary text-white text-[10px] uppercase tracking-wider rounded-sm opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-xl border border-white/10">
+                                        {item.label}
+                                    </div>
+                                )}
+                            </Link>
+                        );
+                    })}
             </nav>
 
             {/* User Area */}

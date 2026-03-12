@@ -185,23 +185,6 @@ export default function EnlistStaffPage() {
                         </div>
                     </section>
 
-                    <section className="bg-white border border-border p-5 rounded-sm flex flex-col gap-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <ShieldCheck size={16} className="text-primary" />
-                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-secondary">Deployment Checklist</h3>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <label className="flex items-center gap-2 text-[10px] font-bold text-secondary cursor-pointer">
-                                <input type="checkbox" className="rounded-sm border-border text-primary" /> Contract Executed
-                            </label>
-                            <label className="flex items-center gap-2 text-[10px] font-bold text-secondary cursor-pointer">
-                                <input type="checkbox" className="rounded-sm border-border text-primary" /> Identity Verified
-                            </label>
-                            <label className="flex items-center gap-2 text-[10px] font-bold text-secondary cursor-pointer">
-                                <input type="checkbox" className="rounded-sm border-border text-primary" /> Access Node Assigned
-                            </label>
-                        </div>
-                    </section>
                 </div>
             </div>
 

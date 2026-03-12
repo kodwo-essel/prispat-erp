@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import dbConnect from "@/lib/dbConnect";
 import Finance from "@/models/Finance";
 
 export async function GET() {
     try {
+        const session = await getSession();
+        if (!session || !hasPermission(session.user, "VIEW_FINANCE")) {
+            return NextResponse.json({ success: false, error: "ACCESS DENIED: UNAUTHORIZED." }, { status: 403 });
+        }
         await dbConnect();
         const transactions = await Finance.find({}).sort({ date: -1 });
         return NextResponse.json({ success: true, data: transactions });
@@ -14,6 +20,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        const session = await getSession();
+        if (!session || !hasPermission(session.user, "MANAGE_FINANCE")) {
+            return NextResponse.json({ success: false, error: "ACCESS DENIED: UNAUTHORIZED." }, { status: 403 });
+        }
         await dbConnect();
         const body = await request.json();
 

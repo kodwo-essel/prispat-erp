@@ -161,19 +161,19 @@ export default function LoginPage() {
                                     <motion.div
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
-                                        className="bg-primary/5 border border-primary/20 p-4 rounded-sm flex items-start gap-3"
+                                        className="bg-green-50 border border-green-200 p-4 rounded-sm flex items-start gap-3"
                                     >
-                                        <CheckCircle2 size={16} className="text-primary shrink-0 mt-0.5" />
+                                        <CheckCircle2 size={16} className="text-green-600 shrink-0 mt-0.5" />
                                         <div className="flex flex-col gap-1">
-                                            <p className="text-[10px] font-bold text-primary uppercase tracking-tight leading-tight">
+                                            <p className="text-[10px] font-bold text-green-600 uppercase tracking-tight leading-tight">
                                                 IDENTITY VERIFIED. SYNCHRONIZING SESSION...
                                             </p>
-                                            <div className="h-0.5 bg-primary/20 w-full rounded-full overflow-hidden">
+                                            <div className="h-0.5 bg-green-200 w-full rounded-full overflow-hidden">
                                                 <motion.div
                                                     initial={{ x: "-100%" }}
                                                     animate={{ x: "0%" }}
                                                     transition={{ duration: 1.5 }}
-                                                    className="h-full bg-primary"
+                                                    className="h-full bg-green-600"
                                                 />
                                             </div>
                                         </div>

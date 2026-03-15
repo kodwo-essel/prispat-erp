@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
     ChevronLeft,
@@ -13,32 +13,36 @@ import {
     Download,
     Filter,
     Loader2,
-    Calendar
+    Calendar,
+    Plus
 } from "lucide-react";
 import { exportToCSV } from "@/lib/exportUtils";
+import NewAuditModal from "./components/NewAuditModal";
 
 export default function SupplierAuditPage() {
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const fetchAudits = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/suppliers/audit");
+            const json = await res.json();
+            if (json.success) {
+                setAuditLogs(json.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch audits:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchAudits = async () => {
-            try {
-                const res = await fetch("/api/suppliers/audit");
-                const json = await res.json();
-                if (json.success) {
-                    setAuditLogs(json.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch audits:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchAudits();
-    }, []);
+    }, [fetchAudits]);
 
     const handleExport = () => {
         if (!auditLogs || auditLogs.length === 0) return;
@@ -69,6 +73,13 @@ export default function SupplierAuditPage() {
 
     return (
         <div className="flex flex-col gap-6">
+            {/* New Audit Modal */}
+            <NewAuditModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={fetchAudits}
+            />
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-2">
@@ -77,17 +88,25 @@ export default function SupplierAuditPage() {
                     </Link>
                     <h1 className="text-3xl font-bold tracking-tight text-primary">Supplier Performance Audit</h1>
                 </div>
-                <button
-                    onClick={handleExport}
-                    disabled={auditLogs.length === 0 || loading}
-                    className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-sm transition-colors uppercase tracking-wider ${auditLogs.length === 0 || loading
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider px-6"
+                    >
+                        <Plus size={14} /> Record New Audit
+                    </button>
+                    <button
+                        onClick={handleExport}
+                        disabled={auditLogs.length === 0 || loading}
+                        className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-sm transition-colors uppercase tracking-wider ${auditLogs.length === 0 || loading
                             ? 'text-slate-400 border-slate-200 border cursor-not-allowed'
                             : 'text-primary border border-primary hover:bg-primary/5'
-                        }`}
-                >
-                    {loading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-                    Export Audit Registry
-                </button>
+                            }`}
+                    >
+                        {loading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        Export Audit Registry
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

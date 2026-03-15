@@ -61,9 +61,9 @@ export default function SuppliersPage() {
                     <Link href="/dashboard/suppliers/supplies" className="flex items-center gap-2 text-xs font-bold text-secondary border border-border px-4 py-2 rounded-sm hover:bg-muted uppercase tracking-wider transition-colors">
                         <History size={14} /> Supply Registry
                     </Link>
-                    <button className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
+                    <Link href="/dashboard/suppliers/audit" className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors">
                         <FileText size={14} /> Audit Report
-                    </button>
+                    </Link>
                     <Link href="/dashboard/suppliers/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
                         <Plus size={14} /> Onboard New Supplier
                     </Link>

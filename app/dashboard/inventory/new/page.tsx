@@ -157,6 +157,8 @@ export default function RecordNewArrivalPage() {
                                         <option>Kg</option>
                                         <option>Bags</option>
                                         <option>Cases</option>
+                                        <option>Cartons</option>
+                                        <option>Boxes</option>
                                     </select>
                                 </div>
                             </div>

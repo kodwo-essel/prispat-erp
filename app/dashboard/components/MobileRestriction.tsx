@@ -11,7 +11,7 @@ export default function MobileRestriction() {
     }, []);
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-slate-50 text-slate-900 flex flex-col items-center justify-center p-8 md:hidden overflow-hidden font-sans">
+        <div className="fixed inset-0 z-[9999] bg-slate-50 text-slate-900 flex flex-col items-center justify-center p-8 md:hidden print:hidden overflow-hidden font-sans">
             {/* Background Security Texture */}
             <div className="absolute inset-0 opacity-[0.05] pointer-events-none select-none overflow-hidden text-slate-400 font-mono text-[8px] leading-none">
                 <div className="flex flex-wrap gap-4 p-4">

@@ -109,7 +109,7 @@ export default function StaffPage() {
                             <div className="p-6">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="h-14 w-14 bg-muted border border-border rounded-sm flex items-center justify-center text-primary font-bold text-xl uppercase shadow-inner">
-                                        {person.name.charAt(0)}
+                                        {person.name?.split(" ").map((n: string) => n[0]).join("") || "--"}
                                     </div>
                                     <span className={`text-[8px] font-black px-2 py-1 rounded-sm border uppercase tracking-widest ${person.accessLevel === 'Admin' ? 'bg-red-50 text-red-700 border-red-100' :
                                         person.accessLevel === 'Manager' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :

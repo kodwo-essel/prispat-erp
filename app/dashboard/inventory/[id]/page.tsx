@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     ChevronLeft,
@@ -19,10 +20,12 @@ import {
     FlaskConical,
     BarChart3,
     Plus,
-    Loader2
+    Loader2 as Loader
 } from "lucide-react";
+import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
 
 export default function ItemManagementPage({ params }: { params: Promise<{ id: string }> }) {
+    const router = useRouter();
     const { id } = use(params);
     const [item, setItem] = useState<any>(null);
     const [activities, setActivities] = useState<any[]>([]);
@@ -30,6 +33,8 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [updateLoading, setUpdateLoading] = useState(false);
     const [allSuppliers, setAllSuppliers] = useState<any[]>([]);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     useEffect(() => {
         const fetchItemData = async () => {
@@ -71,6 +76,22 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
         fetchItemData();
     }, [id]);
 
+    const handleDelete = async () => {
+        setDeleteLoading(true);
+        try {
+            const res = await fetch(`/api/inventory/${id}`, { method: "DELETE" });
+            const json = await res.json();
+            if (json.success) {
+                router.push("/dashboard/inventory");
+            }
+        } catch (error) {
+            console.error("Deletion failed:", error);
+        } finally {
+            setDeleteLoading(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
+
     const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setUpdateLoading(true);
@@ -107,7 +128,7 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
     if (loading) {
         return (
             <div className="flex-grow flex flex-col items-center justify-center min-h-[400px] gap-4 text-slate-400">
-                <Loader2 size={32} className="animate-spin text-primary" />
+                <Loader size={32} className="animate-spin text-primary" />
                 <span className="text-xs font-bold uppercase tracking-widest">Retrieving Secure Asset Data...</span>
             </div>
         );
@@ -206,7 +227,7 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 border border-border py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors">Discard</button>
                                 <button type="submit" disabled={updateLoading} className="flex-1 btn-primary py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                                    {updateLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                                    {updateLoading ? <Loader size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
                                     Commit Changes
                                 </button>
                             </div>
@@ -214,6 +235,16 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                isLoading={deleteLoading}
+                title="Decommission Asset"
+                message={`Are you sure you want to permanently decommission ${item.name}? This action cannot be undone and will remove the item from active inventory records.`}
+                confirmText="Decommission Asset"
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -347,7 +378,10 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                 <ArrowUpRight size={14} className="opacity-40 group-hover:opacity-100" />
                             </button>
                             <div className="h-px bg-white/10 my-2" />
-                            <button className="flex items-center gap-2 text-red-300 hover:text-red-200 text-[10px] font-bold uppercase tracking-widest transition-colors">
+                            <button
+                                onClick={() => setIsDeleteModalOpen(true)}
+                                className="flex items-center gap-2 text-red-300 hover:text-red-200 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                            >
                                 <Trash2 size={12} /> Mark for Decommission
                             </button>
                         </div>

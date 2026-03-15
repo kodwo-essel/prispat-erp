@@ -296,7 +296,7 @@ export default function NewSupplyReceiptPage() {
                                         />
                                     </div>
                                     <div className="md:col-span-2 flex flex-col gap-1.5">
-                                        <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter uppercase tracking-tighter">Batch ID</label>
+                                        <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Batch ID</label>
                                         <input
                                             type="text"
                                             required
@@ -325,6 +325,8 @@ export default function NewSupplyReceiptPage() {
                                                 <option>Kg</option>
                                                 <option>Bags</option>
                                                 <option>Cases</option>
+                                                <option>Cartons</option>
+                                                <option>Boxes</option>
                                             </select>
                                         </div>
                                     </div>

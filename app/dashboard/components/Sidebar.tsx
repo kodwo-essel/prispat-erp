@@ -17,7 +17,8 @@ import {
     Settings as SettingsIcon,
     Loader2,
     ShoppingBag,
-    History
+    History,
+    FileText
 } from "lucide-react";
 import { hasPermission } from "@/lib/permissions";
 
@@ -30,6 +31,7 @@ const navItems = [
     { href: "/dashboard/sales", label: "Sales & Dispatch", icon: ShoppingBag, permission: "VIEW_CUSTOMERS" },
     { href: "/dashboard/staff", label: "Staff", icon: UserCircle, permission: "VIEW_STAFF" },
     { href: "/dashboard/finance", label: "Finance", icon: CircleDollarSign, permission: "VIEW_FINANCE" },
+    { href: "/dashboard/invoices", label: "Invoices", icon: FileText, permission: "VIEW_FINANCE" },
     { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon, permission: "MANAGE_SETTINGS" },
 ];
 
@@ -71,7 +73,7 @@ export default function Sidebar() {
 
     return (
         <aside
-            className={`bg-primary text-white flex flex-col transition-all duration-300 relative ${isCollapsed ? "w-16" : "w-64"
+            className={`bg-primary text-white flex flex-col transition-all duration-300 relative print:hidden ${isCollapsed ? "w-16" : "w-64"
                 }`}
         >
             {/* Sidebar Toggle */}
@@ -98,7 +100,10 @@ export default function Sidebar() {
                 {navItems
                     .filter(item => !item.permission || hasPermission(user, item.permission as any))
                     .map((item) => {
-                        const isActive = pathname === item.href;
+                        // Find if this is the most specific active route
+                        const isActive = item.href === "/dashboard"
+                            ? pathname === "/dashboard"
+                            : pathname === item.href || (pathname.startsWith(item.href + "/") && !navItems.some(ni => ni.href !== item.href && ni.href.startsWith(item.href) && pathname.startsWith(ni.href)));
                         const Icon = item.icon;
 
                         return (
@@ -139,7 +144,7 @@ export default function Sidebar() {
                         className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} hover:opacity-80 transition-opacity`}
                     >
                         <div className="h-8 w-8 rounded-full bg-primary-dark border border-white/20 shrink-0 flex items-center justify-center text-[10px] font-bold bg-slate-800">
-                            {user?.name?.split(" ").map((n: string) => n[0]).join("") || "JD"}
+                            {user?.name?.split(" ").map((n: string) => n[0]).join("") || "--"}
                         </div>
                         {!isCollapsed && (
                             <div className="overflow-hidden text-left">

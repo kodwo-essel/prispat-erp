@@ -21,8 +21,14 @@ import {
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
     const [config, setConfig] = useState<any>({
         organizationName: "Prispat Prime Distribution",
+        address: "Plot 42, Industrial Area, Kumasi, Ghana",
+        email: "admin@prispat.com",
+        phone: "+233 24 000 0000",
+        logoUrl: "",
         systemNodeId: "GH-ACCRA-CORE-01",
         securityLevel: "Standard",
         auditRetentionDays: 365,
@@ -62,13 +68,16 @@ export default function SettingsPage() {
             });
             const json = await res.json();
             if (json.success) {
-                alert("SYSTEM CONFIGURATION SYNCHRONIZED SUCCESSFULLY.");
+                setMessage("SYSTEM CONFIGURATION SYNCHRONIZED SUCCESSFULLY.");
+                setTimeout(() => setMessage(""), 5000);
             } else {
-                alert("ERROR: " + json.error);
+                setError("ERROR: " + json.error);
+                setTimeout(() => setError(""), 5000);
             }
         } catch (error) {
             console.error("Failed to save settings:", error);
-            alert("CRITICAL ERROR: SYNCHRONIZATION FAILURE.");
+            setError("CRITICAL ERROR: SYNCHRONIZATION FAILURE.");
+            setTimeout(() => setError(""), 5000);
         } finally {
             setSaving(false);
         }
@@ -109,34 +118,90 @@ export default function SettingsPage() {
                 </div>
             </div>
 
+            {message && (
+                <div className="bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold uppercase tracking-widest p-4 rounded-sm animate-in fade-in slide-in-from-top-2">
+                    {message}
+                </div>
+            )}
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-widest p-4 rounded-sm animate-in fade-in slide-in-from-top-2">
+                    {error}
+                </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left: General & Infrastructure */}
                 <div className="lg:col-span-2 flex flex-col gap-8">
 
-                    {/* Identity Section */}
+                    {/* Identity & Business Profile Section */}
                     <section className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
                         <div className="bg-muted px-6 py-4 border-b border-border flex items-center gap-2">
                             <Server size={16} className="text-primary" />
-                            <h3 className="text-xs font-bold uppercase tracking-widest">System Identity Node</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-widest">System Identity & Business Profile</h3>
                         </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Authorized Organization Name</label>
-                                <input
-                                    type="text"
-                                    value={config.organizationName}
-                                    onChange={(e) => setConfig({ ...config, organizationName: e.target.value })}
-                                    className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
-                                />
+                        <div className="p-6 flex flex-col gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Authorized Organization Name</label>
+                                    <input
+                                        type="text"
+                                        value={config.organizationName}
+                                        onChange={(e) => setConfig({ ...config, organizationName: e.target.value })}
+                                        className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Master System Node ID</label>
+                                    <input
+                                        type="text"
+                                        value={config.systemNodeId}
+                                        onChange={(e) => setConfig({ ...config, systemNodeId: e.target.value })}
+                                        className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
+                                    />
+                                </div>
                             </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Master System Node ID</label>
-                                <input
-                                    type="text"
-                                    value={config.systemNodeId}
-                                    onChange={(e) => setConfig({ ...config, systemNodeId: e.target.value })}
-                                    className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
-                                />
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-border pt-8">
+                                <div className="flex flex-col gap-2 lg:col-span-2">
+                                    <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Operations Headquarters Address</label>
+                                    <input
+                                        type="text"
+                                        value={config.address}
+                                        onChange={(e) => setConfig({ ...config, address: e.target.value })}
+                                        className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Official Support Phone</label>
+                                    <input
+                                        type="text"
+                                        value={config.phone}
+                                        onChange={(e) => setConfig({ ...config, phone: e.target.value })}
+                                        className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Global Administrative Email</label>
+                                    <input
+                                        type="email"
+                                        value={config.email}
+                                        onChange={(e) => setConfig({ ...config, email: e.target.value })}
+                                        className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Branding Logo URL (SVG/PNG)</label>
+                                    <input
+                                        type="text"
+                                        value={config.logoUrl}
+                                        onChange={(e) => setConfig({ ...config, logoUrl: e.target.value })}
+                                        className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
+                                        placeholder="https://..."
+                                    />
+                                </div>
                             </div>
                         </div>
                     </section>

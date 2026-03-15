@@ -12,14 +12,14 @@ export default function DashboardLayout({
     return (
         <>
             <MobileRestriction />
-            <div className="hidden md:flex h-screen bg-slate-50 text-slate-900 font-sans">
+            <div className="hidden md:flex print:block h-screen bg-slate-50 text-slate-900 font-sans">
                 {/* Persistent Sidebar */}
                 <Sidebar />
 
                 {/* Main Content Area */}
                 <main className="flex-grow flex flex-col min-w-0 overflow-hidden">
                     {/* Top Header */}
-                    <header className="h-16 bg-white border-b border-border px-8 flex items-center justify-between shrink-0">
+                    <header className="h-16 bg-white border-b border-border px-8 flex items-center justify-between shrink-0 print:hidden">
                         <div className="flex items-center gap-4">
                             <div className="h-8 w-8 bg-primary/10 rounded-sm flex items-center justify-center text-primary">
                                 <Leaf size={16} />
@@ -40,14 +40,14 @@ export default function DashboardLayout({
                     </header>
 
                     {/* Content Region */}
-                    <div className="flex-grow overflow-y-auto p-8">
+                    <div className="flex-grow overflow-y-auto p-8 print:p-0 print:overflow-visible">
                         <div className="max-w-7xl mx-auto">
                             {children}
                         </div>
                     </div>
 
                     {/* Footer Area */}
-                    <footer className="h-10 bg-white border-t border-border px-8 flex items-center justify-between text-[10px] font-bold text-secondary uppercase tracking-widest shrink-0">
+                    <footer className="h-10 bg-white border-t border-border px-8 flex items-center justify-between text-[10px] font-bold text-secondary uppercase tracking-widest shrink-0 print:hidden">
                         <div>© 2026 Prispat Prime Distribution</div>
                         <div className="flex gap-6">
                             <span className="hover:text-primary cursor-help">Technical Support</span>

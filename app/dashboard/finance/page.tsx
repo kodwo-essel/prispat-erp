@@ -53,24 +53,28 @@ export default function FinancePage() {
 
     // Calculate dynamic stats
     const calculateStats = () => {
+        if (!transactions || transactions.length === 0) {
+            return { weeklyRevenue: 0, totalExpenditure: 0, accountsReceivable: 0, netPosition: 0 };
+        }
+
         const now = new Date();
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
         const weeklyRevenue = transactions
-            .filter(tx => tx.type === 'Revenue' && new Date(tx.date) >= sevenDaysAgo)
-            .reduce((sum, tx) => sum + tx.amount, 0);
+            .filter(tx => String(tx.type).trim() === 'Revenue' && new Date(tx.date).getTime() >= sevenDaysAgo.getTime())
+            .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
         const totalExpenditure = transactions
-            .filter(tx => ['Expense', 'Payroll', 'Tax'].includes(tx.type))
-            .reduce((sum, tx) => sum + tx.amount, 0);
+            .filter(tx => ['Expense', 'Payroll', 'Tax'].includes(String(tx.type).trim()))
+            .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
         const accountsReceivable = transactions
-            .filter(tx => tx.type === 'A/R')
-            .reduce((sum, tx) => sum + tx.amount, 0);
+            .filter(tx => String(tx.type).trim() === 'A/R')
+            .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
         const totalRevenue = transactions
-            .filter(tx => tx.type === 'Revenue')
-            .reduce((sum, tx) => sum + tx.amount, 0);
+            .filter(tx => String(tx.type).trim() === 'Revenue')
+            .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
         const netPosition = totalRevenue - totalExpenditure;
 
@@ -194,7 +198,7 @@ export default function FinancePage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Link href={`/ dashboard / finance / ${tx._id} `} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                        <Link href={`/dashboard/finance/${tx._id}`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                                             View Details <ArrowRight size={10} />
                                         </Link>
                                     </td>

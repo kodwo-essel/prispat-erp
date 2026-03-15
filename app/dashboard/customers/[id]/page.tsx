@@ -13,13 +13,15 @@ import {
     MessageSquare,
     Edit3,
     Trash2,
-    Loader2,
     Plus,
     ArrowUpRight,
     ArrowDownRight,
     Mail,
-    Phone
+    Phone,
+    Loader2 as Loader
 } from "lucide-react";
+import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
+import { useRouter } from "next/navigation";
 
 export default function CustomerManagementPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -28,6 +30,25 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [updateLoading, setUpdateLoading] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const router = useRouter();
+
+    const handleDelete = async () => {
+        setDeleteLoading(true);
+        try {
+            const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+            const json = await res.json();
+            if (json.success) {
+                router.push("/dashboard/customers");
+            }
+        } catch (error) {
+            console.error("Deletion failed:", error);
+        } finally {
+            setDeleteLoading(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
 
     useEffect(() => {
         const fetchCustomerData = async () => {
@@ -87,7 +108,7 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
     if (loading) {
         return (
             <div className="flex-grow flex flex-col items-center justify-center min-h-[400px] gap-4 text-slate-400">
-                <Loader2 size={32} className="animate-spin text-primary" />
+                <Loader size={32} className="animate-spin text-primary" />
                 <span className="text-xs font-bold uppercase tracking-widest">Accessing Client Protocol...</span>
             </div>
         );
@@ -182,7 +203,7 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 border border-border py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors">Discard</button>
                                 <button type="submit" disabled={updateLoading} className="flex-1 btn-primary py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                                    {updateLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                                    {updateLoading ? <Loader size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
                                     Update Client Dossier
                                 </button>
                             </div>
@@ -190,6 +211,16 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                isLoading={deleteLoading}
+                title="Delete Customer Profile"
+                message={`Are you sure you want to permanently delete ${customer.name}? This will remove them from the active registry. All transactional data will be preserved for financial records.`}
+                confirmText="Delete Customer"
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Section: Financials & History */}
@@ -324,17 +355,26 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
                     <div className="bg-primary text-white p-6 rounded-sm shadow-md">
                         <h3 className="text-xs font-bold uppercase tracking-[0.2em] opacity-80 mb-6">Commander's Actions</h3>
                         <div className="flex flex-col gap-3">
-                            <button className="flex items-center justify-between w-full bg-white/10 hover:bg-white/20 p-3 rounded-sm text-xs font-bold transition-all group">
+                            <Link
+                                href={`/dashboard/invoices/new?customer=${customer.name}&id=${customer._id}`}
+                                className="flex items-center justify-between w-full bg-white/10 hover:bg-white/20 p-3 rounded-sm text-xs font-bold transition-all group"
+                            >
                                 Issue Electronic Invoice
                                 <ArrowUpRight size={14} className="opacity-40 group-hover:opacity-100" />
-                            </button>
-                            <button className="flex items-center justify-between w-full bg-white/10 hover:bg-white/20 p-3 rounded-sm text-xs font-bold transition-all group">
+                            </Link>
+                            <button
+                                onClick={() => setIsEditModalOpen(true)}
+                                className="flex items-center justify-between w-full bg-white/10 hover:bg-white/20 p-3 rounded-sm text-xs font-bold transition-all group"
+                            >
                                 Adjust Credit Authorization
                                 <ShieldCheck size={14} className="opacity-40 group-hover:opacity-100" />
                             </button>
                             <div className="h-px bg-white/10 my-2" />
-                            <button className="flex items-center gap-2 text-red-300 hover:text-red-200 text-[10px] font-bold uppercase tracking-widest transition-colors">
-                                <Trash2 size={12} /> Revoke Access Rights
+                            <button
+                                onClick={() => setIsDeleteModalOpen(true)}
+                                className="flex items-center gap-2 text-red-300 hover:text-red-200 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                            >
+                                <Trash2 size={12} /> Delete Customer
                             </button>
                         </div>
                     </div>

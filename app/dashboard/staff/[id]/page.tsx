@@ -21,12 +21,14 @@ import {
     ShieldCheck,
     Plus
 } from "lucide-react";
+import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
 
 export default function StaffManagementPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const [person, setPerson] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
     const [updateLoading, setUpdateLoading] = useState(false);
 
     useEffect(() => {
@@ -82,7 +84,7 @@ export default function StaffManagementPage({ params }: { params: Promise<{ id: 
     };
 
     const handleRevoke = async () => {
-        if (!confirm("CRITICAL: Are you sure you want to revoke system access for this officer? This action will be logged in the forensic ledger.")) return;
+        setIsRevokeModalOpen(false);
 
         setUpdateLoading(true);
         try {
@@ -154,7 +156,7 @@ export default function StaffManagementPage({ params }: { params: Promise<{ id: 
                         <Edit size={14} /> Edit Identity
                     </button>
                     <button
-                        onClick={handleRevoke}
+                        onClick={() => setIsRevokeModalOpen(true)}
                         className="bg-red-600 text-white flex items-center gap-2 text-xs font-bold uppercase tracking-wider px-6 py-2.5 rounded-sm hover:bg-red-700 transition-colors disabled:opacity-50"
                         disabled={updateLoading || person.status === 'Terminated'}
                     >
@@ -366,6 +368,16 @@ export default function StaffManagementPage({ params }: { params: Promise<{ id: 
                     </div>
                 </div>
             </div>
+
+            <ConfirmationModal
+                isOpen={isRevokeModalOpen}
+                onClose={() => setIsRevokeModalOpen(false)}
+                onConfirm={handleRevoke}
+                isLoading={updateLoading}
+                title="REVOKE SYSTEM ACCESS"
+                message={`CRITICAL: Are you sure you want to revoke system access for ${person.name}? This action will be logged in the forensic ledger and the account will be immediately suspended.`}
+                confirmText="Revoke Access"
+            />
         </div>
     );
 }

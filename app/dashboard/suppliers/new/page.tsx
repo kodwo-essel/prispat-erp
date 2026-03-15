@@ -212,11 +212,10 @@ export default function OnboardSupplierPage() {
                                 <label className="text-[10px] font-black text-secondary uppercase tracking-widest">Account Number (IBAN)</label>
                                 <input
                                     type="text"
-                                    required
                                     value={formData.bankDetails.account}
                                     onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, account: e.target.value } })}
                                     className="w-full bg-muted border border-border px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary text-slate-700 font-bold"
-                                    placeholder="EX00 0000 0000 0000"
+                                    placeholder="EX00 0000 0000 0000 (Optional)"
                                 />
                             </div>
                         </div>

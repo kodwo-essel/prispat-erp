@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     ChevronLeft,
@@ -11,14 +12,16 @@ import {
     ShieldCheck,
     CreditCard,
     Edit3,
-    Trash2,
-    Loader2,
     Plus,
     FlaskConical,
-    ExternalLink
+    ExternalLink,
+    Trash2,
+    Loader2 as Loader
 } from "lucide-react";
+import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
 
 export default function SupplierManagementPage({ params }: { params: Promise<{ id: string }> }) {
+    const router = useRouter();
     const { id } = use(params);
     const [supplier, setSupplier] = useState<any>(null);
     const [suppliedItems, setSuppliedItems] = useState<any[]>([]);
@@ -28,6 +31,24 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isItemModalOpen, setIsItemModalOpen] = useState(false);
     const [itemUpdateLoading, setItemUpdateLoading] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
+    const handleDelete = async () => {
+        setDeleteLoading(true);
+        try {
+            const res = await fetch(`/api/suppliers/${id}`, { method: "DELETE" });
+            const json = await res.json();
+            if (json.success) {
+                router.push("/dashboard/suppliers");
+            }
+        } catch (error) {
+            console.error("Deletion failed:", error);
+        } finally {
+            setDeleteLoading(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
 
     useEffect(() => {
         const fetchSupplierData = async () => {
@@ -125,7 +146,7 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
     if (loading) {
         return (
             <div className="flex-grow flex flex-col items-center justify-center min-h-[400px] gap-4 text-slate-400">
-                <Loader2 size={32} className="animate-spin text-primary" />
+                <Loader size={32} className="animate-spin text-primary" />
                 <span className="text-xs font-bold uppercase tracking-widest">Accessing Supplier Dossier...</span>
             </div>
         );
@@ -230,7 +251,7 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 border border-border py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors">Discard</button>
                                 <button type="submit" disabled={updateLoading} className="flex-1 btn-primary py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                                    {updateLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                                    {updateLoading ? <Loader size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
                                     Update Dossier
                                 </button>
                             </div>
@@ -238,6 +259,16 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                isLoading={deleteLoading}
+                title="Terminate Partnership"
+                message={`Are you sure you want to terminate the partnership with ${supplier.name}? All associated financial records will be preserved for history, but this entity will be removed from the active registry.`}
+                confirmText="Terminate Partnership"
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Section: Core Details */}
@@ -381,7 +412,10 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                                 <ShieldCheck size={14} className="opacity-40 group-hover:opacity-100" />
                             </button>
                             <div className="h-px bg-white/10 my-2" />
-                            <button className="flex items-center gap-2 text-red-300 hover:text-red-200 text-[10px] font-bold uppercase tracking-widest transition-colors">
+                            <button
+                                onClick={() => setIsDeleteModalOpen(true)}
+                                className="flex items-center gap-2 text-red-300 hover:text-red-200 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                            >
                                 <Trash2 size={12} /> Terminate Partnership
                             </button>
                         </div>
@@ -437,7 +471,7 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => { setIsItemModalOpen(false); setEditingItem(null); }} className="flex-1 border border-border py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors">Discard</button>
                                 <button type="submit" disabled={itemUpdateLoading} className="flex-1 btn-primary py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                                    {itemUpdateLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                                    {itemUpdateLoading ? <Loader size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
                                     Update Item
                                 </button>
                             </div>

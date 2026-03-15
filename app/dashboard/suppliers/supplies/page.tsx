@@ -13,7 +13,8 @@ import {
     Plus,
     FileText,
     History,
-    Printer
+    Printer,
+    Trash2
 } from "lucide-react";
 import ReceiptPrintView from "./components/ReceiptPrintView";
 
@@ -63,6 +64,7 @@ export default function SupplyRegistryPage() {
         s.batchId.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+
     return (
         <div className="flex flex-col gap-6 max-w-6xl mx-auto">
             {/* Header */}
@@ -76,7 +78,7 @@ export default function SupplyRegistryPage() {
                         <p className="text-secondary text-sm">Comprehensive ledger of all incoming shipments and logistics events.</p>
                     </div>
                     <div className="flex gap-3">
-                        <Link href="/dashboard/suppliers/new-receipt" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
+                        <Link href="/dashboard/suppliers/supplies/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
                             <Plus size={14} /> Record New Supply
                         </Link>
                     </div>
@@ -136,6 +138,7 @@ export default function SupplyRegistryPage() {
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Items</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Total Value</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                                     </>
                                 ) : (
                                     <>
@@ -180,6 +183,14 @@ export default function SupplyRegistryPage() {
                                             <div className="text-xs font-black text-primary tabular-nums">₵{r.totalAmount.toLocaleString()}</div>
                                             <div className="text-[10px] text-secondary uppercase">Gross Value</div>
                                         </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${r.status === 'Received' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                r.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' :
+                                                    'bg-slate-50 text-slate-500 border-slate-100'
+                                                }`}>
+                                                {r.status}
+                                            </span>
+                                        </td>
                                         <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => setSelectedReceipt(r)}
@@ -187,12 +198,12 @@ export default function SupplyRegistryPage() {
                                             >
                                                 <Printer size={10} /> Export
                                             </button>
-                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${r.status === 'Received' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                r.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' :
-                                                    'bg-slate-50 text-slate-500 border-slate-100'
-                                                }`}>
-                                                {r.status}
-                                            </span>
+                                            <Link
+                                                href={`/dashboard/suppliers/supplies/${r._id}`}
+                                                className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight bg-primary text-white hover:bg-primary-dark flex items-center gap-1.5 transition-colors"
+                                            >
+                                                <FileText size={10} /> View
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))
@@ -215,9 +226,12 @@ export default function SupplyRegistryPage() {
                                             <div className="text-[10px] text-secondary">{s.unit}</div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1 ml-auto">
+                                            <Link
+                                                href={`/dashboard/inventory/lookup?sku=${s.sku}&batchId=${s.batchId}`}
+                                                className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1 ml-auto w-fit"
+                                            >
                                                 Details <ArrowRight size={10} />
-                                            </button>
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))
@@ -230,7 +244,7 @@ export default function SupplyRegistryPage() {
             {/* Footer Summary */}
             <div className="flex items-center justify-between p-4 bg-slate-100 border border-border rounded-sm">
                 <div className="text-[10px] font-bold text-secondary uppercase tracking-widest flex items-center gap-2">
-                    <History size={12} /> Authorized System Log: High-Integrity Logistics Interface
+                    <History size={12} /> Logistics System Log
                 </div>
                 <div className="text-[10px] font-bold text-primary uppercase tracking-widest">
                     Total {view === "receipts" ? "Receipts" : "Items"}: {view === "receipts" ? filteredReceipts.length : filteredItems.length}

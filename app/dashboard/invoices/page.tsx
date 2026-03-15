@@ -28,7 +28,7 @@ export default function InvoicesPage() {
                 const res = await fetch("/api/finance");
                 const json = await res.json();
                 if (json.success) {
-                    const filtered = json.data.filter((tx: any) => tx.type === "Revenue");
+                    const filtered = json.data.filter((tx: any) => ["Revenue", "A/R"].includes(tx.type));
                     setInvoices(filtered);
                 }
             } catch (error) {
@@ -104,7 +104,14 @@ export default function InvoicesPage() {
                                     <td className="px-6 py-4 text-slate-700">{inv.entity}</td>
                                     <td className="px-6 py-4 text-secondary">{new Date(inv.date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 font-bold tabular-nums">₵{inv.amount.toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-[10px] font-black uppercase text-green-600">Settled</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${inv.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                            inv.status === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                'bg-red-50 text-red-600 border border-red-100'
+                                            }`}>
+                                            {inv.status}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <Link
                                             href={`/dashboard/invoices/${inv._id}`}

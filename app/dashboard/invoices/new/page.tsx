@@ -174,16 +174,21 @@ function NewInvoiceForm() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Category</label>
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Status</label>
                                 <select
-                                    value={formData.category}
-                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    value={formData.status}
+                                    onChange={(e) => {
+                                        const newStatus = e.target.value;
+                                        setFormData({
+                                            ...formData,
+                                            status: newStatus,
+                                            type: newStatus === "Pending" ? "A/R" : "Revenue"
+                                        });
+                                    }}
                                     className="w-full bg-muted border border-border px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
                                 >
-                                    <option>Product Sale</option>
-                                    <option>Consultancy</option>
-                                    <option>Logistics Fee</option>
-                                    <option>Other Revenue</option>
+                                    <option value="Settled">Settled (Paid)</option>
+                                    <option value="Pending">Pending (Invoice)</option>
                                 </select>
                             </div>
                             <div className="flex flex-col gap-2">

@@ -11,14 +11,24 @@ import {
     ShieldCheck,
     FileText,
     TrendingUp,
-    DollarSign
+    DollarSign,
+    Trash2,
+    AlertCircle,
+    CheckCircle2
 } from "lucide-react";
 import InvoicePrintView from "../components/InvoicePrintView";
+import ConfirmationModal from "../../components/ConfirmationModal";
+import { useRouter } from "next/navigation";
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const router = useRouter();
     const [invoice, setInvoice] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [updateLoading, setUpdateLoading] = useState(false);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [settings, setSettings] = useState<any>(null);
     const [isPrinting, setIsPrinting] = useState(false);
 
@@ -43,6 +53,52 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
         fetchData();
     }, [id]);
+
+    const handleStatusUpdate = async (newStatus: string) => {
+        setUpdateLoading(true);
+        setMessage("");
+        setError("");
+        try {
+            // Mapping status to ledger type
+            const type = newStatus === "Pending" ? "A/R" : "Revenue";
+
+            const res = await fetch(`/api/finance/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatus, type }),
+            });
+            const json = await res.json();
+            if (json.success) {
+                setMessage(`INVOICE STATUS UPDATED TO: ${newStatus.toUpperCase()}`);
+                setInvoice(json.data);
+            } else {
+                setError(json.error || "FAILED TO UPDATE STATUS.");
+            }
+        } catch (err) {
+            setError("SYSTEM ERROR: UNABLE TO PROCESS UPDATE.");
+        } finally {
+            setUpdateLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        setUpdateLoading(true);
+        try {
+            const res = await fetch(`/api/finance/${id}`, { method: "DELETE" });
+            const json = await res.json();
+            if (json.success) {
+                router.push("/dashboard/invoices");
+            } else {
+                setError(json.error || "FAILED TO DELETE RECORD.");
+                setShowDeleteModal(false);
+            }
+        } catch (err) {
+            setError("SYSTEM ERROR: UNABLE TO DELETE RECORD.");
+            setShowDeleteModal(false);
+        } finally {
+            setUpdateLoading(false);
+        }
+    };
 
     const biz = settings || {
         organizationName: "Prispat Prime Distribution",
@@ -77,6 +133,12 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 </Link>
                 <div className="flex gap-3">
                     <button
+                        onClick={() => setShowDeleteModal(true)}
+                        className="flex items-center gap-2 text-xs font-bold text-red-600 border border-red-100 px-4 py-2 rounded-sm hover:bg-red-50 transition-colors uppercase tracking-wider"
+                    >
+                        <Trash2 size={14} /> Delete
+                    </button>
+                    <button
                         onClick={() => window.open(`/print/invoice/${id}`, '_blank')}
                         className="flex items-center gap-2 text-xs font-bold text-secondary border border-border px-4 py-2 rounded-sm hover:bg-slate-50 transition-colors uppercase tracking-wider"
                     >
@@ -90,6 +152,17 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                     </button>
                 </div>
             </div>
+
+            {message && (
+                <div className="bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold uppercase tracking-widest p-3 rounded-sm animate-in fade-in slide-in-from-top-2 flex items-center gap-3">
+                    <CheckCircle2 size={14} /> {message}
+                </div>
+            )}
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-widest p-3 rounded-sm animate-in fade-in shake flex items-center gap-3">
+                    <AlertCircle size={14} /> {error}
+                </div>
+            )}
 
             {/* Invoice Container */}
             <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden print:border-0 print:shadow-none">
@@ -169,9 +242,27 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                             <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Total Amount</span>
                             <span className="text-xl font-black text-primary tabular-nums">₵{invoice.amount.toLocaleString()}.00</span>
                         </div>
-                        <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-sm flex items-center justify-center gap-2">
-                            <ShieldCheck size={14} className="text-green-600" />
-                            <span className="text-[10px] font-black uppercase text-green-700 tracking-widest text-center">Payment Status: Settled</span>
+                        <div className="mt-4 p-3 border border-border rounded-sm flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-black uppercase text-secondary tracking-widest">Payment Status</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${invoice.status === 'Settled' ? 'text-green-600' : 'text-amber-600'}`}>
+                                    {invoice.status}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    className="flex-grow bg-muted border border-border px-3 py-2 rounded-sm text-[10px] font-bold uppercase focus:outline-none focus:border-primary appearance-none"
+                                    value={invoice.status}
+                                    onChange={(e) => handleStatusUpdate(e.target.value)}
+                                    disabled={updateLoading}
+                                >
+                                    <option value="Pending">Pending (Invoice)</option>
+                                    <option value="Settled">Settled (Paid)</option>
+                                    <option value="Overdue">Overdue</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                                {updateLoading && <Loader2 size={14} className="animate-spin text-primary" />}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -206,6 +297,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 </div>
             </div>
 
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDelete}
+                title="REDACT INVOICE"
+                message="ARE YOU SURE YOU WANT TO PERMANENTLY REDACT THIS INVOICE? THIS ACTION IS IRREVERSIBLE AND WILL BE LOGGED IN THE AUDIT TRAIL."
+                isLoading={updateLoading}
+            />
         </div>
     );
 }

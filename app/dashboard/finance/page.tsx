@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
     Plus,
@@ -11,15 +11,18 @@ import {
     Filter,
     ChevronLeft,
     ChevronRight,
-    Loader2
+    Loader2,
+    AlertCircle
 } from "lucide-react";
 import { exportToCSV } from "@/lib/exportUtils";
 
 export default function FinancePage() {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const handleExport = () => {
+        if (!transactions || transactions.length === 0) return;
         const exportData = transactions.map(tx => ({
             TransactionID: tx.txId,
             Entity: tx.entity,
@@ -35,14 +38,19 @@ export default function FinancePage() {
 
     useEffect(() => {
         const fetchFinance = async () => {
+            setLoading(true);
+            setError(null);
             try {
-                const res = await fetch("/api/finance");
+                const res = await fetch("/api/finance", { cache: "no-store" });
                 const json = await res.json();
                 if (json.success) {
                     setTransactions(json.data);
+                } else {
+                    setError(json.error || "Failed to retrieve fiscal data.");
                 }
             } catch (error) {
                 console.error("Failed to fetch finance:", error);
+                setError("Network error: Could not reach central ledger.");
             } finally {
                 setLoading(false);
             }
@@ -51,8 +59,8 @@ export default function FinancePage() {
         fetchFinance();
     }, []);
 
-    // Calculate dynamic stats
-    const calculateStats = () => {
+    // Calculate dynamic stats with useMemo to prevent unnecessary recalcs and sync with data load
+    const stats = useMemo(() => {
         if (!transactions || transactions.length === 0) {
             return { weeklyRevenue: 0, totalExpenditure: 0, accountsReceivable: 0, netPosition: 0 };
         }
@@ -79,9 +87,7 @@ export default function FinancePage() {
         const netPosition = totalRevenue - totalExpenditure;
 
         return { weeklyRevenue, totalExpenditure, accountsReceivable, netPosition };
-    };
-
-    const stats = calculateStats();
+    }, [transactions]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -104,28 +110,38 @@ export default function FinancePage() {
                 </div>
             </div>
 
+            {/* Error Display */}
+            {error && (
+                <div className="bg-red-50 border border-red-100 p-4 rounded-sm flex items-center gap-3 text-red-600 transition-all">
+                    <AlertCircle size={18} />
+                    <span className="text-xs font-bold uppercase tracking-widest">{error}</span>
+                    <button onClick={() => window.location.reload()} className="ml-auto text-[10px] bg-red-600 text-white px-3 py-1 rounded-sm font-black hover:bg-red-700">RETRY SYSTEM SYNC</button>
+                </div>
+            )}
+
             {/* Metrics Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white border border-border p-4 rounded-sm">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Weekly Revenue</div>
-                    <div className="text-xl font-bold text-primary">₵{stats.weeklyRevenue.toLocaleString()}</div>
-                    <div className="text-[10px] text-green-600 font-bold mt-1">Live Calculation</div>
-                </div>
-                <div className="bg-white border border-border p-4 rounded-sm">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Expenditure</div>
-                    <div className="text-xl font-bold text-primary">₵{stats.totalExpenditure.toLocaleString()}</div>
-                    <div className="text-[10px] text-slate-400 font-bold mt-1">Institutional Spend</div>
-                </div>
-                <div className="bg-white border border-border p-4 rounded-sm">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Accounts Receivable</div>
-                    <div className="text-xl font-bold text-amber-600">₵{stats.accountsReceivable.toLocaleString()}</div>
-                    <div className="text-[10px] text-secondary font-medium mt-1">Pending Invoices</div>
-                </div>
-                <div className="bg-white border border-border p-4 rounded-sm">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Net Fiscal Position</div>
-                    <div className="text-xl font-bold text-primary">₵{stats.netPosition.toLocaleString()}</div>
-                    <div className="text-[10px] text-primary/60 font-medium mt-1">Current Liquidity</div>
-                </div>
+                {[
+                    { label: "Weekly Revenue", value: stats.weeklyRevenue, color: "text-primary", info: "Live Calculation" },
+                    { label: "Total Expenditure", value: stats.totalExpenditure, color: "text-primary", info: "Institutional Spend" },
+                    { label: "Accounts Receivable", value: stats.accountsReceivable, color: "text-amber-600", info: "Pending Invoices" },
+                    { label: "Net Fiscal Position", value: stats.netPosition, color: "text-primary", info: "Current Liquidity" },
+                ].map((m, idx) => (
+                    <div key={idx} className="bg-white border border-border p-4 rounded-sm h-[88px] flex flex-col justify-between">
+                        <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">{m.label}</div>
+                        {loading ? (
+                            <div className="flex items-center gap-2 animate-pulse">
+                                <div className="h-6 w-24 bg-muted rounded-sm"></div>
+                                <Loader2 size={12} className="animate-spin text-slate-300" />
+                            </div>
+                        ) : (
+                            <div className={`text-xl font-bold ${m.color}`}>₵{m.value.toLocaleString()}</div>
+                        )}
+                        <div className={`text-[10px] font-medium mt-1 ${m.info === 'Live Calculation' ? 'text-green-600 font-bold' : 'text-slate-400'}`}>
+                            {loading ? "Synchronizing..." : m.info}
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Filters Bar */}

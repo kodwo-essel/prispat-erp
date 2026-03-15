@@ -133,7 +133,7 @@ export default function Sidebar() {
             </nav>
 
             {/* User Area */}
-            <div className={`p-4 border-t border-white/10 flex flex-col gap-4 bg-black/10`}>
+            <div className={`p-4 border-t border-white/10 flex flex-col items-center gap-4 bg-black/10`}>
                 {loading ? (
                     <div className="flex items-center justify-center p-2">
                         <Loader2 size={16} className="animate-spin opacity-40" />
@@ -141,23 +141,18 @@ export default function Sidebar() {
                 ) : (
                     <Link
                         href="/dashboard/profile"
-                        className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} hover:opacity-80 transition-opacity`}
+                        className={`flex items-center justify-center hover:opacity-80 transition-opacity`}
+                        title={user?.name}
                     >
-                        <div className="h-8 w-8 rounded-full bg-primary-dark border border-white/20 shrink-0 flex items-center justify-center text-[10px] font-bold bg-slate-800">
+                        <div className="h-8 w-8 rounded-full bg-slate-800 border border-white/20 shrink-0 flex items-center justify-center text-[10px] font-bold shadow-lg">
                             {user?.name?.split(" ").map((n: string) => n[0]).join("") || "--"}
                         </div>
-                        {!isCollapsed && (
-                            <div className="overflow-hidden text-left">
-                                <div className="text-[10px] font-bold text-white truncate uppercase tracking-tight">{user?.name || "Unauthorized"}</div>
-                                <div className="text-[8px] text-white/50 truncate uppercase font-medium">{user?.role || "Restricted Access"}</div>
-                            </div>
-                        )}
                     </Link>
                 )}
                 {!isCollapsed && (
                     <button
                         onClick={handleSignOut}
-                        className="flex items-center gap-2 text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors mb-2"
+                        className="flex items-center gap-2 text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest transition-colors mb-2"
                     >
                         <LogOut size={12} /> Sign Out
                     </button>

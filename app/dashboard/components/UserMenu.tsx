@@ -44,37 +44,44 @@ export default function UserMenu() {
             {/* User Profile Trigger */}
             <button
                 onClick={toggleMenu}
-                className="flex items-center gap-3 pl-4 border-l border-border hover:opacity-80 transition-opacity"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-                <div className="text-right hidden sm:block">
-                    {loading ? (
-                        <div className="h-4 w-24 bg-slate-100 animate-pulse rounded-sm mb-1" />
-                    ) : (
-                        <>
-                            <div className="text-[10px] font-black text-primary uppercase tracking-tighter">{user?.name || "Unauthorized"}</div>
-                            <div className="text-[8px] text-secondary font-bold uppercase tracking-widest">{user?.role || "Restricted Access"}</div>
-                        </>
-                    )}
-                </div>
                 <div className="relative">
-                    <div className="h-9 w-9 bg-slate-100 rounded-sm border border-border flex items-center justify-center text-primary font-black text-xs shadow-sm overflow-hidden group-hover:border-primary transition-colors">
+                    <div className="h-9 w-9 bg-slate-100 rounded-full border border-border flex items-center justify-center text-primary font-black text-xs shadow-sm overflow-hidden group-hover:border-primary transition-colors">
                         {loading ? (
                             <div className="w-full h-full bg-slate-200 animate-pulse" />
                         ) : (
                             user?.name?.split(" ").map((n: string) => n[0]).join("") || <User size={18} />
                         )}
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+                    <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 border-2 border-white rounded-full"></div>
                 </div>
                 <ChevronDown size={12} className={`text-secondary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white border border-border rounded-sm shadow-xl z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="px-4 py-3 border-b border-border mb-1">
-                        <div className="text-[10px] font-black text-primary uppercase tracking-widest mb-0.5">Authentication Node</div>
-                        <div className="text-[9px] text-secondary font-bold truncate">GH-ACCRA-{user?.staffId || "GHOST"}-01</div>
+                <div className="absolute right-0 mt-3 w-64 bg-white border border-border rounded-sm shadow-2xl z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* User Info Header */}
+                    <div className="px-5 py-4 bg-slate-50/50 border-b border-border mb-2 flex items-center gap-3">
+                        <div className="h-10 w-10 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg">
+                            {user?.name?.split(" ").map((n: string) => n[0]).join("") || "?"}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <div className="text-[11px] font-black text-primary uppercase tracking-tight truncate">
+                                {user?.name || "Unauthorized"}
+                            </div>
+                            <div className="text-[8px] text-secondary font-bold uppercase tracking-widest truncate">
+                                {user?.role || "Restricted Access"}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="px-5 py-2 mb-1">
+                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Node Identification</div>
+                        <div className="text-[8px] font-bold text-secondary font-mono bg-white border border-border px-2 py-1 rounded-sm">
+                            GH-ACCRA-{user?.staffId || "GHOST"}-01
+                        </div>
                     </div>
 
                     <Link

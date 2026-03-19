@@ -63,7 +63,7 @@ export async function GET(
                                     default: "Pending"
                                 }
                             },
-                            else: "$status"
+                            else: { $ifNull: ["$status", "Pending"] }
                         }
                     }
                 }
@@ -156,41 +156,6 @@ export async function PUT(
             return NextResponse.json({ success: false, error: "Transaction not found" }, { status: 404 });
         }
 
-        // 3. Financial Integrity Sync
-        const FinanceModel = (await import("@/models/Finance")).default;
-
-        // If it's a payment record, sync its parent
-        const parentId = updated.parentInvoiceId || currentTx.parentInvoiceId;
-        if (parentId) {
-            const parent = await FinanceModel.findOne({ txId: parentId });
-            if (parent) {
-                const allPayments = await FinanceModel.find({ parentInvoiceId: parentId, status: "Settled" });
-                const newTotalPaid = allPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-                parent.totalPaid = newTotalPaid;
-
-                if (parent.totalPaid >= parent.amount) {
-                    parent.status = "Settled";
-                } else if (parent.totalPaid > 0) {
-                    parent.status = "Partial";
-                } else if (parent.status !== "Cancelled") {
-                    parent.status = "Pending";
-                }
-                await parent.save();
-            }
-        }
-
-        // If it's an invoice record, sync its own balance from its payments
-        if (updated.isInvoice) {
-            const allPayments = await FinanceModel.find({ parentInvoiceId: updated.txId, status: "Settled" });
-            const newTotalPaid = allPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-
-            // For direct fulfillment (Cash Sales) with no payment records, we respect the current amount if Settled
-            if (newTotalPaid > 0 || updated.status === "Pending" || updated.status === "Unpaid") {
-                updated.totalPaid = newTotalPaid;
-                await updated.save();
-            }
-        }
-
         return NextResponse.json({ success: true, data: updated });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -210,13 +175,6 @@ export async function DELETE(
         await dbConnect();
         const { id } = await params;
 
-        const currentTx = await Finance.findOne({
-            $or: [
-                { _id: mongoose.isValidObjectId(id) ? id : new mongoose.Types.ObjectId().toString() },
-                { txId: id }
-            ]
-        });
-
         const deleted = await Finance.findOneAndDelete({
             $or: [
                 { _id: mongoose.isValidObjectId(id) ? id : new mongoose.Types.ObjectId().toString() },
@@ -226,26 +184,6 @@ export async function DELETE(
 
         if (!deleted) {
             return NextResponse.json({ success: false, error: "Transaction not found" }, { status: 404 });
-        }
-
-        // Sync Parent Invoice if a payment was deleted
-        if (deleted.parentInvoiceId) {
-            const FinanceModel = (await import("@/models/Finance")).default;
-            const parent = await FinanceModel.findOne({ txId: deleted.parentInvoiceId });
-            if (parent) {
-                const allPayments = await FinanceModel.find({ parentInvoiceId: deleted.parentInvoiceId, status: "Settled" });
-                const newTotalPaid = allPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-                parent.totalPaid = newTotalPaid;
-
-                if (parent.totalPaid >= parent.amount) {
-                    parent.status = "Settled";
-                } else if (parent.totalPaid > 0) {
-                    parent.status = "Partial";
-                } else {
-                    parent.status = "Pending";
-                }
-                await parent.save();
-            }
         }
 
         return NextResponse.json({ success: true, data: deleted });

@@ -46,7 +46,8 @@ export async function POST(request: Request) {
         // 3. Create Finance Transaction (Revenue or A/R)
         const orderId = `ORD-${Date.now()}`;
         const invId = `INV-${Date.now()}`;   // Invoice always gets INV- prefix
-        const isCreditSale = saleType === "Credit";
+        const normalizedSaleType = (saleType || "Credit").toLowerCase();
+        const isCreditSale = normalizedSaleType === "credit";
 
         // Create the Invoice record
         const invoice = await Finance.create({
@@ -57,10 +58,8 @@ export async function POST(request: Request) {
             amount: totalAmount,
             category: "Sales Fulfillment",
             recordedBy: userName,
-            status: isCreditSale ? "Unpaid" : "Pending",   // status is derived from payments, not stored
             description: `Invoice for Order ${orderId}`,
             isInvoice: true,
-            totalPaid: 0,           // always 0 — real total is calculated from child payments
             date: new Date()
         });
 

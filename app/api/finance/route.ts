@@ -73,7 +73,7 @@ export async function GET(request: Request) {
                                     default: "Pending"
                                 }
                             },
-                            else: "$status"
+                            else: { $ifNull: ["$status", "Pending"] }
                         }
                     }
                 }
@@ -162,28 +162,6 @@ export async function POST(request: Request) {
         }
 
         const transaction = await Finance.create(body);
-
-        // 3. Sync Parent Invoice if this is a payment
-        if (parentInvoiceId) {
-            const parent = await Finance.findOne({ txId: parentInvoiceId });
-            if (parent) {
-                // Sum all SETTLED payments for this invoice
-                const allPayments = await Finance.find({ parentInvoiceId: parentInvoiceId, status: "Settled" });
-                const newTotalPaid = allPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-                parent.totalPaid = newTotalPaid;
-
-                // Update parent status
-                if (parent.totalPaid >= parent.amount) {
-                    parent.status = "Settled";
-                } else if (parent.totalPaid > 0) {
-                    parent.status = "Partial";
-                } else if (parent.status !== "Cancelled") {
-                    parent.status = "Pending";
-                }
-
-                await parent.save();
-            }
-        }
         return NextResponse.json({ success: true, data: transaction }, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });

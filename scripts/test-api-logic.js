@@ -1,18 +1,16 @@
-import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
-import dbConnect from "@/lib/dbConnect";
-import Finance from "@/models/Finance";
 
-export async function GET() {
+const mongoose = require('mongoose');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
+
+async function testApiLogic() {
     try {
-        const session = await getSession();
-        if (!session || !hasPermission(session.user, "VIEW_FINANCE")) {
-            return NextResponse.json({ success: false, error: "ACCESS DENIED: UNAUTHORIZED." }, { status: 403 });
-        }
-        await dbConnect();
+        const uri = process.env.MONGODB_URI;
+        await mongoose.connect(uri);
 
-        // Return all invoice records with dynamically calculated totalPaid
+        const Finance = mongoose.connection.collection('finances');
+
+        // Emulate the aggregation pipeline from app/api/finance/invoices/route.ts
         const invoices = await Finance.aggregate([
             { $match: { isInvoice: true } },
             {
@@ -51,7 +49,7 @@ export async function GET() {
                                     default: "Pending"
                                 }
                             },
-                            else: { $ifNull: ["$status", "Pending"] }
+                            else: "$status"
                         }
                     }
                 }
@@ -68,10 +66,25 @@ export async function GET() {
                 }
             },
             { $sort: { date: -1 } }
-        ]);
+        ]).toArray();
 
-        return NextResponse.json({ success: true, data: invoices });
-    } catch (error: any) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        console.log(`API check: Found ${invoices.length} invoices`);
+        invoices.forEach(inv => {
+            console.log(`ID: ${inv.txId}, Status: ${inv.status}, Amount: ${inv.amount}, Paid: ${inv.totalPaid}`);
+        });
+
+        const outstanding = invoices.filter(inv =>
+            inv.status !== "Settled" && inv.status !== "Cancelled"
+        );
+        console.log(`Frontend check: Found ${outstanding.length} outstanding invoices`);
+        outstanding.forEach(inv => {
+            console.log(`OUTSTANDING -> ID: ${inv.txId}, Status: ${inv.status}`);
+        });
+
+        await mongoose.disconnect();
+    } catch (err) {
+        console.error(err);
     }
 }
+
+testApiLogic();

@@ -31,19 +31,54 @@ export async function POST(request: Request) {
         }
 
         if (services.includes("finance")) {
-            const txs = await Finance.find({
-                date: { $gte: start, $lte: end }
-            });
-            const revenue = txs.filter(t => t.type === "Revenue" && t.status === "Settled").reduce((acc, t) => acc + t.amount, 0);
-            const expenses = txs.filter(t => t.type === "Expense").reduce((acc, t) => acc + t.amount, 0);
+            const txs = await Finance.aggregate([
+                { $match: { date: { $gte: start, $lte: end } } },
+                {
+                    $lookup: {
+                        from: "finances",
+                        localField: "txId",
+                        foreignField: "parentInvoiceId",
+                        pipeline: [{ $match: { status: "Settled" } }],
+                        as: "childPayments"
+                    }
+                },
+                {
+                    $addFields: {
+                        calculatedStatus: {
+                            $cond: {
+                                if: {
+                                    $and: [
+                                        { $eq: ["$isInvoice", true] },
+                                        { $gt: [{ $size: "$childPayments" }, 0] }
+                                    ]
+                                },
+                                then: {
+                                    $switch: {
+                                        branches: [
+                                            { case: { $eq: ["$status", "Cancelled"] }, then: "Cancelled" },
+                                            { case: { $gte: [{ $sum: "$childPayments.amount" }, "$amount"] }, then: "Settled" },
+                                            { case: { $gt: [{ $sum: "$childPayments.amount" }, 0] }, then: "Partial" }
+                                        ],
+                                        default: "Pending"
+                                    }
+                                },
+                                else: "$status"
+                            }
+                        }
+                    }
+                }
+            ]);
+
+            const revenue = txs.filter(t => t.type === "Revenue" && t.calculatedStatus === "Settled").reduce((acc, t) => acc + (t.amount || 0), 0);
+            const expenses = txs.filter(t => t.type === "Expense").reduce((acc, t) => acc + (t.amount || 0), 0);
 
             reportData.finance = {
                 revenue,
                 expenses,
                 metrics: {
                     totalTransactions: txs.length,
-                    pendingCollections: txs.filter(t => t.status === "Pending" && t.type === "A/R").reduce((acc, t) => acc + t.amount, 0),
-                    settledPayments: txs.filter(t => t.status === "Settled").length
+                    pendingCollections: txs.filter(t => t.calculatedStatus === "Pending" && t.type === "A/R").reduce((acc, t) => acc + (t.amount || 0), 0),
+                    settledPayments: txs.filter(t => t.calculatedStatus === "Settled").length
                 }
             };
         }

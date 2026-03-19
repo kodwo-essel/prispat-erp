@@ -71,12 +71,53 @@ export async function GET() {
             });
         });
 
-        // Pending Shipments (Derived from Pending Finance Transactions of type Expense/Procurement)
-        const pendingTransactions = await Finance.find({
-            status: "Pending",
-            type: { $in: ["Expense", "A/R"] }
-        });
-        const pendingShipmentsCount = pendingTransactions.length;
+        // Pending Shipments (Calculated for Invoices, Stored for others)
+        const pendingResults = await Finance.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { type: "Expense", status: "Pending" },
+                        { type: { $in: ["A/R", "Revenue"] }, isInvoice: true }
+                    ]
+                }
+            },
+            {
+                $lookup: {
+                    from: "finances",
+                    localField: "txId",
+                    foreignField: "parentInvoiceId",
+                    pipeline: [{ $match: { status: "Settled" } }],
+                    as: "childPayments"
+                }
+            },
+            {
+                $addFields: {
+                    calculatedStatus: {
+                        $cond: {
+                            if: {
+                                $and: [
+                                    { $eq: ["$isInvoice", true] },
+                                    { $gt: [{ $size: "$childPayments" }, 0] }
+                                ]
+                            },
+                            then: {
+                                $switch: {
+                                    branches: [
+                                        { case: { $eq: ["$status", "Cancelled"] }, then: "Cancelled" },
+                                        { case: { $gte: [{ $sum: "$childPayments.amount" }, "$amount"] }, then: "Settled" },
+                                        { case: { $gt: [{ $sum: "$childPayments.amount" }, 0] }, then: "Partial" }
+                                    ],
+                                    default: "Pending"
+                                }
+                            },
+                            else: "$status"
+                        }
+                    }
+                }
+            },
+            { $match: { calculatedStatus: "Pending" } }
+        ]);
+        const pendingShipmentsCount = pendingResults.length;
 
         // 4. Recent Activity
         const recentFinance = await Finance.find({})

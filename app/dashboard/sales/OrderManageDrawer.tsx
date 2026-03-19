@@ -126,6 +126,9 @@ const OrderManageDrawer: React.FC<OrderManageDrawerProps> = ({
                         </div>
                         <div className="bg-muted/30 p-4 rounded-sm border border-border">
                             <div className="font-bold text-primary">{order.customer.name}</div>
+                            {order.customer.phone && order.customer.phone !== "N/A" && (
+                                <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-tighter mt-0.5">Contact: {order.customer.phone}</div>
+                            )}
                             <div className="text-[10px] text-secondary uppercase tracking-tighter mt-1">Registry ID: {order.customer.id || "Walk-in"}</div>
                         </div>
                     </section>

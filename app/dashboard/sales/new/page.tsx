@@ -33,6 +33,7 @@ export default function NewOrderPage() {
     const [orderItems, setOrderItems] = useState<any[]>([]);
     const [saleType, setSaleType] = useState<"Credit" | "Cash">(initialType);
     const [customerName, setCustomerName] = useState("");
+    const [customerPhone, setCustomerPhone] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("Cash");
 
     // Search States
@@ -40,6 +41,7 @@ export default function NewOrderPage() {
     const [itemSearch, setItemSearch] = useState("");
     const [showCustomerSearch, setShowCustomerSearch] = useState(false);
     const [showItemSearch, setShowItemSearch] = useState(false);
+    const [userName, setUserName] = useState("System Automator");
 
     useEffect(() => {
         const fetchData = async () => {
@@ -57,6 +59,16 @@ export default function NewOrderPage() {
             }
         };
         fetchData();
+    }, []);
+
+    useEffect(() => {
+        fetch("/api/auth/me")
+            .then(res => res.json())
+            .then(json => {
+                if (json.success && json.user?.name) {
+                    setUserName(json.user.name);
+                }
+            });
     }, []);
 
     const filteredCustomers = customers.filter(c =>
@@ -120,9 +132,17 @@ export default function NewOrderPage() {
 
         let customerData;
         if (saleType === "Cash") {
-            customerData = { name: customerName || "Walk-in Customer", id: "walk-in" };
+            customerData = {
+                name: customerName || "Walk-in Customer",
+                phone: customerPhone || "N/A",
+                id: "walk-in"
+            };
         } else if (selectedCustomer) {
-            customerData = { id: selectedCustomer._id, name: selectedCustomer.name };
+            customerData = {
+                id: selectedCustomer._id,
+                name: selectedCustomer.name,
+                phone: selectedCustomer.phone || "N/A"
+            };
         } else {
             setError("Please select a registered client or switch to Shop Cash Sale.");
             return;
@@ -146,7 +166,7 @@ export default function NewOrderPage() {
                     totalAmount,
                     saleType,
                     paymentMethod,
-                    recordedBy: "Current User"
+                    recordedBy: userName
                 }),
             });
             const json = await res.json();
@@ -205,7 +225,7 @@ export default function NewOrderPage() {
                         </div>
 
                         {saleType === "Cash" ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Customer Name (Optional)</label>
                                     <input
@@ -214,6 +234,16 @@ export default function NewOrderPage() {
                                         className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
                                         value={customerName}
                                         onChange={(e) => setCustomerName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Phone Number (Optional)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="024 XXX XXXX"
+                                        className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                                        value={customerPhone}
+                                        onChange={(e) => setCustomerPhone(e.target.value)}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
@@ -254,7 +284,7 @@ export default function NewOrderPage() {
                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
                                 <input
                                     type="text"
-                                    placeholder="Search Clinical or Distribution Client..."
+                                    placeholder="Search Distribution Client..."
                                     className="w-full bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
                                     value={customerSearch}
                                     onChange={(e) => {

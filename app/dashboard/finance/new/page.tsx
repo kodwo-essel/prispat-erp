@@ -38,6 +38,7 @@ export default function RecordTransactionPage() {
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loadingInvoices, setLoadingInvoices] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
+    const [userName, setUserName] = useState("System Automator");
     const [isSuccess, setIsSuccess] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -78,6 +79,16 @@ export default function RecordTransactionPage() {
         fetchInvoices();
     }, [preselectedInvoice]);
 
+    useEffect(() => {
+        fetch("/api/auth/me")
+            .then(res => res.json())
+            .then(json => {
+                if (json.success && json.user?.name) {
+                    setUserName(json.user.name);
+                }
+            });
+    }, []);
+
     const handleInvoiceSelect = (txId: string) => {
         const inv = invoices.find(i => i.txId === txId);
         if (inv) {
@@ -112,7 +123,7 @@ export default function RecordTransactionPage() {
                 body: JSON.stringify({
                     ...formData,
                     amount: Number(formData.amount),
-                    recordedBy: "Current User" // In real app, get from session
+                    recordedBy: userName
                 }),
             });
             const json = await res.json();

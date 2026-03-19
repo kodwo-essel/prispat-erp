@@ -134,6 +134,9 @@ export async function POST(request: Request) {
             }
         }
 
+        // Set recordedBy from authenticated session
+        body.recordedBy = session.user.name || "System Automator";
+
         // 1. Inventory Deduction (Stock Reservation) for manual invoices
         if (items && items.length > 0 && (status === "Settled" || status === "Pending") && type === "Revenue") {
             // Only deduct if this is a new Invoice/Sale (not a payment for an old one)

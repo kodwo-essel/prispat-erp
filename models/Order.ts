@@ -10,6 +10,7 @@ const OrderSchema = new mongoose.Schema(
         customer: {
             id: String,
             name: String,
+            phone: String,
         },
         saleType: {
             type: String,

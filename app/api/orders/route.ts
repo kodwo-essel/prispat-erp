@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Inventory from "@/models/Inventory";
 import Finance from "@/models/Finance";
+import { getSession } from "@/lib/auth";
 
 export async function GET() {
     try {
@@ -17,8 +18,11 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         await dbConnect();
+        const session = await getSession();
         const body = await request.json();
         const { customer, items, totalAmount, recordedBy, saleType } = body;
+
+        const userName = session?.user?.name || recordedBy || "System Automator";
 
         // 1. Validate Stock Availability (Batch-Specific)
         for (const item of items) {
@@ -52,7 +56,7 @@ export async function POST(request: Request) {
             type: isCreditSale ? "A/R" : "Revenue",
             amount: totalAmount,
             category: "Sales Fulfillment",
-            recordedBy: recordedBy || "System Automator",
+            recordedBy: userName,
             status: isCreditSale ? "Unpaid" : "Pending",   // status is derived from payments, not stored
             description: `Invoice for Order ${orderId}`,
             isInvoice: true,
@@ -71,7 +75,7 @@ export async function POST(request: Request) {
                 type: "Revenue",
                 amount: totalAmount,
                 category: "Sales Fulfillment",
-                recordedBy: recordedBy || "System Automator",
+                recordedBy: userName,
                 status: "Settled",
                 description: `Cash payment for Invoice ${invId}`,
                 isInvoice: false,

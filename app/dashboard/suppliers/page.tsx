@@ -5,13 +5,12 @@ import Link from "next/link";
 import {
     Plus,
     Search,
-    FileText,
     History,
-    ShieldCheck,
-    MoreVertical, // Retained as it's used in the component
     ChevronLeft,
     ChevronRight,
-    Loader2
+    Loader2,
+    ArrowRight,
+    FileText
 } from "lucide-react";
 
 export default function SuppliersPage() {
@@ -112,9 +111,8 @@ export default function SuppliersPage() {
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Entity Name</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Contact / Ops</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Reliability</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right w-48">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -137,30 +135,16 @@ export default function SuppliersPage() {
                                     </td>
                                     <td className="px-6 py-4 text-xs text-secondary">{sup.category}</td>
                                     <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center justify-between w-24">
-                                                <span className="text-[10px] font-bold text-primary">{sup.reliability || '100%'}</span>
-                                                <ShieldCheck size={12} className="text-green-600" />
-                                            </div>
-                                            <div className="h-1 w-24 bg-muted rounded-full overflow-hidden">
-                                                <div className="h-full bg-primary" style={{ width: sup.reliability || '100%' }}></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
                                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${sup.status === 'Active' ? 'bg-green-50 text-green-600 border border-green-100' :
                                             'bg-amber-50 text-amber-600 border border-amber-100'
                                             }`}>
                                             {sup.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-3 text-secondary">
-                                            <Link href={`/dashboard/suppliers/${sup._id}`} className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">Manage</Link>
-                                            <button className="hover:text-primary transition-colors">
-                                                <MoreVertical size={14} />
-                                            </button>
-                                        </div>
+                                    <td className="px-6 py-4 text-right w-48">
+                                        <Link href={`/dashboard/suppliers/${sup._id}`} className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest flex items-center justify-end gap-2 whitespace-nowrap">
+                                            Manage <ArrowRight size={10} />
+                                        </Link>
                                     </td>
                                 </tr>
                             ))}

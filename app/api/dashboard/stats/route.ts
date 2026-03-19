@@ -91,6 +91,83 @@ export async function GET() {
             type: tx.type
         }));
 
+        // 5. Revenue Trend (Last 7 Days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const dailyRevenue = await Finance.aggregate([
+            {
+                $match: {
+                    date: { $gte: sevenDaysAgo },
+                    type: "Revenue",
+                    status: "Settled"
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+                    amount: { $sum: "$amount" }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Fill in missing days with 0
+        const trendData = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(now.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const found = dailyRevenue.find(r => r._id === dateStr);
+            trendData.push({
+                date: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+                revenue: found ? found.amount : 0
+            });
+        }
+
+        // 6. MTD Revenue & Items
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const mtdRevenue = await Finance.aggregate([
+            {
+                $match: {
+                    date: { $gte: firstDayOfMonth },
+                    type: "Revenue",
+                    status: "Settled"
+                }
+            },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        const inventorySummary = {
+            totalItems: activeInventoryCount,
+            lowStock: inventoryItems.filter(i => i.stock < 100).length,
+            outOfStock: inventoryItems.filter(i => i.stock === 0).length,
+            health: Math.round(((activeInventoryCount - inventoryItems.filter(i => i.stock < 100).length) / activeInventoryCount) * 100) || 0
+        };
+
+        // 7. Advanced Analytics (Categorical)
+        const inventoryByCategory = await Inventory.aggregate([
+            { $group: { _id: "$category", count: { $sum: 1 } } },
+            { $project: { name: "$_id", value: "$count", _id: 0 } }
+        ]);
+
+        const financialDistribution = await Finance.aggregate([
+            {
+                $match: {
+                    date: { $gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) },
+                    status: "Settled"
+                }
+            },
+            { $group: { _id: "$type", value: { $sum: "$amount" } } },
+            { $project: { name: "$_id", value: 1, _id: 0 } }
+        ]);
+
+        const supplierDistribution = await Supplier.aggregate([
+            { $group: { _id: "$status", count: { $sum: 1 } } },
+            { $project: { name: "$_id", value: "$count", _id: 0 } }
+        ]);
+
         return NextResponse.json({
             success: true,
             data: {
@@ -100,8 +177,14 @@ export async function GET() {
                     { label: "Active Suppliers", value: activeSuppliersCount.toString(), change: "Verified", trend: "up" },
                     { label: "Total Asset Value", value: `₵${totalAssetValue.toLocaleString()}`, change: "Calculated", trend: "up" },
                 ],
-                alerts: alerts.slice(0, 5), // Limit to top 5 alerts
-                activities
+                alerts: alerts.slice(0, 5),
+                activities,
+                revenueTrend: trendData,
+                mtdRevenue: mtdRevenue[0]?.total || 0,
+                inventorySummary,
+                inventoryByCategory,
+                financialDistribution,
+                supplierDistribution
             }
         });
     } catch (error: any) {

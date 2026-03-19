@@ -250,9 +250,9 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                                             <div className="text-xs font-bold text-primary">{item.name}</div>
                                             <div className="text-[9px] text-secondary mt-1 uppercase tracking-tight">SKU: {item.sku} • Batch: {item.batchId}</div>
                                         </td>
-                                        <td className="py-6 text-xs text-right tabular-nums">{item.quantity.toFixed(2)}</td>
-                                        <td className="py-6 text-xs text-right tabular-nums">₵{item.price.toLocaleString()}.00</td>
-                                        <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{(item.quantity * item.price).toLocaleString()}.00</td>
+                                        <td className="py-6 text-xs text-right tabular-nums">{(Number(item.quantity) || 0).toFixed(2)}</td>
+                                        <td className="py-6 text-xs text-right tabular-nums">₵{(Number(item.price) || 0).toLocaleString()}.00</td>
+                                        <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{((Number(item.quantity) || 0) * (Number(item.price) || 0)).toLocaleString()}.00</td>
                                     </tr>
                                 ))
                             ) : (
@@ -262,8 +262,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                                         <div className="text-[9px] text-secondary mt-1 uppercase tracking-tight">Fiscal Category: {invoice.category}</div>
                                     </td>
                                     <td className="py-6 text-xs text-right tabular-nums">1.00</td>
-                                    <td className="py-6 text-xs text-right tabular-nums">₵{invoice.amount.toLocaleString()}.00</td>
-                                    <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{invoice.amount.toLocaleString()}.00</td>
+                                    <td className="py-6 text-xs text-right tabular-nums">₵{(Number(invoice.amount) || 0).toLocaleString()}.00</td>
+                                    <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{(Number(invoice.amount) || 0).toLocaleString()}.00</td>
                                 </tr>
                             )}
                         </tbody>
@@ -275,7 +275,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                     <div className="w-full max-w-xs flex flex-col gap-4">
                         <div className="flex justify-between items-center text-xs">
                             <span className="font-bold text-secondary uppercase tracking-widest">Subtotal</span>
-                            <span className="font-bold tabular-nums">₵{invoice.amount.toLocaleString()}.00</span>
+                            <span className="font-bold tabular-nums">₵{(Number(invoice.amount) || 0).toLocaleString()}.00</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
                             <span className="font-bold text-secondary uppercase tracking-widest">VAT (0.0%)</span>
@@ -284,7 +284,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                         <div className="h-px bg-border my-2" />
                         <div className="flex justify-between items-center">
                             <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Total Amount</span>
-                            <span className="text-xl font-black text-primary tabular-nums">₵{invoice.amount.toLocaleString()}.00</span>
+                            <span className="text-xl font-black text-primary tabular-nums">₵{(Number(invoice.amount) || 0).toLocaleString()}.00</span>
                         </div>
                         <div className="mt-4 p-4 border border-border rounded-sm flex flex-col gap-4 bg-white shadow-sm">
                             <div className="flex items-center justify-between border-b border-border pb-2">
@@ -299,11 +299,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1">
                                     <span className="text-[8px] font-black text-secondary uppercase">Paid to Date</span>
-                                    <span className="text-sm font-bold text-green-600">₵{(invoice.totalPaid || 0).toLocaleString()}</span>
+                                    <span className="text-sm font-bold text-green-600">₵{(Number(invoice.totalPaid) || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="flex flex-col gap-1 text-right">
                                     <span className="text-[8px] font-black text-secondary uppercase">Balance Due</span>
-                                    <span className="text-sm font-bold text-red-600">₵{(invoice.amount - (invoice.totalPaid || 0)).toLocaleString()}</span>
+                                    <span className="text-sm font-bold text-red-600">₵{((Number(invoice.amount) || 0) - (Number(invoice.totalPaid) || 0)).toLocaleString()}</span>
                                 </div>
                             </div>
 

@@ -18,7 +18,8 @@ import {
     Loader2,
     ShoppingBag,
     History,
-    FileText
+    FileText,
+    BarChart3
 } from "lucide-react";
 import { hasPermission } from "@/lib/permissions";
 
@@ -32,6 +33,7 @@ const navItems = [
     { href: "/dashboard/staff", label: "Staff", icon: UserCircle, permission: "VIEW_STAFF" },
     { href: "/dashboard/finance", label: "Finance", icon: CircleDollarSign, permission: "VIEW_FINANCE" },
     { href: "/dashboard/invoices", label: "Invoices", icon: FileText, permission: "VIEW_FINANCE" },
+    { href: "/dashboard/reports", label: "Reports", icon: BarChart3, permission: "VIEW_FINANCE" },
     { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon, permission: "MANAGE_SETTINGS" },
 ];
 

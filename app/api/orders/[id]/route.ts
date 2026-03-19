@@ -5,11 +5,11 @@ import Inventory from "@/models/Inventory";
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await dbConnect();
-        const { id } = params;
+        const { id } = await params;
 
         // Search by orderId (public) or _id (internal)
         const order = id.startsWith('ORD-')
@@ -28,12 +28,12 @@ export async function GET(
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await dbConnect();
         const body = await request.json();
-        const { id } = params;
+        const { id } = await params;
 
         const updateData: any = {};
         if (body.status) updateData.status = body.status;
@@ -57,11 +57,11 @@ export async function PATCH(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await dbConnect();
-        const { id } = params;
+        const { id } = await params;
 
         const order = await Order.findById(id);
         if (!order) {

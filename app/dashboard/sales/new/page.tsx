@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import {
     ChevronLeft,
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function NewOrderPage() {
+function NewOrderForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const initialType = searchParams.get("type") === "cash" ? "Cash" : "Credit";
@@ -489,3 +489,16 @@ export default function NewOrderPage() {
         </form>
     );
 }
+
+export default function NewOrderPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-vh-100 italic text-secondary text-xs uppercase tracking-widest gap-2">
+                <Loader2 className="animate-spin" size={14} /> Initializing POS Records...
+            </div>
+        }>
+            <NewOrderForm />
+        </Suspense>
+    );
+}
+

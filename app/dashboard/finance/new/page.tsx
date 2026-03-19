@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -18,7 +18,7 @@ import {
     Loader2
 } from "lucide-react";
 
-export default function RecordTransactionPage() {
+function RecordTransactionForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const preselectedInvoice = searchParams.get("invoice");
@@ -390,3 +390,16 @@ export default function RecordTransactionPage() {
         </div>
     );
 }
+
+export default function RecordTransactionPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-vh-100 italic text-secondary text-xs uppercase tracking-widest gap-2">
+                <Loader2 className="animate-spin" size={14} /> Synchronizing Finance Engine...
+            </div>
+        }>
+            <RecordTransactionForm />
+        </Suspense>
+    );
+}
+

@@ -34,8 +34,15 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                 <div className="flex justify-between items-start border-b-2 border-primary pb-8">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-primary text-white flex items-center justify-center rounded-sm">
-                                <Leaf size={24} />
+                            <div className="h-12 w-12 bg-white flex items-center justify-center rounded-sm border border-slate-200 overflow-hidden p-1">
+                                <img
+                                    src={biz.logoUrl || "/images/logo.jpeg"}
+                                    alt="Logo"
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = "/images/logo.jpeg";
+                                    }}
+                                />
                             </div>
                             <h1 className="text-2xl font-black uppercase tracking-tighter text-primary">{biz.organizationName}</h1>
                         </div>

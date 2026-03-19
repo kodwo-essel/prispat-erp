@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +23,22 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [settings, setSettings] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/settings");
+                const data = await res.json();
+                if (data.success) {
+                    setSettings(data.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch settings:", err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,11 +94,18 @@ export default function LoginPage() {
                         transition={{ delay: 0.5, duration: 0.8 }}
                         className="flex items-center gap-3"
                     >
-                        <div className="h-10 w-10 bg-primary rounded-sm flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-                            <Zap size={24} className="text-white fill-white" />
+                        <div className="h-12 w-12 bg-white rounded-sm flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)] overflow-hidden p-1.5 border border-white/20">
+                            <img
+                                src={settings?.logoUrl || "/images/logo.jpeg"}
+                                alt="Logo"
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "/images/logo.jpeg";
+                                }}
+                            />
                         </div>
                         <div className="font-black text-xl tracking-tighter text-white uppercase">
-                            Prispat Prime <span className="text-white font-black uppercase">ERP</span>
+                            {settings?.organizationName || "Prispat Prime ERP"}
                         </div>
                     </motion.div>
 

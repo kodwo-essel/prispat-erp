@@ -194,13 +194,26 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[10px] font-black uppercase text-secondary tracking-widest">Branding Logo URL (SVG/PNG)</label>
-                                    <input
-                                        type="text"
-                                        value={config.logoUrl}
-                                        onChange={(e) => setConfig({ ...config, logoUrl: e.target.value })}
-                                        className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary focus:outline-none focus:border-primary"
-                                        placeholder="https://..."
-                                    />
+                                    <div className="flex gap-4 items-start">
+                                        <input
+                                            type="text"
+                                            value={config.logoUrl}
+                                            onChange={(e) => setConfig({ ...config, logoUrl: e.target.value })}
+                                            className="bg-muted border border-border px-4 py-2 rounded-sm text-sm font-bold text-primary flex-grow focus:outline-none focus:border-primary"
+                                            placeholder="https://..."
+                                        />
+                                        <div className="h-10 w-10 bg-white border border-border rounded-sm flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-sm">
+                                            <img
+                                                src={config.logoUrl || "/images/logo.jpeg"}
+                                                alt="Logo Preview"
+                                                className="w-full h-full object-contain"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = "/images/logo.jpeg";
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-[8px] text-secondary font-bold uppercase tracking-widest mt-1">Default: /images/logo.jpeg</p>
                                 </div>
                             </div>
                         </div>

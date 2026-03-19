@@ -192,9 +192,16 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 {/* Invoice Header */}
                 <div className="p-10 border-b border-border flex justify-between items-start bg-muted/30">
                     <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="h-10 w-10 bg-primary text-white flex items-center justify-center rounded-sm font-black text-xl">
-                                {biz.organizationName?.[0] || 'A'}
+                        <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 bg-white flex items-center justify-center rounded-sm border border-slate-200 overflow-hidden p-1 shadow-sm">
+                                <img
+                                    src={biz.logoUrl || "/images/logo.jpeg"}
+                                    alt="Logo"
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = "/images/logo.jpeg";
+                                    }}
+                                />
                             </div>
                             <span className="text-xl font-black text-primary uppercase tracking-tighter">{biz.organizationName}</span>
                         </div>
@@ -337,8 +344,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                                             <td className="px-4 py-3">{p.recordedBy}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${p.status === "Settled" ? "bg-green-100 text-green-700" :
-                                                        p.status === "Pending" ? "bg-yellow-100 text-yellow-700" :
-                                                            "bg-gray-100 text-gray-600"
+                                                    p.status === "Pending" ? "bg-yellow-100 text-yellow-700" :
+                                                        "bg-gray-100 text-gray-600"
                                                     }`}>{p.status}</span>
                                             </td>
                                             <td className="px-4 py-3 text-right font-bold text-primary">₵{Number(p.amount).toLocaleString()}</td>

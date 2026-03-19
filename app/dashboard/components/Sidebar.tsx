@@ -40,23 +40,33 @@ export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
+    const [settings, setSettings] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchUser = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch("/api/auth/me");
-                const data = await res.json();
-                if (data.success) {
-                    setUser(data.user);
+                const [userRes, settingsRes] = await Promise.all([
+                    fetch("/api/auth/me"),
+                    fetch("/api/settings")
+                ]);
+
+                const userData = await userRes.json();
+                const settingsData = await settingsRes.json();
+
+                if (userData.success) {
+                    setUser(userData.user);
+                }
+                if (settingsData.success) {
+                    setSettings(settingsData.data);
                 }
             } catch (error) {
-                console.error("Failed to fetch user:", error);
+                console.error("Failed to fetch sidebar data:", error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchUser();
+        fetchData();
     }, []);
 
     const handleSignOut = async () => {
@@ -86,12 +96,22 @@ export default function Sidebar() {
 
             {/* Branding */}
             <div className={`p-6 border-b border-white/10 flex items-center ${isCollapsed ? "justify-center" : "gap-3"}`}>
-                <div className="h-8 w-8 bg-white/10 rounded-sm flex items-center justify-center shrink-0">
-                    <Leaf size={18} className="text-white" />
+                <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-white/20 shadow-inner">
+                    <img
+                        src={settings?.logoUrl || "/images/logo.jpeg"}
+                        alt="Logo"
+                        className="w-full h-full object-contain p-1"
+                        onError={(e) => {
+                            // Fallback to default if custom URL fails
+                            (e.target as HTMLImageElement).src = "/images/logo.jpeg";
+                        }}
+                    />
                 </div>
                 {!isCollapsed && (
-                    <div className="font-bold tracking-tight text-sm uppercase">Prispat Prime<br />
-                        <span className="opacity-60 text-[10px]">Portal</span></div>
+                    <div className="font-bold tracking-tight text-sm uppercase leading-tight">
+                        {settings?.organizationName?.split(" ").slice(0, 2).join(" ") || "Prispat Prime"}<br />
+                        <span className="opacity-60 text-[10px] tracking-widest font-black uppercase">ERP Ecosystem</span>
+                    </div>
                 )}
             </div>
 

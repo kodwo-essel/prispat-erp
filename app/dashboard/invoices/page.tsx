@@ -23,13 +23,10 @@ export default function InvoicesPage() {
     useEffect(() => {
         const fetchInvoices = async () => {
             try {
-                // For now, we'll fetch from finance but filtered for 'Revenue' or specific invoice tags
-                // In a real scenario, this would be a dedicated /api/invoices
-                const res = await fetch("/api/finance");
+                const res = await fetch("/api/finance/invoices");
                 const json = await res.json();
                 if (json.success) {
-                    const filtered = json.data.filter((tx: any) => ["Revenue", "A/R"].includes(tx.type));
-                    setInvoices(filtered);
+                    setInvoices(json.data || []);
                 }
             } catch (error) {
                 console.error("Failed to fetch invoices:", error);
@@ -92,7 +89,9 @@ export default function InvoicesPage() {
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Invoice #</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Client</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Date</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Amount</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Total</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Paid</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Balance</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                             </tr>
@@ -103,11 +102,16 @@ export default function InvoicesPage() {
                                     <td className="px-6 py-4 font-bold text-primary tabular-nums">{inv.txId || `INV-${inv._id.substring(0, 6)}`}</td>
                                     <td className="px-6 py-4 text-slate-700">{inv.entity}</td>
                                     <td className="px-6 py-4 text-secondary">{new Date(inv.date).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4 font-bold tabular-nums">₵{inv.amount.toLocaleString()}</td>
+                                    <td className="px-6 py-4 tabular-nums">₵{inv.amount.toLocaleString()}</td>
+                                    <td className="px-6 py-4 tabular-nums text-green-600 font-bold">₵{(inv.totalPaid || 0).toLocaleString()}</td>
+                                    <td className={`px-6 py-4 tabular-nums font-bold ${inv.amount - (inv.totalPaid || 0) <= 0 ? "text-slate-900" : "text-red-600"}`}>
+                                        {inv.amount - (inv.totalPaid || 0) <= 0 ? "-" : `₵${(inv.amount - (inv.totalPaid || 0)).toLocaleString()}`}
+                                    </td>
                                     <td className="px-6 py-4">
                                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${inv.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                            inv.status === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                                'bg-red-50 text-red-600 border border-red-100'
+                                            inv.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                inv.status === 'Unpaid' || inv.status === 'Pending' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                    'bg-slate-50 text-slate-600 border border-slate-100'
                                             }`}>
                                             {inv.status}
                                         </span>

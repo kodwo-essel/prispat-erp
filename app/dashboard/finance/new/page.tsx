@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     ChevronLeft,
     Save,
@@ -13,18 +14,124 @@ import {
     Calendar,
     AlertCircle,
     Download,
-    CheckCircle2
+    CheckCircle2,
+    Loader2
 } from "lucide-react";
 
 export default function RecordTransactionPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const preselectedInvoice = searchParams.get("invoice");
+
     const [formData, setFormData] = useState({
         entity: "",
         amount: "",
         type: "Revenue",
         category: "Agro-Input Sales",
         date: new Date().toISOString().split('T')[0],
-        description: ""
+        description: "",
+        parentInvoiceId: "",
+        isInvoice: true,        // default: creating a top-level invoice/transaction
+        method: "Bank Transfer"
     });
+
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [loadingInvoices, setLoadingInvoices] = useState(false);
+    const [statusMessage, setStatusMessage] = useState("");
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchInvoices = async () => {
+            setLoadingInvoices(true);
+            try {
+                const res = await fetch("/api/finance/invoices");
+                const json = await res.json();
+                if (json.success) {
+                    const outstanding = json.data.filter((inv: any) =>
+                        inv.status !== "Settled" && inv.status !== "Cancelled"
+                    );
+                    setInvoices(outstanding);
+
+                    // Handle deep link from Invoice detail page
+                    if (preselectedInvoice) {
+                        const inv = outstanding.find((i: any) => i.txId === preselectedInvoice);
+                        if (inv) {
+                            const remaining = inv.amount - (inv.totalPaid || 0);
+                            setFormData(prev => ({
+                                ...prev,
+                                parentInvoiceId: preselectedInvoice,
+                                entity: inv.entity,
+                                category: inv.category,
+                                amount: remaining.toString(),
+                                description: `Payment for Invoice ${preselectedInvoice}`
+                            }));
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch invoices:", err);
+            } finally {
+                setLoadingInvoices(false);
+            }
+        };
+        fetchInvoices();
+    }, [preselectedInvoice]);
+
+    const handleInvoiceSelect = (txId: string) => {
+        const inv = invoices.find(i => i.txId === txId);
+        if (inv) {
+            const remaining = inv.amount - (inv.totalPaid || 0);
+            setFormData({
+                ...formData,
+                parentInvoiceId: txId,
+                isInvoice: false,    // recording a payment against an existing invoice
+                entity: inv.entity,
+                category: inv.category,
+                amount: remaining.toString(),
+                description: `Payment for Invoice ${txId}`
+            });
+        } else {
+            setFormData({
+                ...formData,
+                parentInvoiceId: "",
+                isInvoice: true,     // back to creating a top-level record
+            });
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setStatusMessage("");
+
+        try {
+            const res = await fetch("/api/finance", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...formData,
+                    amount: Number(formData.amount),
+                    recordedBy: "Current User" // In real app, get from session
+                }),
+            });
+            const json = await res.json();
+            if (json.success) {
+                setIsSuccess(true);
+                setStatusMessage("TRANSACTION COMMITTED TO LEDGER SUCCESSFULLY.");
+                setTimeout(() => {
+                    const redirect = searchParams.get("redirect") || "/dashboard/finance";
+                    router.push(redirect);
+                }, 1500);
+            } else {
+                setStatusMessage(json.error || "FAILED TO COMMIT TRANSACTION.");
+            }
+        } catch (err) {
+            setStatusMessage("SYSTEM ERROR: UNABLE TO REACH FINANCE ENGINE.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="flex flex-col gap-8 max-w-5xl mx-auto">
@@ -44,9 +151,32 @@ export default function RecordTransactionPage() {
                 {/* Entry Form */}
                 <div className="lg:col-span-7 flex flex-col gap-6">
                     <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-6">
-                        <div className="flex items-center gap-2 border-b border-border pb-4 mb-2">
-                            <Coins size={18} className="text-primary" />
-                            <h3 className="text-xs font-bold uppercase tracking-widest">Transaction Parameters</h3>
+                        <div className="flex items-center justify-between border-b border-border pb-4 mb-2">
+                            <div className="flex items-center gap-2">
+                                <Coins size={18} className="text-primary" />
+                                <h3 className="text-xs font-bold uppercase tracking-widest">Transaction Parameters</h3>
+                            </div>
+                            {loadingInvoices && <Loader2 size={14} className="animate-spin text-primary" />}
+                        </div>
+
+                        {/* Invoice Link Picker */}
+                        <div className="flex flex-col gap-2 p-3 bg-primary/5 border border-primary/20 rounded-sm mb-4">
+                            <label className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                <FileText size={12} /> Link to Outstanding Invoice (Optional)
+                            </label>
+                            <select
+                                value={formData.parentInvoiceId}
+                                onChange={(e) => handleInvoiceSelect(e.target.value)}
+                                className="w-full bg-white border border-primary/20 px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary transition-colors"
+                            >
+                                <option value="">Direct Entry (No Invoice Link)</option>
+                                {invoices.map(inv => (
+                                    <option key={inv.txId} value={inv.txId}>
+                                        {inv.txId} - {inv.entity} (Bal: ₵{(inv.amount - (inv.totalPaid || 0)).toLocaleString()})
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-[9px] text-secondary">Linking will automatically update the invoice balance and status.</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -87,6 +217,7 @@ export default function RecordTransactionPage() {
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                     className="w-full bg-muted border border-border px-4 py-2.5 rounded-sm text-sm focus:outline-none focus:border-primary transition-colors">
                                     <option>Agro-Input Sales</option>
+                                    <option>Sales Fulfillment</option>
                                     <option>Procurement Cost</option>
                                     <option>Logistics Fee</option>
                                     <option>Personnel Payroll</option>
@@ -132,12 +263,27 @@ export default function RecordTransactionPage() {
                         </div>
                     </section>
 
+                    {statusMessage && (
+                        <div className={`p-4 rounded-sm border text-[10px] font-bold uppercase tracking-widest flex items-center gap-3 ${isSuccess ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
+                            }`}>
+                            {isSuccess ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                            {statusMessage}
+                        </div>
+                    )}
+
                     <div className="flex items-center justify-end gap-4 border-t border-border pt-6">
-                        <button className="flex items-center gap-2 text-xs font-bold text-secondary uppercase tracking-widest px-6 py-2.5 rounded-sm hover:bg-muted transition-colors">
+                        <button
+                            type="button"
+                            onClick={() => window.location.reload()}
+                            className="flex items-center gap-2 text-xs font-bold text-secondary uppercase tracking-widest px-6 py-2.5 rounded-sm hover:bg-muted transition-colors">
                             <RotateCcw size={14} /> Clear Ledger Entry
                         </button>
-                        <button className="btn-primary flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-8 py-2.5 rounded-sm">
-                            <Save size={14} /> Commit to Finance Engine
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="btn-primary flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-8 py-2.5 rounded-sm disabled:opacity-50">
+                            {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            {isLoading ? "Committing..." : "Commit to Finance Engine"}
                         </button>
                     </div>
                 </div>

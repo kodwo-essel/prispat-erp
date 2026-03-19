@@ -11,6 +11,11 @@ const OrderSchema = new mongoose.Schema(
             id: String,
             name: String,
         },
+        saleType: {
+            type: String,
+            enum: ["Credit", "Cash"],
+            default: "Credit",
+        },
         items: [
             {
                 sku: String,
@@ -27,11 +32,14 @@ const OrderSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["Pending", "Dispatched", "Delivered", "Cancelled"],
+            enum: ["Pending", "Dispatched", "Delivered", "Cancelled", "Received"],
             default: "Pending",
         },
         dispatchDate: {
             type: Date,
+        },
+        txId: {
+            type: String,
         }
     },
     {

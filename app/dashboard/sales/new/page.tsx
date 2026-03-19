@@ -14,10 +14,13 @@ import {
     Search,
     ShoppingBag
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function NewOrderPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const initialType = searchParams.get("type") === "cash" ? "Cash" : "Credit";
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -28,8 +31,9 @@ export default function NewOrderPage() {
     // Form State
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
     const [orderItems, setOrderItems] = useState<any[]>([]);
-    const [isAnonymous, setIsAnonymous] = useState(false);
-    const [anonymousFarmerName, setAnonymousFarmerName] = useState("");
+    const [saleType, setSaleType] = useState<"Credit" | "Cash">(initialType);
+    const [customerName, setCustomerName] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState("Cash");
 
     // Search States
     const [customerSearch, setCustomerSearch] = useState("");
@@ -115,12 +119,12 @@ export default function NewOrderPage() {
         e.preventDefault();
 
         let customerData;
-        if (isAnonymous) {
-            customerData = { name: anonymousFarmerName || "Walk-in Farmer", id: "anonymous" };
+        if (saleType === "Cash") {
+            customerData = { name: customerName || "Walk-in Customer", id: "walk-in" };
         } else if (selectedCustomer) {
             customerData = { id: selectedCustomer._id, name: selectedCustomer.name };
         } else {
-            setError("Please select a customer or mark as anonymous.");
+            setError("Please select a registered client or switch to Shop Cash Sale.");
             return;
         }
 
@@ -140,7 +144,8 @@ export default function NewOrderPage() {
                     customer: customerData,
                     items: orderItems,
                     totalAmount,
-                    status: "Pending", // Defaulting to Pending
+                    saleType,
+                    paymentMethod,
                     recordedBy: "Current User"
                 }),
             });
@@ -164,44 +169,66 @@ export default function NewOrderPage() {
                     <ChevronLeft size={12} /> Back to Sales
                 </Link>
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl font-bold tracking-tight text-primary">Dispatch New Order</h1>
-                    <p className="text-secondary text-sm">Issue stock and generate financial claims for registered institutional clients or walk-in farmers.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-primary">Record New Sale</h1>
+                    <p className="text-secondary text-sm">Issue stock and generate financial claims for institutional credit clients or direct shop cash customers.</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 flex flex-col gap-6">
                     <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-4">
-                        <div className="flex items-center justify-between border-b border-border pb-4">
-                            <h3 className="text-xs font-bold uppercase tracking-widest">Client Identification</h3>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={isAnonymous}
-                                    onChange={(e) => {
-                                        setIsAnonymous(e.target.checked);
-                                        if (e.target.checked) {
-                                            setSelectedCustomer(null);
-                                            setCustomerSearch("");
-                                            setShowCustomerSearch(false);
-                                        }
-                                    }}
-                                    className="accent-primary"
-                                />
-                                <span className="text-[10px] font-bold uppercase text-secondary">Anonymous / Walk-in Farmer</span>
-                            </label>
+                        <div className="flex flex-col gap-4 border-b border-border pb-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-bold uppercase tracking-widest">Transaction Mode</h3>
+                                <div className="flex bg-muted p-1 rounded-sm border border-border">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSaleType("Credit")}
+                                        className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${saleType === "Credit" ? "bg-primary text-white shadow-sm" : "text-secondary hover:text-primary"}`}
+                                    >
+                                        Credit Sale
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSaleType("Cash")}
+                                        className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${saleType === "Cash" ? "bg-primary text-white shadow-sm" : "text-secondary hover:text-primary"}`}
+                                    >
+                                        Shop Cash Sale
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-secondary leading-tight italic">
+                                {saleType === "Credit"
+                                    ? "Institutional delivery with invoice-based settlement (A/R)."
+                                    : "Direct shop floor transaction with immediate cash/digital settlement."}
+                            </p>
                         </div>
 
-                        {isAnonymous ? (
-                            <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Farmer Name (Optional)</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter Farmer Name..."
-                                    className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
-                                    value={anonymousFarmerName}
-                                    onChange={(e) => setAnonymousFarmerName(e.target.value)}
-                                />
+                        {saleType === "Cash" ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Customer Name (Optional)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Walk-in Customer..."
+                                        className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                                        value={customerName}
+                                        onChange={(e) => setCustomerName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Settlement Channel</label>
+                                    <select
+                                        className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary font-bold"
+                                        value={paymentMethod}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    >
+                                        <option value="Cash">Physical Cash</option>
+                                        <option value="MoMo">Mobile Money (MTN/Telecel)</option>
+                                        <option value="POS">Bank Card / POS Terminal</option>
+                                        <option value="Transfer">Direct Bank Transfer</option>
+                                    </select>
+                                </div>
                             </div>
                         ) : selectedCustomer ? (
                             <div className="flex items-center justify-between p-4 bg-muted border border-border rounded-sm">
@@ -418,8 +445,8 @@ export default function NewOrderPage() {
                                 onClick={() => {
                                     setOrderItems([]);
                                     setSelectedCustomer(null);
-                                    setIsAnonymous(false);
-                                    setAnonymousFarmerName("");
+                                    setSaleType("Credit");
+                                    setCustomerName("");
                                 }}
                                 className="flex items-center justify-center gap-2 text-[10px] font-bold text-secondary uppercase tracking-widest py-2 hover:bg-muted transition-colors rounded-sm"
                             >

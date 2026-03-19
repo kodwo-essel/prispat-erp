@@ -15,8 +15,10 @@ import {
     AlertCircle,
     Truck,
     Edit2,
-    Save
+    Save,
+    FileText
 } from "lucide-react";
+import Link from "next/link";
 
 interface OrderManageDrawerProps {
     isOpen: boolean;
@@ -38,7 +40,12 @@ const OrderManageDrawer: React.FC<OrderManageDrawerProps> = ({
 
     useEffect(() => {
         if (order) {
-            setEditDispatchDate(new Date(order.dispatchDate || order.createdAt).toISOString().split('T')[0]);
+            try {
+                const dateVal = order.dispatchDate || order.createdAt || new Date();
+                setEditDispatchDate(new Date(dateVal).toISOString().split('T')[0]);
+            } catch (e) {
+                setEditDispatchDate(new Date().toISOString().split('T')[0]);
+            }
         }
         setIsEditing(false);
     }, [order]);
@@ -49,6 +56,7 @@ const OrderManageDrawer: React.FC<OrderManageDrawerProps> = ({
         Pending: "bg-amber-50 text-amber-600 border-amber-100",
         Dispatched: "bg-blue-50 text-blue-600 border-blue-100",
         Delivered: "bg-green-50 text-green-600 border-green-100",
+        Received: "bg-green-50 text-green-600 border-green-100",
         Cancelled: "bg-red-50 text-red-600 border-red-100",
     };
 
@@ -75,10 +83,13 @@ const OrderManageDrawer: React.FC<OrderManageDrawerProps> = ({
                         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary mb-1">Dispatch Manager</div>
                         <h2 className="text-lg font-bold text-primary flex items-center gap-2">
                             {order.orderId}
+                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-tight border ${order.saleType === 'Cash' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                {order.saleType || "Credit"}
+                            </span>
                         </h2>
                     </div>
                     <div className="flex items-center gap-2">
-                        {!isEditing && order.status !== 'Cancelled' && (
+                        {!isEditing && order.status !== 'Cancelled' && order.saleType !== 'Cash' && (
                             <button
                                 onClick={() => setIsEditing(true)}
                                 className="p-2 hover:bg-muted rounded-full transition-colors text-primary"
@@ -115,7 +126,7 @@ const OrderManageDrawer: React.FC<OrderManageDrawerProps> = ({
                         </div>
                         <div className="bg-muted/30 p-4 rounded-sm border border-border">
                             <div className="font-bold text-primary">{order.customer.name}</div>
-                            <div className="text-[10px] text-secondary uppercase tracking-tighter mt-1">Registry ID: {order.customer.id || "Anonymous"}</div>
+                            <div className="text-[10px] text-secondary uppercase tracking-tighter mt-1">Registry ID: {order.customer.id || "Walk-in"}</div>
                         </div>
                     </section>
 
@@ -125,7 +136,15 @@ const OrderManageDrawer: React.FC<OrderManageDrawerProps> = ({
                             <Calendar size={14} /> Dispatch Schedule
                         </div>
                         <div className="bg-muted/30 p-4 rounded-sm border border-border">
-                            {isEditing ? (
+                            {order.saleType === 'Cash' ? (
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="text-xs font-bold text-green-600">Immediate Fulfillment</div>
+                                        <div className="text-[10px] text-secondary uppercase tracking-tighter mt-1">Direct Shop Floor Transaction</div>
+                                    </div>
+                                    <CheckCircle size={24} className="text-green-200" />
+                                </div>
+                            ) : isEditing ? (
                                 <div key="edit-date" className="space-y-2">
                                     <label className="text-[10px] font-bold text-secondary uppercase">Effective Dispatch Date</label>
                                     <input
@@ -146,6 +165,28 @@ const OrderManageDrawer: React.FC<OrderManageDrawerProps> = ({
                             )}
                         </div>
                     </section>
+
+                    {/* Financial Linkage */}
+                    {order.txId && (
+                        <section className="space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondary">
+                                <FileText size={14} /> Linked Financial Record
+                            </div>
+                            <div className="bg-primary/5 p-4 rounded-sm border border-primary/20 flex items-center justify-between">
+                                <div>
+                                    <div className="text-xs font-bold text-primary">{order.txId}</div>
+                                    <div className="text-[10px] text-secondary uppercase tracking-tighter mt-1">Official Claim Invoice</div>
+                                </div>
+                                <Link
+                                    href={`/dashboard/invoices/${order.txId}`}
+                                    className="p-2 bg-white border border-primary/20 rounded-sm hover:bg-primary/5 transition-colors text-primary"
+                                    title="View Full Invoice"
+                                >
+                                    <ExternalLink size={16} />
+                                </Link>
+                            </div>
+                        </section>
+                    )}
 
                     {/* Order Manifest (Non-editable) */}
                     <section className="space-y-3">

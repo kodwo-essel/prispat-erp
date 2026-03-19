@@ -12,12 +12,14 @@ import {
     ChevronLeft,
     ChevronRight,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    ExternalLink
 } from "lucide-react";
 import { exportToCSV } from "@/lib/exportUtils";
 
 export default function FinancePage() {
     const [transactions, setTransactions] = useState<any[]>([]);
+    const [invoices, setInvoices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -41,18 +43,26 @@ export default function FinancePage() {
             setLoading(true);
             setError(null);
 
-            // Set a secondary timeout for UX if the network is extremely slow
             const timer = setTimeout(() => {
                 if (loading) setError("System is taking longer than usual to sync. Please check your connection.");
             }, 8000);
 
             try {
-                const res = await fetch("/api/finance", { cache: "no-store" });
-                const json = await res.json();
-                if (json.success) {
-                    setTransactions(json.data || []);
+                // Fetch transactions (PAY-*, TX-*) and invoices (INV-*) in parallel
+                const [txRes, invRes] = await Promise.all([
+                    fetch("/api/finance", { cache: "no-store" }),
+                    fetch("/api/finance/invoices", { cache: "no-store" })
+                ]);
+                const txJson = await txRes.json();
+                const invJson = await invRes.json();
+
+                if (txJson.success) {
+                    setTransactions(txJson.data || []);
                 } else {
-                    setError(json.error || "Failed to retrieve fiscal data.");
+                    setError(txJson.error || "Failed to retrieve fiscal data.");
+                }
+                if (invJson.success) {
+                    setInvoices(invJson.data || []);
                 }
             } catch (error) {
                 console.error("Failed to fetch finance:", error);
@@ -66,35 +76,45 @@ export default function FinancePage() {
         fetchFinance();
     }, []);
 
-    // Calculate dynamic stats with useMemo to prevent unnecessary recalcs and sync with data load
+    // Calculate dynamic stats from both transactions and invoices
     const stats = useMemo(() => {
-        if (!transactions || transactions.length === 0) {
-            return { weeklyRevenue: 0, totalExpenditure: 0, accountsReceivable: 0, netPosition: 0 };
-        }
-
         const now = new Date();
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        const weeklyRevenue = transactions
-            .filter(tx => String(tx.type).trim() === 'Revenue' && new Date(tx.date).getTime() >= sevenDaysAgo.getTime())
-            .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+        // Weekly Revenue: Sum of all settled PAY-* / revenue transactions in the last 7 days
+        const weeklyRevenue = transactions.reduce((sum, tx) => {
+            const isRecent = new Date(tx.date).getTime() >= sevenDaysAgo.getTime();
+            if (!isRecent) return sum;
+            if (tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+                return sum + (Number(tx.amount) || 0);
+            }
+            return sum;
+        }, 0);
 
+        // Total Expenditure: Sum of all expense-type transactions
         const totalExpenditure = transactions
             .filter(tx => ['Expense', 'Payroll', 'Tax'].includes(String(tx.type).trim()))
             .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
-        const accountsReceivable = transactions
-            .filter(tx => String(tx.type).trim() === 'A/R')
-            .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+        // A/R: Sum of remaining balances on non-settled invoices (from invoices endpoint)
+        const accountsReceivable = invoices
+            .filter(inv =>
+                inv.status !== "Cancelled" && inv.status !== "Settled"
+            )
+            .reduce((sum, inv) => sum + ((Number(inv.amount) || 0) - (Number(inv.totalPaid) || 0)), 0);
 
-        const totalRevenue = transactions
-            .filter(tx => String(tx.type).trim() === 'Revenue')
-            .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+        // Total Revenue: Sum of all settled payments
+        const totalRevenue = transactions.reduce((sum, tx) => {
+            if (tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+                return sum + (Number(tx.amount) || 0);
+            }
+            return sum;
+        }, 0);
 
         const netPosition = totalRevenue - totalExpenditure;
 
         return { weeklyRevenue, totalExpenditure, accountsReceivable, netPosition };
-    }, [transactions]);
+    }, [transactions, invoices]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -168,11 +188,9 @@ export default function FinancePage() {
                         <option>Quarterly Report</option>
                         <option>Annual View</option>
                     </select>
-                    <button className="flex items-center gap-2 text-xs font-bold text-secondary px-4 py-2 hover:text-primary transition-colors">
-                        <Filter size={14} /> Advanced Filters
-                    </button>
+
                 </div>
-                <div className="text-xs text-secondary font-medium">Synced with Central Bank API</div>
+
             </div>
 
             {/* Transactions Table */}
@@ -195,35 +213,49 @@ export default function FinancePage() {
                         <thead>
                             <tr className="bg-muted border-b border-border">
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Transaction ID</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Entity / Reference</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Nature</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Amount (GHS)</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Date</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Linked Invoice</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Entity</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Amount</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">Status</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {transactions.map((tx) => (
                                 <tr key={tx._id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{tx.txId}</td>
+                                    <td className="px-6 py-4 font-bold text-primary tabular-nums">{tx.txId}</td>
                                     <td className="px-6 py-4">
-                                        <div className="text-xs font-semibold text-primary">{tx.entity}</div>
-                                        <div className="text-[10px] text-secondary mt-0.5">{tx.category}</div>
+                                        {tx.isInvoice ? (
+                                            <Link
+                                                href={`/dashboard/invoices/${tx.txId}`}
+                                                className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                                            >
+                                                {tx.txId} <ExternalLink size={10} />
+                                            </Link>
+                                        ) : tx.parentInvoiceId ? (
+                                            <Link
+                                                href={`/dashboard/invoices/${tx.parentInvoiceId}`}
+                                                className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-indigo-700 hover:underline"
+                                            >
+                                                {tx.parentInvoiceId} <ExternalLink size={10} />
+                                            </Link>
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-secondary uppercase tracking-widest opacity-40">
+                                                Direct {tx.type}
+                                            </span>
+                                        )}
                                     </td>
-                                    <td className="px-6 py-4 text-xs text-secondary">{tx.type}</td>
-                                    <td className="px-6 py-4">
-                                        <div className={`text-xs font-bold tabular-nums ${tx.type === 'Revenue' ? 'text-green-600' : 'text-slate-900'}`}>
-                                            {tx.type === 'Revenue' ? '+' : '-'} {tx.amount.toLocaleString()}
-                                        </div>
+                                    <td className="px-6 py-4 text-slate-700">{tx.entity}</td>
+                                    <td className="px-6 py-4 text-secondary">{tx.category}</td>
+                                    <td className={`px-6 py-4 text-right font-bold tabular-nums ${tx.type === 'Revenue' || tx.type === 'Settlement' ? 'text-green-600' : 'text-primary'}`}>
+                                        {tx.type === 'Revenue' || tx.type === 'Settlement' ? '+' : '-'}₵{tx.amount.toLocaleString()}
                                     </td>
-                                    <td className="px-6 py-4 text-xs text-secondary tabular-nums">
-                                        {new Date(tx.date).toLocaleDateString()}
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-center">
                                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${tx.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                            tx.status === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                                'bg-red-50 text-red-600 border border-red-100'
+                                            tx.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                tx.status === 'Unpaid' || tx.status === 'Pending' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                    'bg-slate-50 text-slate-600 border border-slate-100'
                                             }`}>
                                             {tx.status}
                                         </span>

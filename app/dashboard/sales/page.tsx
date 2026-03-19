@@ -14,7 +14,12 @@ import {
     User,
     CheckCircle,
     XCircle,
-    Trash2
+    Trash2,
+    Truck,
+    Edit2,
+    Save,
+    FileText,
+    ExternalLink
 } from "lucide-react";
 import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
 import OrderManageDrawer from "./OrderManageDrawer";
@@ -25,6 +30,7 @@ export default function SalesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [typeFilter, setTypeFilter] = useState<"All" | "Credit" | "Cash">("All");
 
     // Modal State
     const [modalConfig, setModalConfig] = useState<{
@@ -150,8 +156,14 @@ export default function SalesPage() {
     const todayISO = new Date().toISOString().split('T')[0];
 
     const dispatchesToday = orders.filter(o => {
-        const d = new Date(o.dispatchDate || o.createdAt).toISOString().split('T')[0];
-        return d === todayISO && o.status !== 'Cancelled';
+        try {
+            const dateVal = o.dispatchDate || o.createdAt;
+            if (!dateVal) return false;
+            const d = new Date(dateVal).toISOString().split('T')[0];
+            return d === todayISO && o.status !== 'Cancelled';
+        } catch (e) {
+            return false;
+        }
     }).length;
 
     const totalDispatches = orders.filter(o => o.status !== 'Cancelled').length;
@@ -169,10 +181,13 @@ export default function SalesPage() {
         return sum;
     }, 0);
 
-    const filteredOrders = orders.filter(order =>
-        order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.customer.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredOrders = orders.filter(order => {
+        const matchesSearch = order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order.customer.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const saleType = order.saleType || "Credit";
+        const matchesType = typeFilter === "All" || saleType === typeFilter;
+        return matchesSearch && matchesType;
+    });
 
     return (
         <div className="flex flex-col gap-6">
@@ -184,7 +199,7 @@ export default function SalesPage() {
                 </div>
                 <div className="flex gap-3">
                     <Link href="/dashboard/sales/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider font-bold">
-                        <Plus size={14} /> Dispatch New Order
+                        <Plus size={14} /> Record New Sale
                     </Link>
                 </div>
             </div>
@@ -210,8 +225,8 @@ export default function SalesPage() {
             </div>
 
             {/* Filters Bar */}
-            <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between gap-4">
-                <div className="relative flex-grow max-w-sm">
+            <div className="bg-white border border-border p-4 rounded-sm flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+                <div className="relative flex-grow max-w-sm w-full">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
                     <input
                         type="text"
@@ -221,7 +236,20 @@ export default function SalesPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="text-xs text-secondary font-medium tracking-tight">Accessing Live Order Registry</div>
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Filter Mode:</span>
+                    <div className="flex bg-muted p-1 rounded-sm border border-border">
+                        {(["All", "Credit", "Cash"] as const).map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setTypeFilter(type)}
+                                className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* Orders Table */}
@@ -242,10 +270,11 @@ export default function SalesPage() {
                             <tr className="bg-muted border-b border-border">
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Order ID</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Customer Entity</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Manifest Summary</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Total Value</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Dispatch Date</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Date</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Sale Type</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Related Invoice</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                             </tr>
                         </thead>
@@ -254,31 +283,21 @@ export default function SalesPage() {
                                 <tr key={order._id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{order.orderId}</td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <User size={12} className="text-secondary opacity-50" />
-                                            <div className="text-xs font-bold text-slate-900">{order.customer.name}</div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-xs text-secondary font-medium">
-                                            {order.items.length} Product Line Items
-                                        </div>
-                                        <div className="text-[10px] text-slate-400 truncate max-w-[200px]">
-                                            {order.items.map((i: any) => i.name).join(", ")}
+                                        <div className="text-xs font-bold text-slate-900">
+                                            {order.customer.name}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-black text-slate-900 tabular-nums">₵{order.totalAmount.toLocaleString()}</div>
                                         <div className="text-[10px] text-secondary uppercase font-bold tracking-tighter">Settled</div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 text-xs text-secondary">
-                                            <Calendar size={12} className="opacity-50" />
-                                            {new Date(order.dispatchDate).toLocaleDateString()}
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="text-xs text-secondary font-bold tabular-nums">
+                                            {new Date(order.dispatchDate || order.createdAt).toLocaleDateString()}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${order.status === 'Delivered' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${order.status === 'Delivered' || order.status === 'Received' ? 'bg-green-50 text-green-600 border-green-100' :
                                             order.status === 'Dispatched' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
                                                 order.status === 'Cancelled' ? 'bg-red-50 text-red-600 border border-red-100' :
                                                     'bg-slate-50 text-slate-500 border border-slate-100'
@@ -286,42 +305,30 @@ export default function SalesPage() {
                                             {order.status}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-tight border ${order.saleType === 'Cash' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                            {order.saleType || "Credit"}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-3">
-                                            <button
-                                                onClick={() => handleOpenDrawer(order)}
-                                                className="text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20 px-3 py-1.5 rounded-sm hover:bg-primary/5 transition-colors"
+                                        {order.txId ? (
+                                            <Link
+                                                href={`/dashboard/invoices/${order.txId}`}
+                                                className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
                                             >
-                                                Manage Dispatch
-                                            </button>
-                                            <div className="h-4 w-px bg-border mx-1" />
-                                            <div className="flex items-center gap-1.5">
-                                                {order.status === 'Pending' && (
-                                                    <button
-                                                        onClick={() => handleUpdateOrder(order._id, { status: 'Dispatched' })}
-                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-sm title='Mark as Dispatched'"
-                                                    >
-                                                        <ArrowRight size={14} />
-                                                    </button>
-                                                )}
-                                                {order.status === 'Dispatched' && (
-                                                    <button
-                                                        onClick={() => handleUpdateOrder(order._id, { status: 'Delivered' })}
-                                                        className="p-1.5 text-green-600 hover:bg-green-50 rounded-sm title='Mark as Delivered'"
-                                                    >
-                                                        <CheckCircle size={14} />
-                                                    </button>
-                                                )}
-                                                {order.status !== 'Cancelled' && order.status !== 'Delivered' && (
-                                                    <button
-                                                        onClick={() => handleCancelOrder(order._id)}
-                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-sm title='Cancel Order'"
-                                                    >
-                                                        <XCircle size={14} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
+                                                {order.txId} <ExternalLink size={12} />
+                                            </Link>
+                                        ) : (
+                                            <span className="text-[10px] text-slate-300 italic uppercase">No Link</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button
+                                            onClick={() => handleOpenDrawer(order)}
+                                            className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
+                                        >
+                                            Manage <ArrowRight size={10} />
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

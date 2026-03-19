@@ -17,7 +17,21 @@ export default function InvoiceExportPage({ params }: { params: Promise<{ id: st
                 const res = await fetch(`/api/finance/${id}`);
                 const json = await res.json();
                 if (json.success) {
-                    setInvoice(json.data);
+                    const invData = json.data;
+                    // If invoice is linked to an order, fetch order details for line items
+                    if (invData.orderId) {
+                        try {
+                            const ordRes = await fetch(`/api/orders/${invData.orderId}`);
+                            const ordJson = await ordRes.json();
+                            if (ordJson.success) {
+                                // Merge order items into invoice for the print view
+                                invData.items = ordJson.data.items;
+                            }
+                        } catch (e) {
+                            console.error("Failed to fetch linked order:", e);
+                        }
+                    }
+                    setInvoice(invData);
                 }
             } catch (error) {
                 console.error("Failed to fetch invoice:", error);

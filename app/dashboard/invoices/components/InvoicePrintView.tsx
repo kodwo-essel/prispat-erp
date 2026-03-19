@@ -57,7 +57,7 @@ export default function InvoicePrintView({ invoice, onClose }: InvoicePrintViewP
                             <User size={14} className="text-primary" /> Bill To
                         </div>
                         <div className="pl-6">
-                            <div className="text-lg font-bold text-primary">{invoice.customerName}</div>
+                            <div className="text-lg font-bold text-primary">{invoice.entity || invoice.customerName}</div>
                             <div className="text-[10px] text-secondary uppercase font-bold tracking-tight">Authorized Client</div>
                         </div>
                     </div>
@@ -102,8 +102,8 @@ export default function InvoicePrintView({ invoice, onClose }: InvoicePrintViewP
                                         <div className="text-[9px] text-secondary font-medium tracking-widest uppercase">{item.sku}</div>
                                     </td>
                                     <td className="py-4 text-right text-xs font-bold text-slate-700">{item.quantity}</td>
-                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{item.unitPrice.toLocaleString()}</td>
-                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * item.unitPrice).toLocaleString()}</td>
+                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{(item.unitPrice || item.price || 0).toLocaleString()}</td>
+                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * (item.unitPrice || item.price || 0)).toLocaleString()}</td>
                                 </tr>
                             )) : (
                                 <tr>

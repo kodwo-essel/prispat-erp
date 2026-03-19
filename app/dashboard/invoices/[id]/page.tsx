@@ -24,6 +24,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     const { id } = use(params);
     const router = useRouter();
     const [invoice, setInvoice] = useState<any>(null);
+    const [order, setOrder] = useState<any>(null);
+    const [payments, setPayments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [updateLoading, setUpdateLoading] = useState(false);
     const [message, setMessage] = useState("");
@@ -42,7 +44,28 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 const invJson = await invRes.json();
                 const setJson = await setRes.json();
 
-                if (invJson.success) setInvoice(invJson.data);
+                if (invJson.success) {
+                    const inv = invJson.data;
+                    setInvoice(inv);
+                    // Fetch child payment records linked to this invoice
+                    try {
+                        const payRes = await fetch(`/api/finance?parentInvoiceId=${inv.txId}`);
+                        const payJson = await payRes.json();
+                        if (payJson.success) setPayments(payJson.data || []);
+                    } catch (e) {
+                        console.error("Failed to fetch child payments:", e);
+                    }
+                    // If invoice is linked to an order, fetch order details for line items
+                    if (inv.orderId) {
+                        try {
+                            const ordRes = await fetch(`/api/orders/${invJson.data.orderId}`);
+                            const ordJson = await ordRes.json();
+                            if (ordJson.success) setOrder(ordJson.data);
+                        } catch (e) {
+                            console.error("Failed to fetch linked order:", e);
+                        }
+                    }
+                }
                 if (setJson.success) setSettings(setJson.data);
             } catch (error) {
                 console.error("Failed to fetch data:", error);
@@ -213,15 +236,29 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            <tr>
-                                <td className="py-6">
-                                    <div className="text-xs font-bold text-primary">{invoice.description || invoice.category || "General Supply Distribution"}</div>
-                                    <div className="text-[9px] text-secondary mt-1 uppercase tracking-tight">Fiscal Category: {invoice.category}</div>
-                                </td>
-                                <td className="py-6 text-xs text-right tabular-nums">1.00</td>
-                                <td className="py-6 text-xs text-right tabular-nums">₵{invoice.amount.toLocaleString()}.00</td>
-                                <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{invoice.amount.toLocaleString()}.00</td>
-                            </tr>
+                            {order && order.items && order.items.length > 0 ? (
+                                order.items.map((item: any, idx: number) => (
+                                    <tr key={idx}>
+                                        <td className="py-6">
+                                            <div className="text-xs font-bold text-primary">{item.name}</div>
+                                            <div className="text-[9px] text-secondary mt-1 uppercase tracking-tight">SKU: {item.sku} • Batch: {item.batchId}</div>
+                                        </td>
+                                        <td className="py-6 text-xs text-right tabular-nums">{item.quantity.toFixed(2)}</td>
+                                        <td className="py-6 text-xs text-right tabular-nums">₵{item.price.toLocaleString()}.00</td>
+                                        <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{(item.quantity * item.price).toLocaleString()}.00</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td className="py-6">
+                                        <div className="text-xs font-bold text-primary">{invoice.description || invoice.category || "General Supply Distribution"}</div>
+                                        <div className="text-[9px] text-secondary mt-1 uppercase tracking-tight">Fiscal Category: {invoice.category}</div>
+                                    </td>
+                                    <td className="py-6 text-xs text-right tabular-nums">1.00</td>
+                                    <td className="py-6 text-xs text-right tabular-nums">₵{invoice.amount.toLocaleString()}.00</td>
+                                    <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{invoice.amount.toLocaleString()}.00</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -242,30 +279,76 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                             <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Total Amount</span>
                             <span className="text-xl font-black text-primary tabular-nums">₵{invoice.amount.toLocaleString()}.00</span>
                         </div>
-                        <div className="mt-4 p-3 border border-border rounded-sm flex flex-col gap-3">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black uppercase text-secondary tracking-widest">Payment Status</span>
-                                <span className={`text-[10px] font-black uppercase tracking-widest ${invoice.status === 'Settled' ? 'text-green-600' : 'text-amber-600'}`}>
+                        <div className="mt-4 p-4 border border-border rounded-sm flex flex-col gap-4 bg-white shadow-sm">
+                            <div className="flex items-center justify-between border-b border-border pb-2">
+                                <span className="text-[10px] font-black uppercase text-secondary tracking-widest">Financial Summary</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${invoice.status === 'Settled' ? 'bg-green-100 text-green-700' :
+                                    invoice.status === 'Partial' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                                    }`}>
                                     {invoice.status}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <select
-                                    className="flex-grow bg-muted border border-border px-3 py-2 rounded-sm text-[10px] font-bold uppercase focus:outline-none focus:border-primary appearance-none"
-                                    value={invoice.status}
-                                    onChange={(e) => handleStatusUpdate(e.target.value)}
-                                    disabled={updateLoading}
-                                >
-                                    <option value="Pending">Pending (Invoice)</option>
-                                    <option value="Settled">Settled (Paid)</option>
-                                    <option value="Overdue">Overdue</option>
-                                    <option value="Cancelled">Cancelled</option>
-                                </select>
-                                {updateLoading && <Loader2 size={14} className="animate-spin text-primary" />}
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[8px] font-black text-secondary uppercase">Paid to Date</span>
+                                    <span className="text-sm font-bold text-green-600">₵{(invoice.totalPaid || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="flex flex-col gap-1 text-right">
+                                    <span className="text-[8px] font-black text-secondary uppercase">Balance Due</span>
+                                    <span className="text-sm font-bold text-red-600">₵{(invoice.amount - (invoice.totalPaid || 0)).toLocaleString()}</span>
+                                </div>
                             </div>
+
+                            {invoice.status !== 'Settled' && (
+                                <Link
+                                    href={`/dashboard/finance/new?invoice=${invoice.txId}&redirect=/dashboard/invoices/${id}`}
+                                    className="w-full bg-primary text-white text-center py-2 text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <DollarSign size={12} /> Record Installment
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
+
+                {/* Settlement History — driven by real child payment records */}
+                {payments.length > 0 && (
+                    <div className="p-10 border-t border-border bg-slate-50/50">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondary mb-4">
+                            <ShieldCheck size={14} /> Settlement History
+                        </div>
+                        <div className="border border-border rounded-sm overflow-hidden bg-white">
+                            <table className="w-full text-left">
+                                <thead className="bg-muted/50 text-[10px] font-bold uppercase text-secondary">
+                                    <tr>
+                                        <th className="px-4 py-2">Ref</th>
+                                        <th className="px-4 py-2">Date</th>
+                                        <th className="px-4 py-2">Agent</th>
+                                        <th className="px-4 py-2">Status</th>
+                                        <th className="px-4 py-2 text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {payments.map((p: any) => (
+                                        <tr key={p.txId} className="text-xs">
+                                            <td className="px-4 py-3 font-mono text-[10px] text-secondary">{p.txId}</td>
+                                            <td className="px-4 py-3 tabular-nums">{new Date(p.date).toLocaleDateString()}</td>
+                                            <td className="px-4 py-3">{p.recordedBy}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${p.status === "Settled" ? "bg-green-100 text-green-700" :
+                                                        p.status === "Pending" ? "bg-yellow-100 text-yellow-700" :
+                                                            "bg-gray-100 text-gray-600"
+                                                    }`}>{p.status}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-bold text-primary">₵{Number(p.amount).toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
 
                 {/* Footer Notes */}
                 <div className="p-10 border-t border-border flex justify-between items-end">

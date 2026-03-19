@@ -36,11 +36,13 @@ function NewInvoiceForm() {
         category: "Product Sale",
         amount: 0,
         date: new Date().toISOString().split('T')[0],
-        status: "Settled",
+        status: "Unpaid",
         description: `Electronic Invoice for ${customerName || 'Client'}`,
         method: "Bank Transfer",
         recordedBy: "",
-        items: [] as any[]
+        items: [] as any[],
+        isInvoice: true,
+        totalPaid: 0
     });
 
     const [itemSearch, setItemSearch] = useState("");

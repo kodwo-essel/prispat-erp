@@ -3,6 +3,29 @@ import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
 import Inventory from "@/models/Inventory";
 
+export async function GET(
+    request: Request,
+    { params }: { params: { id: string } }
+) {
+    try {
+        await dbConnect();
+        const { id } = params;
+
+        // Search by orderId (public) or _id (internal)
+        const order = id.startsWith('ORD-')
+            ? await Order.findOne({ orderId: id })
+            : await Order.findById(id);
+
+        if (!order) {
+            return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, data: order });
+    } catch (error: any) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+}
+
 export async function PATCH(
     request: NextRequest,
     { params }: { params: { id: string } }

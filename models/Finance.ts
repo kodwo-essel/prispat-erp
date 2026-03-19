@@ -7,6 +7,9 @@ const FinanceSchema = new mongoose.Schema(
             required: true,
             unique: true,
         },
+        orderId: {
+            type: String,
+        },
         entity: {
             type: String,
             required: true,
@@ -26,9 +29,29 @@ const FinanceSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["Settled", "Pending", "Overdue", "Cancelled"],
+            enum: ["Settled", "Pending", "Overdue", "Cancelled", "Partial", "Unpaid"],
             default: "Pending",
         },
+        isInvoice: {
+            type: Boolean,
+            default: false,
+        },
+        parentInvoiceId: {
+            type: String, // txId of the claim it settles
+        },
+        totalPaid: {
+            type: Number,
+            default: 0,
+        },
+        paymentLog: [
+            {
+                amount: Number,
+                date: { type: Date, default: Date.now },
+                method: String,
+                recordedBy: String,
+                note: String,
+            }
+        ],
         category: {
             type: String,
             required: true,

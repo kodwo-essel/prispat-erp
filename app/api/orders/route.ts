@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     try {
         await dbConnect();
         const body = await request.json();
-        const { customer, items, totalAmount, recordedBy } = body;
+        const { customer, items, totalAmount, recordedBy, saleType } = body;
 
         // 1. Validate Stock Availability (Batch-Specific)
         for (const item of items) {
@@ -40,27 +40,56 @@ export async function POST(request: Request) {
         }
 
         // 3. Create Finance Transaction (Revenue or A/R)
-        const txId = `TX-${Date.now()}`;
-        await Finance.create({
-            txId,
+        const orderId = `ORD-${Date.now()}`;
+        const invId = `INV-${Date.now()}`;   // Invoice always gets INV- prefix
+        const isCreditSale = saleType === "Credit";
+
+        // Create the Invoice record
+        const invoice = await Finance.create({
+            txId: invId,
+            orderId,
             entity: customer.name,
-            type: "Revenue",
+            type: isCreditSale ? "A/R" : "Revenue",
             amount: totalAmount,
             category: "Sales Fulfillment",
             recordedBy: recordedBy || "System Automator",
-            status: "Settled",
-            description: `Order dispatch for ${customer.name}`
+            status: isCreditSale ? "Unpaid" : "Pending",   // status is derived from payments, not stored
+            description: `Invoice for Order ${orderId}`,
+            isInvoice: true,
+            totalPaid: 0,           // always 0 — real total is calculated from child payments
+            date: new Date()
         });
 
+        // Every invoice gets a child payment record.
+        // Cash sale = one immediate Settled payment.
+        // Credit sale = no payment yet (PAY- records added later as money comes in).
+        if (!isCreditSale) {
+            await Finance.create({
+                txId: `PAY-${Date.now()}`,
+                parentInvoiceId: invId,
+                entity: customer.name,
+                type: "Revenue",
+                amount: totalAmount,
+                category: "Sales Fulfillment",
+                recordedBy: recordedBy || "System Automator",
+                status: "Settled",
+                description: `Cash payment for Invoice ${invId}`,
+                isInvoice: false,
+                totalPaid: 0,
+                date: new Date()
+            });
+        }
+
         // 4. Create the Order Record
-        const orderId = `ORD-${Date.now()}`;
         const newOrder = await Order.create({
             orderId,
             customer,
             items,
             totalAmount,
-            status: "Dispatched",
-            dispatchDate: new Date()
+            status: isCreditSale ? "Dispatched" : "Received",
+            dispatchDate: new Date(),
+            txId: invId,          // reference points to the INV- invoice record
+            saleType: saleType || "Credit"
         });
 
         return NextResponse.json({ success: true, data: newOrder }, { status: 201 });

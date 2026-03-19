@@ -212,20 +212,20 @@ export default function FinancePage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-muted border-b border-border">
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Transaction ID</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Linked Invoice</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Entity</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Amount</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">Status</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Transaction ID</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Linked Invoice</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Entity</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Amount</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">Status</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {transactions.map((tx) => (
                                 <tr key={tx._id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 font-bold text-primary tabular-nums">{tx.txId}</td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-2.5 text-xs font-bold text-primary tabular-nums">{tx.txId}</td>
+                                    <td className="px-4 py-2.5">
                                         {tx.isInvoice ? (
                                             <Link
                                                 href={`/dashboard/invoices/${tx.txId}`}
@@ -246,12 +246,12 @@ export default function FinancePage() {
                                             </span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 text-slate-700">{tx.entity}</td>
-                                    <td className="px-6 py-4 text-secondary">{tx.category}</td>
-                                    <td className={`px-6 py-4 text-right font-bold tabular-nums ${tx.type === 'Revenue' || tx.type === 'Settlement' ? 'text-green-600' : 'text-primary'}`}>
+                                    <td className="px-4 py-2.5 text-xs text-slate-700">{tx.entity}</td>
+                                    <td className="px-4 py-2.5 text-xs text-secondary">{tx.category}</td>
+                                    <td className={`px-4 py-2.5 text-xs text-right font-bold tabular-nums ${tx.type === 'Revenue' || tx.type === 'Settlement' ? 'text-green-600' : 'text-primary'}`}>
                                         {tx.type === 'Revenue' || tx.type === 'Settlement' ? '+' : '-'}₵{tx.amount.toLocaleString()}
                                     </td>
-                                    <td className="px-6 py-4 text-center">
+                                    <td className="px-4 py-2.5 text-center">
                                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${tx.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
                                             tx.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
                                                 tx.status === 'Unpaid' || tx.status === 'Pending' ? 'bg-red-50 text-red-600 border border-red-100' :
@@ -260,7 +260,7 @@ export default function FinancePage() {
                                             {tx.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-4 py-2.5 text-right">
                                         <Link href={`/dashboard/finance/${tx._id}`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                                             View Details <ArrowRight size={10} />
                                         </Link>

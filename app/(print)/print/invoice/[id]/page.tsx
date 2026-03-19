@@ -9,6 +9,7 @@ export default function InvoiceExportPage({ params }: { params: Promise<{ id: st
     const { id } = use(params);
     const router = useRouter();
     const [invoice, setInvoice] = useState<any>(null);
+    const [payments, setPayments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -30,6 +31,14 @@ export default function InvoiceExportPage({ params }: { params: Promise<{ id: st
                         } catch (e) {
                             console.error("Failed to fetch linked order:", e);
                         }
+                    }
+                    // Fetch child payment records
+                    try {
+                        const payRes = await fetch(`/api/finance?parentInvoiceId=${invData.txId}`);
+                        const payJson = await payRes.json();
+                        if (payJson.success) setPayments(payJson.data || []);
+                    } catch (e) {
+                        console.error("Failed to fetch child payments:", e);
                     }
                     setInvoice(invData);
                 }
@@ -69,6 +78,7 @@ export default function InvoiceExportPage({ params }: { params: Promise<{ id: st
     return (
         <InvoicePrintView
             invoice={invoice}
+            payments={payments}
             onClose={() => router.back()}
         />
     );

@@ -5,10 +5,11 @@ import { Leaf, FileText, Calendar, MapPin, User, ShieldCheck } from "lucide-reac
 
 interface InvoicePrintViewProps {
     invoice: any;
+    payments?: any[];
     onClose: () => void;
 }
 
-export default function InvoicePrintView({ invoice, onClose }: InvoicePrintViewProps) {
+export default function InvoicePrintView({ invoice, payments = [], onClose }: InvoicePrintViewProps) {
     const [settings, setSettings] = useState<any>(null);
 
     useEffect(() => {
@@ -118,20 +119,68 @@ export default function InvoicePrintView({ invoice, onClose }: InvoicePrintViewP
                 </div>
 
                 {/* Financial Totals */}
-                <div className="flex flex-col items-end gap-2 border-t-2 border-slate-200 pt-6">
-                    <div className="flex justify-between w-64 text-[10px] font-bold text-secondary uppercase">
-                        <span>Subtotal:</span>
-                        <span className="tabular-nums">₵{invoice.amount?.toLocaleString()}</span>
+                {(() => {
+                    const totalPaid = payments
+                        .filter((p: any) => p.status === 'Settled')
+                        .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+                    const balance = (invoice.amount || 0) - totalPaid;
+                    return (
+                        <div className="flex flex-col items-end gap-2 border-t-2 border-slate-200 pt-6">
+                            <div className="flex justify-between w-64 text-[10px] font-bold text-secondary uppercase">
+                                <span>Subtotal:</span>
+                                <span className="tabular-nums">₵{invoice.amount?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between w-64 text-[10px] font-bold text-secondary uppercase">
+                                <span>Tax (0%):</span>
+                                <span className="tabular-nums">₵0.00</span>
+                            </div>
+                            {totalPaid > 0 && (
+                                <div className="flex justify-between w-64 text-[10px] font-bold text-green-600 uppercase">
+                                    <span>Total Paid:</span>
+                                    <span className="tabular-nums">₵{totalPaid.toLocaleString()}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between w-80 text-lg font-black text-primary uppercase tracking-tighter mt-4 bg-primary/5 p-4 rounded-sm border border-primary/10">
+                                <span>{balance <= 0 ? 'Total:' : 'Balance Due:'}</span>
+                                <span className="tabular-nums font-mono text-2xl">₵{(balance <= 0 ? invoice.amount : balance)?.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* Payment History */}
+                {payments.length > 0 && (
+                    <div className="flex flex-col gap-4 mt-4">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-secondary border-b border-border pb-2">
+                            <ShieldCheck size={12} /> Payment History
+                        </div>
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b-2 border-slate-200">
+                                    <th className="py-2 text-[10px] font-bold uppercase text-secondary">Reference</th>
+                                    <th className="py-2 text-[10px] font-bold uppercase text-secondary">Date</th>
+                                    <th className="py-2 text-[10px] font-bold uppercase text-secondary">Recorded By</th>
+                                    <th className="py-2 text-[10px] font-bold uppercase text-secondary text-center">Status</th>
+                                    <th className="py-2 text-right text-[10px] font-bold uppercase text-secondary">Amount (₵)</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {payments.map((p: any) => (
+                                    <tr key={p.txId}>
+                                        <td className="py-3 text-[10px] font-mono font-bold text-secondary">{p.txId}</td>
+                                        <td className="py-3 text-xs text-slate-700 tabular-nums">{new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                                        <td className="py-3 text-xs text-slate-600">{p.recordedBy}</td>
+                                        <td className="py-3 text-center">
+                                            <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${p.status === 'Settled' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                                }`}>{p.status}</span>
+                                        </td>
+                                        <td className="py-3 text-right text-xs font-black text-primary tabular-nums">₵{Number(p.amount).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                    <div className="flex justify-between w-64 text-[10px] font-bold text-secondary uppercase">
-                        <span>Tax (0%):</span>
-                        <span className="tabular-nums">₵0.00</span>
-                    </div>
-                    <div className="flex justify-between w-80 text-lg font-black text-primary uppercase tracking-tighter mt-4 bg-primary/5 p-4 rounded-sm border border-primary/10">
-                        <span>Amount Due:</span>
-                        <span className="tabular-nums font-mono text-2xl">₵{invoice.amount?.toLocaleString()}</span>
-                    </div>
-                </div>
+                )}
 
                 {/* Validation Section */}
                 <div className="grid grid-cols-2 gap-20 mt-20">

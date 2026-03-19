@@ -215,6 +215,15 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                         <option>Extreme</option>
                                     </select>
                                 </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Expiry Date</label>
+                                    <input
+                                        name="expiryDate"
+                                        type="date"
+                                        defaultValue={item.expiryDate ? new Date(item.expiryDate).toISOString().split('T')[0] : ''}
+                                        className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
+                                    />
+                                </div>
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold uppercase text-secondary">Verified Supplier</label>

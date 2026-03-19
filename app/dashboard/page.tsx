@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
     TrendingUp,
@@ -118,7 +119,9 @@ export default function DashboardPage() {
                                             <div className="text-[11px] text-secondary mt-1">{alert.description}</div>
                                         </div>
                                     </div>
-                                    <button className="text-[10px] font-bold text-primary border border-primary px-3 py-1 rounded-sm hover:bg-primary/5">ACTION</button>
+                                    <Link href={alert.link || "/dashboard/inventory"} className="text-[10px] font-bold text-primary border border-primary px-3 py-1 rounded-sm hover:bg-primary/5 transition-colors">
+                                        ACTION
+                                    </Link>
                                 </div>
                             ))
                         ) : (

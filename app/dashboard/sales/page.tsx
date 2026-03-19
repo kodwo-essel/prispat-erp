@@ -11,31 +11,163 @@ import {
     ChevronRight,
     Loader2,
     Calendar,
-    User
+    User,
+    CheckCircle,
+    XCircle,
+    Trash2
 } from "lucide-react";
+import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
+import OrderManageDrawer from "./OrderManageDrawer";
 
 export default function SalesPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+    // Modal State
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        type: "danger" | "warning" | "info";
+        onConfirm: () => void;
+        isLoading?: boolean;
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        confirmText: "Confirm",
+        type: "info",
+        onConfirm: () => { },
+    });
+
+    const fetchOrders = async () => {
+        try {
+            setLoading(true);
+            const res = await fetch("/api/orders");
+            const json = await res.json();
+            if (json.success) {
+                setOrders(json.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch orders:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const res = await fetch("/api/orders");
-                const json = await res.json();
-                if (json.success) {
-                    setOrders(json.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch orders:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchOrders();
     }, []);
+
+    const handleUpdateOrder = async (id: string, updates: any) => {
+        setModalConfig({
+            isOpen: true,
+            title: `Update Order Information`,
+            message: `Are you sure you want to commit these changes to the order record?`,
+            confirmText: `Commit Changes`,
+            type: "info",
+            isLoading: false,
+            onConfirm: async () => {
+                setModalConfig(prev => ({ ...prev, isLoading: true }));
+                try {
+                    const res = await fetch(`/api/orders/${id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(updates)
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        fetchOrders();
+                        setModalConfig(prev => ({ ...prev, isOpen: false }));
+                        setIsDrawerOpen(false);
+                    } else {
+                        setModalConfig({
+                            isOpen: true,
+                            title: "Update Failed",
+                            message: json.error || "Failed to update order.",
+                            confirmText: "Close",
+                            type: "danger",
+                            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                        });
+                    }
+                } catch (error) {
+                    console.error("Update failed:", error);
+                } finally {
+                    setModalConfig(prev => ({ ...prev, isLoading: false }));
+                }
+            }
+        });
+    };
+
+    const handleCancelOrder = async (id: string) => {
+        setModalConfig({
+            isOpen: true,
+            title: "Cancel Order",
+            message: "Are you sure you want to cancel this order? This will restock inventory and mark the record as inactive.",
+            confirmText: "Cancel Order",
+            type: "danger",
+            isLoading: false,
+            onConfirm: async () => {
+                setModalConfig(prev => ({ ...prev, isLoading: true }));
+                try {
+                    const res = await fetch(`/api/orders/${id}`, {
+                        method: "DELETE"
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        fetchOrders();
+                        setModalConfig(prev => ({ ...prev, isOpen: false }));
+                        setIsDrawerOpen(false); // Close drawer if it was open
+                    } else {
+                        setModalConfig({
+                            isOpen: true,
+                            title: "Cancellation Failed",
+                            message: json.error || "Failed to cancel order.",
+                            confirmText: "Close",
+                            type: "danger",
+                            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                        });
+                    }
+                } catch (error) {
+                    console.error("Cancellation failed:", error);
+                } finally {
+                    setModalConfig(prev => ({ ...prev, isLoading: false }));
+                }
+            }
+        });
+    };
+
+    const handleOpenDrawer = (order: any) => {
+        setSelectedOrder(order);
+        setIsDrawerOpen(true);
+    };
+
+    // Metric Calculations
+    const todayISO = new Date().toISOString().split('T')[0];
+
+    const dispatchesToday = orders.filter(o => {
+        const d = new Date(o.dispatchDate || o.createdAt).toISOString().split('T')[0];
+        return d === todayISO && o.status !== 'Cancelled';
+    }).length;
+
+    const totalDispatches = orders.filter(o => o.status !== 'Cancelled').length;
+
+    const pendingOrders = orders.filter(o => o.status === 'Pending').length;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const mtdRevenue = orders.reduce((sum, o) => {
+        const d = new Date(o.createdAt);
+        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear && o.status !== 'Cancelled') {
+            return sum + o.totalAmount;
+        }
+        return sum;
+    }, 0);
 
     const filteredOrders = orders.filter(order =>
         order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,18 +190,22 @@ export default function SalesPage() {
             </div>
 
             {/* Metrics Overview (Mini) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white border border-border p-4 rounded-sm">
                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Dispatches Today</div>
-                    <div className="text-xl font-bold text-primary">{orders.filter(o => new Date(o.createdAt).toDateString() === new Date().toDateString()).length}</div>
+                    <div className="text-xl font-bold text-primary">{dispatchesToday}</div>
+                </div>
+                <div className="bg-white border border-border p-4 rounded-sm">
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Dispatches</div>
+                    <div className="text-xl font-bold text-primary">{totalDispatches}</div>
                 </div>
                 <div className="bg-white border border-border p-4 rounded-sm">
                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Pending Orders</div>
-                    <div className="text-xl font-bold text-amber-600">{orders.filter(o => o.status === 'Pending').length}</div>
+                    <div className="text-xl font-bold text-amber-600">{pendingOrders}</div>
                 </div>
                 <div className="bg-white border border-border p-4 rounded-sm">
                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Aggregate Revenue (MTD)</div>
-                    <div className="text-xl font-bold text-primary">₵{orders.reduce((sum, o) => sum + o.totalAmount, 0).toLocaleString()}</div>
+                    <div className="text-xl font-bold text-primary">₵{mtdRevenue.toLocaleString()}</div>
                 </div>
             </div>
 
@@ -142,14 +278,50 @@ export default function SalesPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${order.status === 'Dispatched' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-slate-50 text-slate-500 border border-slate-100'}`}>
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${order.status === 'Delivered' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                            order.status === 'Dispatched' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                                                order.status === 'Cancelled' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                    'bg-slate-50 text-slate-500 border border-slate-100'
+                                            }`}>
                                             {order.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
-                                            Manage <ArrowRight size={10} className="inline ml-1" />
-                                        </button>
+                                        <div className="flex items-center justify-end gap-3">
+                                            <button
+                                                onClick={() => handleOpenDrawer(order)}
+                                                className="text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20 px-3 py-1.5 rounded-sm hover:bg-primary/5 transition-colors"
+                                            >
+                                                Manage Dispatch
+                                            </button>
+                                            <div className="h-4 w-px bg-border mx-1" />
+                                            <div className="flex items-center gap-1.5">
+                                                {order.status === 'Pending' && (
+                                                    <button
+                                                        onClick={() => handleUpdateOrder(order._id, { status: 'Dispatched' })}
+                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-sm title='Mark as Dispatched'"
+                                                    >
+                                                        <ArrowRight size={14} />
+                                                    </button>
+                                                )}
+                                                {order.status === 'Dispatched' && (
+                                                    <button
+                                                        onClick={() => handleUpdateOrder(order._id, { status: 'Delivered' })}
+                                                        className="p-1.5 text-green-600 hover:bg-green-50 rounded-sm title='Mark as Delivered'"
+                                                    >
+                                                        <CheckCircle size={14} />
+                                                    </button>
+                                                )}
+                                                {order.status !== 'Cancelled' && order.status !== 'Delivered' && (
+                                                    <button
+                                                        onClick={() => handleCancelOrder(order._id)}
+                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-sm title='Cancel Order'"
+                                                    >
+                                                        <XCircle size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -173,6 +345,25 @@ export default function SalesPage() {
                     </div>
                 </div>
             </div>
+
+            <ConfirmationModal
+                isOpen={modalConfig.isOpen}
+                onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={modalConfig.onConfirm}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                confirmText={modalConfig.confirmText}
+                type={modalConfig.type}
+                isLoading={modalConfig.isLoading}
+            />
+
+            <OrderManageDrawer
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                order={selectedOrder}
+                onUpdateOrder={handleUpdateOrder}
+                onCancelOrder={handleCancelOrder}
+            />
         </div>
     );
 }

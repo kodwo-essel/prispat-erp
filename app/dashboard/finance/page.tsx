@@ -40,11 +40,17 @@ export default function FinancePage() {
         const fetchFinance = async () => {
             setLoading(true);
             setError(null);
+
+            // Set a secondary timeout for UX if the network is extremely slow
+            const timer = setTimeout(() => {
+                if (loading) setError("System is taking longer than usual to sync. Please check your connection.");
+            }, 8000);
+
             try {
                 const res = await fetch("/api/finance", { cache: "no-store" });
                 const json = await res.json();
                 if (json.success) {
-                    setTransactions(json.data);
+                    setTransactions(json.data || []);
                 } else {
                     setError(json.error || "Failed to retrieve fiscal data.");
                 }
@@ -53,6 +59,7 @@ export default function FinancePage() {
                 setError("Network error: Could not reach central ledger.");
             } finally {
                 setLoading(false);
+                clearTimeout(timer);
             }
         };
 
@@ -175,6 +182,14 @@ export default function FinancePage() {
                         <Loader2 size={32} className="animate-spin text-primary" />
                         <span className="text-xs font-bold uppercase tracking-widest">Accessing Secure Records...</span>
                     </div>
+                ) : transactions.length === 0 ? (
+                    <div className="flex-grow flex flex-col items-center justify-center gap-4 text-slate-400 p-12">
+                        <FileText size={48} className="opacity-20" />
+                        <div className="text-center">
+                            <span className="text-sm font-medium block">No fiscal records found in current batch.</span>
+                            <span className="text-[10px] uppercase font-bold tracking-widest opacity-60">Ready for initial ledger entry</span>
+                        </div>
+                    </div>
                 ) : (
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -198,7 +213,7 @@ export default function FinancePage() {
                                     </td>
                                     <td className="px-6 py-4 text-xs text-secondary">{tx.type}</td>
                                     <td className="px-6 py-4">
-                                        <div className={`text - xs font - bold tabular - nums ${tx.type === 'Revenue' ? 'text-green-600' : 'text-slate-900'} `}>
+                                        <div className={`text-xs font-bold tabular-nums ${tx.type === 'Revenue' ? 'text-green-600' : 'text-slate-900'}`}>
                                             {tx.type === 'Revenue' ? '+' : '-'} {tx.amount.toLocaleString()}
                                         </div>
                                     </td>
@@ -206,10 +221,10 @@ export default function FinancePage() {
                                         {new Date(tx.date).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text - [9px] font - bold px - 2 py - 0.5 rounded - full uppercase tracking - tight ${tx.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${tx.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
                                             tx.status === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
                                                 'bg-red-50 text-red-600 border border-red-100'
-                                            } `}>
+                                            }`}>
                                             {tx.status}
                                         </span>
                                     </td>

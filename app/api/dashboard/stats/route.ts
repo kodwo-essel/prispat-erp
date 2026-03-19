@@ -53,7 +53,8 @@ export async function GET() {
                     type: "EXPIRY",
                     title: `${prefix}: ${item.name}`,
                     description: `${item.stock} ${item.unit} (${item.batchId}) expiring in ${diffDays} days.`,
-                    severity
+                    severity,
+                    link: `/dashboard/inventory/${item._id}`
                 });
             }
         });
@@ -65,7 +66,8 @@ export async function GET() {
                 type: "STOCK",
                 title: `LOW STOCK: ${item.name}`,
                 description: `Warehouse threshold breach (${item.stock} units remain).`,
-                severity: item.stock < 20 ? "high" : "medium"
+                severity: item.stock < 20 ? "high" : "medium",
+                link: `/dashboard/inventory/${item._id}`
             });
         });
 

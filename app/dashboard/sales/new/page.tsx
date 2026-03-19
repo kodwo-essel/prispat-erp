@@ -28,6 +28,8 @@ export default function NewOrderPage() {
     // Form State
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
     const [orderItems, setOrderItems] = useState<any[]>([]);
+    const [isAnonymous, setIsAnonymous] = useState(false);
+    const [anonymousFarmerName, setAnonymousFarmerName] = useState("");
 
     // Search States
     const [customerSearch, setCustomerSearch] = useState("");
@@ -63,12 +65,11 @@ export default function NewOrderPage() {
     );
 
     const addItem = (item: any) => {
-        // Find all batches for this product and pick the oldest one (FIFO)
         const batches = inventory
             .filter(i => i.sku === item.sku && i.stock > 0)
             .sort((a, b) => new Date(a.arrivalDate).getTime() - new Date(b.arrivalDate).getTime());
 
-        const oldestBatch = batches[0] || item; // Fallback to current item if no other matches found
+        const oldestBatch = batches[0] || item;
 
         const existing = orderItems.find(oi => oi.sku === oldestBatch.sku && oi.batchId === oldestBatch.batchId);
         if (existing) {
@@ -97,15 +98,12 @@ export default function NewOrderPage() {
 
     const updateQuantity = (sku: string, batchId: string, qty: number) => {
         if (qty < 1) return;
-
-        // Stock Check
         const invItem = inventory.find(i => i.sku === sku && i.batchId === batchId);
         if (invItem && qty > invItem.stock) {
             setError(`Cannot exceed available stock (${invItem.stock}) for batch ${batchId}`);
             return;
         }
         setError("");
-
         setOrderItems(orderItems.map(oi =>
             (oi.sku === sku && oi.batchId === batchId) ? { ...oi, quantity: qty, total: qty * oi.unitPrice } : oi
         ));
@@ -115,10 +113,17 @@ export default function NewOrderPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedCustomer) {
-            setError("Please select a customer.");
+
+        let customerData;
+        if (isAnonymous) {
+            customerData = { name: anonymousFarmerName || "Walk-in Farmer", id: "anonymous" };
+        } else if (selectedCustomer) {
+            customerData = { id: selectedCustomer._id, name: selectedCustomer.name };
+        } else {
+            setError("Please select a customer or mark as anonymous.");
             return;
         }
+
         if (orderItems.length === 0) {
             setError("Please add at least one item.");
             return;
@@ -132,10 +137,11 @@ export default function NewOrderPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    customer: { id: selectedCustomer._id, name: selectedCustomer.name },
+                    customer: customerData,
                     items: orderItems,
                     totalAmount,
-                    recordedBy: "Current User" // In a real app, get from session
+                    status: "Pending", // Defaulting to Pending
+                    recordedBy: "Current User"
                 }),
             });
             const json = await res.json();
@@ -152,90 +158,110 @@ export default function NewOrderPage() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-8 max-w-5xl mx-auto">
-            {/* Header */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
             <div className="flex flex-col gap-4">
                 <Link href="/dashboard/sales" className="flex items-center gap-2 text-[10px] font-bold text-secondary uppercase tracking-widest hover:text-primary transition-colors w-fit">
                     <ChevronLeft size={12} /> Back to Sales
                 </Link>
                 <div className="flex flex-col gap-1">
                     <h1 className="text-3xl font-bold tracking-tight text-primary">Dispatch New Order</h1>
-                    <p className="text-secondary text-sm">Issue stock and generate financial claims for registered institutional clients.</p>
+                    <p className="text-secondary text-sm">Issue stock and generate financial claims for registered institutional clients or walk-in farmers.</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Customer & Item Selection */}
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    {/* Customer Selection */}
                     <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-4">
-                        <div className="flex items-center gap-2 border-b border-border pb-4">
-                            <User size={18} className="text-primary" />
+                        <div className="flex items-center justify-between border-b border-border pb-4">
                             <h3 className="text-xs font-bold uppercase tracking-widest">Client Identification</h3>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isAnonymous}
+                                    onChange={(e) => {
+                                        setIsAnonymous(e.target.checked);
+                                        if (e.target.checked) {
+                                            setSelectedCustomer(null);
+                                            setCustomerSearch("");
+                                            setShowCustomerSearch(false);
+                                        }
+                                    }}
+                                    className="accent-primary"
+                                />
+                                <span className="text-[10px] font-bold uppercase text-secondary">Anonymous / Walk-in Farmer</span>
+                            </label>
                         </div>
 
-                        <div className="relative">
-                            {selectedCustomer ? (
-                                <div className="flex items-center justify-between p-4 bg-muted border border-border rounded-sm">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 bg-primary/10 text-primary flex items-center justify-center rounded-sm font-bold shadow-sm">
-                                            {selectedCustomer.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-bold text-primary">{selectedCustomer.name}</div>
-                                            <div className="text-[10px] text-secondary uppercase font-bold tracking-tighter">{selectedCustomer.region} / {selectedCustomer.type}</div>
-                                        </div>
+                        {isAnonymous ? (
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Farmer Name (Optional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter Farmer Name..."
+                                    className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                                    value={anonymousFarmerName}
+                                    onChange={(e) => setAnonymousFarmerName(e.target.value)}
+                                />
+                            </div>
+                        ) : selectedCustomer ? (
+                            <div className="flex items-center justify-between p-4 bg-muted border border-border rounded-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-primary/10 text-primary flex items-center justify-center rounded-sm font-bold shadow-sm">
+                                        {selectedCustomer.name.charAt(0)}
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedCustomer(null)}
-                                        className="text-[10px] font-bold text-red-600 uppercase tracking-widest hover:underline"
-                                    >
-                                        Change Client
-                                    </button>
+                                    <div>
+                                        <div className="text-sm font-bold text-primary">{selectedCustomer.name}</div>
+                                        <div className="text-[10px] text-secondary uppercase font-bold tracking-tighter">{selectedCustomer.region || 'Registered'}</div>
+                                    </div>
                                 </div>
-                            ) : (
-                                <div className="relative">
-                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search Clinical or Distribution Client..."
-                                        className="w-full bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
-                                        value={customerSearch}
-                                        onChange={(e) => {
-                                            setCustomerSearch(e.target.value);
-                                            setShowCustomerSearch(true);
-                                        }}
-                                        onFocus={() => setShowCustomerSearch(true)}
-                                    />
-                                    {showCustomerSearch && customerSearch && (
-                                        <div className="absolute top-full left-0 right-0 bg-white border border-border shadow-xl rounded-sm z-50 max-h-48 overflow-y-auto mt-1">
-                                            {filteredCustomers.length === 0 ? (
-                                                <div className="p-4 text-xs text-secondary italic">No matching clients found.</div>
-                                            ) : (
-                                                filteredCustomers.map(c => (
-                                                    <div
-                                                        key={c._id}
-                                                        onClick={() => {
-                                                            setSelectedCustomer(c);
-                                                            setShowCustomerSearch(false);
-                                                            setCustomerSearch("");
-                                                        }}
-                                                        className="p-3 hover:bg-slate-50 cursor-pointer border-b border-muted transition-colors"
-                                                    >
-                                                        <div className="text-xs font-bold text-primary">{c.name}</div>
-                                                        <div className="text-[10px] text-secondary uppercase tracking-tighter">{c.region}</div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedCustomer(null)}
+                                    className="text-[10px] font-bold text-red-600 uppercase tracking-widest hover:underline"
+                                >
+                                    Change Client
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
+                                <input
+                                    type="text"
+                                    placeholder="Search Clinical or Distribution Client..."
+                                    className="w-full bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
+                                    value={customerSearch}
+                                    onChange={(e) => {
+                                        setCustomerSearch(e.target.value);
+                                        setShowCustomerSearch(true);
+                                    }}
+                                    onFocus={() => setShowCustomerSearch(true)}
+                                />
+                                {showCustomerSearch && customerSearch && (
+                                    <div className="absolute top-full left-0 right-0 bg-white border border-border shadow-xl rounded-sm z-50 max-h-48 overflow-y-auto mt-1">
+                                        {filteredCustomers.length === 0 ? (
+                                            <div className="p-4 text-xs text-secondary italic">No matching clients found.</div>
+                                        ) : (
+                                            filteredCustomers.map(c => (
+                                                <div
+                                                    key={c._id}
+                                                    onClick={() => {
+                                                        setSelectedCustomer(c);
+                                                        setShowCustomerSearch(false);
+                                                        setCustomerSearch("");
+                                                    }}
+                                                    className="p-3 hover:bg-slate-50 cursor-pointer border-b border-muted transition-colors"
+                                                >
+                                                    <div className="text-xs font-bold text-primary">{c.name}</div>
+                                                    <div className="text-[10px] text-secondary uppercase tracking-tighter">{c.region}</div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </section>
 
-                    {/* Item Fulfillment */}
                     <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-4">
                         <div className="flex items-center justify-between border-b border-border pb-4">
                             <div className="flex items-center gap-2">
@@ -277,10 +303,10 @@ export default function NewOrderPage() {
                                                             <span className="text-[10px] font-bold text-primary">{i.name}</span>
                                                             <span className="text-[9px] font-bold text-slate-400">{i.sku}</span>
                                                         </div>
-                                                        <div className="flex justify-between items-center mt-0.5">
+                                                        <div className="flex justify-between items-center mt-0.5" >
                                                             <span className="text-[9px] text-secondary">Stock: {i.stock} {i.unit}</span>
                                                             <span className="text-[9px] font-black text-slate-700">₵{i.unitPrice?.toLocaleString()}</span>
-                                                        </div>
+                                                        </div >
                                                     </div>
                                                 ))
                                             )}
@@ -290,7 +316,6 @@ export default function NewOrderPage() {
                             </div>
                         </div>
 
-                        {/* Items Table */}
                         <div className="min-h-[200px]">
                             {orderItems.length === 0 ? (
                                 <div className="h-[200px] flex flex-col items-center justify-center gap-3 text-slate-400">
@@ -310,55 +335,43 @@ export default function NewOrderPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-muted">
-                                        {orderItems.map((item) => {
-                                            // Check if this is the oldest batch for this SKU in state
-                                            const allBatchesForSku = inventory.filter(i => i.sku === item.sku && i.stock > 0);
-                                            const sorted = [...allBatchesForSku].sort((a, b) => new Date(a.arrivalDate).getTime() - new Date(b.arrivalDate).getTime());
-                                            const isFIFO = sorted.length > 0 && sorted[0].batchId === item.batchId;
-
-                                            return (
-                                                <tr key={`${item.sku}-${item.batchId}`} className="group">
-                                                    <td className="py-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="text-[10px] font-bold text-primary">{item.name}</div>
-                                                            {isFIFO && (
-                                                                <span className="text-[8px] font-black bg-green-50 text-green-600 border border-green-100 px-1 rounded-full uppercase tracking-tighter">FIFO Suggestion</span>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-[9px] text-secondary tracking-widest font-medium uppercase">{item.sku}</div>
-                                                    </td>
-                                                    <td className="py-4 text-right">
-                                                        <code className="text-[10px] font-mono bg-slate-50 border border-border px-1.5 py-0.5 rounded-sm">
-                                                            {item.batchId}
-                                                        </code>
-                                                    </td>
-                                                    <td className="py-4 text-right">
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            value={item.quantity}
-                                                            onChange={(e) => updateQuantity(item.sku, item.batchId, parseInt(e.target.value))}
-                                                            className="w-16 bg-muted border border-border px-2 py-1 rounded-sm text-[10px] text-right font-bold focus:outline-none focus:border-primary"
-                                                        />
-                                                    </td>
-                                                    <td className="py-4 text-xs font-bold text-slate-700 text-right tabular-nums">
-                                                        ₵{item.unitPrice.toLocaleString()}
-                                                    </td>
-                                                    <td className="py-4 text-xs font-black text-slate-900 text-right tabular-nums">
-                                                        ₵{item.total.toLocaleString()}
-                                                    </td>
-                                                    <td className="py-4 text-right">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeItem(item.sku, item.batchId)}
-                                                            className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-50 rounded-sm"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
+                                        {orderItems.map((item) => (
+                                            <tr key={`${item.sku}-${item.batchId}`} className="group">
+                                                <td className="py-4">
+                                                    <div className="text-[10px] font-bold text-primary">{item.name}</div>
+                                                    <div className="text-[9px] text-secondary tracking-widest font-medium uppercase">{item.sku}</div>
+                                                </td>
+                                                <td className="py-4 text-right">
+                                                    <code className="text-[10px] font-mono bg-slate-50 border border-border px-1.5 py-0.5 rounded-sm">
+                                                        {item.batchId}
+                                                    </code>
+                                                </td>
+                                                <td className="py-4 text-right">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateQuantity(item.sku, item.batchId, parseInt(e.target.value))}
+                                                        className="w-16 bg-muted border border-border px-2 py-1 rounded-sm text-[10px] text-right font-bold focus:outline-none focus:border-primary"
+                                                    />
+                                                </td>
+                                                <td className="py-4 text-xs font-bold text-slate-700 text-right tabular-nums">
+                                                    ₵{item.unitPrice.toLocaleString()}
+                                                </td>
+                                                <td className="py-4 text-xs font-black text-slate-900 text-right tabular-nums">
+                                                    ₵{item.total.toLocaleString()}
+                                                </td>
+                                                <td className="py-4 text-right">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeItem(item.sku, item.batchId)}
+                                                        className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-50 rounded-sm"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             )}
@@ -366,7 +379,6 @@ export default function NewOrderPage() {
                     </section>
                 </div>
 
-                {/* Right Column: Order Summary */}
                 <div className="flex flex-col gap-6">
                     <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-6 sticky top-8">
                         <div className="flex items-center gap-2 border-b border-border pb-4 mb-2">
@@ -391,16 +403,6 @@ export default function NewOrderPage() {
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 mt-4">
-                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-sm">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                    <span className="text-[9px] font-bold text-slate-700 uppercase tracking-widest">Compliance Check Passed</span>
-                                </div>
-                                <p className="text-[9px] text-secondary leading-tight italic">Inventory levels and credit protocols verified for current transaction.</p>
-                            </div>
-                        </div>
-
                         <div className="flex flex-col gap-4 mt-6">
                             {error && <div className="bg-red-50 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-widest p-4 rounded-sm">{error}</div>}
                             <button
@@ -416,6 +418,8 @@ export default function NewOrderPage() {
                                 onClick={() => {
                                     setOrderItems([]);
                                     setSelectedCustomer(null);
+                                    setIsAnonymous(false);
+                                    setAnonymousFarmerName("");
                                 }}
                                 className="flex items-center justify-center gap-2 text-[10px] font-bold text-secondary uppercase tracking-widest py-2 hover:bg-muted transition-colors rounded-sm"
                             >

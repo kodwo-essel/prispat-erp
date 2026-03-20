@@ -16,6 +16,7 @@ import { exportToCSV } from "@/lib/exportUtils";
 
 export default function InventoryPage() {
     const [inventory, setInventory] = useState<any[]>([]);
+    const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("All Categories");
@@ -38,21 +39,24 @@ export default function InventoryPage() {
     };
 
     useEffect(() => {
-        const fetchInventory = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch("/api/inventory");
-                const json = await res.json();
-                if (json.success) {
-                    setInventory(json.data);
-                }
+                const [invRes, ordRes] = await Promise.all([
+                    fetch("/api/inventory"),
+                    fetch("/api/orders")
+                ]);
+                const invJson = await invRes.json();
+                const ordJson = await ordRes.json();
+                if (invJson.success) setInventory(invJson.data);
+                if (ordJson.success) setOrders(ordJson.data);
             } catch (error) {
-                console.error("Failed to fetch inventory:", error);
+                console.error("Failed to fetch data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchInventory();
+        fetchData();
     }, []);
 
     const filteredInventory = inventory.filter(item => {
@@ -66,6 +70,13 @@ export default function InventoryPage() {
 
         return matchesSearch && matchesCategory && matchesStatus;
     });
+
+    const getSoldQuantity = (sku: string, batchId: string) => {
+        return orders.reduce((total, order) => {
+            const item = order.items.find((i: any) => i.sku === sku && i.batchId === batchId);
+            return total + (item ? item.quantity : 0);
+        }, 0);
+    };
 
     return (
         <div className="flex flex-col gap-6">
@@ -144,6 +155,7 @@ export default function InventoryPage() {
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Product Name</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Supplier</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Stock</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Sold</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Pricing</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Expiry</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Status</th>
@@ -169,6 +181,12 @@ export default function InventoryPage() {
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-primary tabular-nums">{item.stock}</div>
                                         <div className="text-[10px] text-secondary">{item.unit}</div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-bold text-orange-600 tabular-nums">
+                                            {getSoldQuantity(item.sku, item.batchId)}
+                                        </div>
+                                        <div className="text-[10px] text-secondary">Units Sold</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString() || '0'}</div>

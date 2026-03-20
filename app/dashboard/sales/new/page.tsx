@@ -467,8 +467,10 @@ function NewOrderForm() {
                                 disabled={loading}
                                 className="btn-primary flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest py-3 rounded-sm shadow-lg shadow-primary/20 w-full"
                             >
-                                {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                Finalize Dispatch
+                                <span className="flex items-center gap-2">
+                                    {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                    Finalize Dispatch
+                                </span>
                             </button>
                             <button
                                 type="button"

@@ -112,6 +112,13 @@ export async function GET() {
                             },
                             else: "$status"
                         }
+                    },
+                    collectedAmount: {
+                        $cond: {
+                            if: { $eq: ["$isInvoice", true] },
+                            then: { $sum: "$childPayments.amount" },
+                            else: { $cond: { if: { $eq: ["$status", "Settled"] }, then: "$amount", else: 0 } }
+                        }
                     }
                 }
             },
@@ -141,7 +148,8 @@ export async function GET() {
             {
                 $match: {
                     date: { $gte: sevenDaysAgo },
-                    type: "Revenue",
+                    type: { $in: ["Revenue", "A/R"] },
+                    isInvoice: false,
                     status: "Settled"
                 }
             },
@@ -173,7 +181,8 @@ export async function GET() {
             {
                 $match: {
                     date: { $gte: firstDayOfMonth },
-                    type: "Revenue",
+                    type: { $in: ["Revenue", "A/R"] },
+                    isInvoice: false,
                     status: "Settled"
                 }
             },

@@ -64,21 +64,35 @@ export async function POST(request: Request) {
                                 },
                                 else: "$status"
                             }
+                        },
+                        // For Cash Flow Revenue, we want to sum the child payments if it's an invoice, 
+                        // or the amount itself if it's a standalone settled payment.
+                        collectedAmount: {
+                            $cond: {
+                                if: { $eq: ["$isInvoice", true] },
+                                then: { $sum: "$childPayments.amount" },
+                                else: { $cond: { if: { $eq: ["$status", "Settled"] }, then: "$amount", else: 0 } }
+                            }
                         }
                     }
                 }
             ]);
 
-            const revenue = txs.filter(t => t.type === "Revenue" && t.calculatedStatus === "Settled").reduce((acc, t) => acc + (t.amount || 0), 0);
-            const expenses = txs.filter(t => t.type === "Expense").reduce((acc, t) => acc + (t.amount || 0), 0);
+            const revenue = txs
+                .filter(t => (t.type === "Revenue" || t.type === "A/R") && !t.isInvoice && t.status === "Settled")
+                .reduce((acc, t) => acc + (t.amount || 0), 0);
+
+            const expenses = txs
+                .filter(t => t.type === "Expense" && t.status !== "Cancelled")
+                .reduce((acc, t) => acc + (t.amount || 0), 0);
 
             reportData.finance = {
                 revenue,
                 expenses,
                 metrics: {
-                    totalTransactions: txs.length,
+                    totalTransactions: txs.filter(t => t.isInvoice || (t.type === "Expense" && !t.parentInvoiceId)).length,
                     pendingCollections: txs.filter(t => t.calculatedStatus === "Pending" && t.type === "A/R").reduce((acc, t) => acc + (t.amount || 0), 0),
-                    settledPayments: txs.filter(t => t.calculatedStatus === "Settled").length
+                    settledInvoices: txs.filter(t => t.isInvoice && t.calculatedStatus === "Settled").length
                 }
             };
         }
@@ -98,7 +112,8 @@ export async function POST(request: Request) {
             const supplies = await Finance.find({
                 date: { $gte: start, $lte: end },
                 type: "Expense",
-                category: { $in: ["Procurement", "Supply"] }
+                category: { $in: ["Procurement", "Supply"] },
+                status: { $ne: "Cancelled" }
             });
             reportData.supplies = {
                 metrics: {
@@ -123,7 +138,9 @@ export async function POST(request: Request) {
         if (services.includes("sales")) {
             const sales = await Finance.find({
                 date: { $gte: start, $lte: end },
-                type: "Revenue"
+                type: { $in: ["Revenue", "A/R"] },
+                isInvoice: true,
+                status: { $ne: "Cancelled" }
             });
             reportData.sales = {
                 metrics: {

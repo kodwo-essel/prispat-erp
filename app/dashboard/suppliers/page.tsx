@@ -135,8 +135,8 @@ export default function SuppliersPage() {
                                     </td>
                                     <td className="px-6 py-4 text-xs text-secondary">{sup.category}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${sup.status === 'Active' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                            'bg-amber-50 text-amber-600 border border-amber-100'
+                                        <span className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter ${sup.status === 'Active' ? 'bg-green-50 text-green-600 border border-green-200' :
+                                            'bg-amber-50 text-amber-600 border border-amber-200'
                                             }`}>
                                             {sup.status}
                                         </span>

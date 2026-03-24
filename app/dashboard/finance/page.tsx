@@ -335,9 +335,9 @@ export default function FinancePage() {
                                     <td className="px-4 py-2.5 text-xs text-slate-700">{tx.entity}</td>
                                     <td className="px-4 py-2.5 text-xs text-secondary">{tx.category}</td>
                                     <td className="px-4 py-2.5">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-tight ${tx.type === 'Revenue' ? 'bg-green-50 text-green-700 border border-green-100' :
-                                            tx.type === 'Expense' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                                                'bg-slate-50 text-slate-600 border border-slate-200'
+                                        <span className={`text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-tighter ${tx.type === 'Revenue' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                            tx.type === 'Expense' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                                'bg-slate-50 text-slate-600 border border-slate-300'
                                             }`}>
                                             {tx.type}
                                         </span>
@@ -346,10 +346,9 @@ export default function FinancePage() {
                                         {tx.type === 'Revenue' || tx.type === 'Settlement' ? '+' : '-'}₵{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
                                     <td className="px-4 py-2.5 text-center">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${tx.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                            tx.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                                tx.status === 'Unpaid' || tx.status === 'Pending' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                                    'bg-slate-50 text-slate-600 border border-slate-100'
+                                        <span className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter ${tx.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-200' :
+                                            tx.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                                                'bg-red-50 text-red-600 border border-red-200'
                                             }`}>
                                             {tx.status}
                                         </span>
@@ -373,6 +372,6 @@ export default function FinancePage() {
                     pageSize={pageSize}
                 />
             </div>
-        </div>
+        </div >
     );
 }

@@ -123,8 +123,8 @@ export default function CustomersPage() {
                                     <td className="px-6 py-4 text-xs text-slate-900 font-medium">{cust.contact}</td>
                                     <td className="px-6 py-4 text-xs font-bold tabular-nums text-primary">₵{(cust.creditLimit || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`text - [9px] font - bold px - 2 py - 0.5 rounded - full uppercase tracking - tight ${cust.status === 'Active' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                            'bg-amber-50 text-amber-600 border border-amber-100'
+                                        <span className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter ${cust.status === 'Active' ? 'bg-green-50 text-green-600 border border-green-200' :
+                                            'bg-amber-50 text-amber-600 border border-amber-200'
                                             } `}>
                                             {cust.status}
                                         </span>

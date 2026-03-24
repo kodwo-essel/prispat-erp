@@ -221,11 +221,11 @@ export default function SalesPage() {
             {/* Metrics Overview (Mini) */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white border border-border p-4 rounded-sm">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Dispatches Today</div>
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Sales Today</div>
                     <div className="text-xl font-bold text-primary">{dispatchesToday}</div>
                 </div>
                 <div className="bg-white border border-border p-4 rounded-sm">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Dispatches</div>
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Sales</div>
                     <div className="text-xl font-bold text-primary">{totalDispatches}</div>
                 </div>
                 <div className="bg-white border border-border p-4 rounded-sm">
@@ -317,16 +317,16 @@ export default function SalesPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${order.status === 'Delivered' || order.status === 'Received' ? 'bg-green-50 text-green-600 border-green-100' :
-                                            order.status === 'Dispatched' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                                                order.status === 'Cancelled' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                                    'bg-slate-50 text-slate-500 border border-slate-100'
+                                        <span className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter border ${order.status === 'Delivered' || order.status === 'Received' ? 'bg-green-50 text-green-600 border-green-200' :
+                                            order.status === 'Dispatched' ? 'bg-blue-50 text-blue-600 border border-blue-200' :
+                                                order.status === 'Cancelled' ? 'bg-red-50 text-red-600 border border-red-200' :
+                                                    'bg-slate-50 text-slate-500 border border-slate-200'
                                             }`}>
                                             {order.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-tight border ${order.saleType === 'Cash' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                        <span className={`text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-tighter border ${order.saleType === 'Cash' ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>
                                             {order.saleType || "Credit"}
                                         </span>
                                     </td>

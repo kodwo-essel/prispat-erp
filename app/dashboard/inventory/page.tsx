@@ -249,7 +249,7 @@ export default function InventoryPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
-                                            <span className={`text-[9px] font-bold px-3 py-0.5 rounded-full border uppercase tracking-widest ${item.stock === 0 ? 'bg-red-50 text-red-700 border-red-200' :
+                                            <span className={`text-[9px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-widest ${item.stock === 0 ? 'bg-red-50 text-red-700 border-red-200' :
                                                 item.stock < 25 ? 'bg-amber-50 text-amber-700 border-amber-200' :
                                                     'bg-green-50 text-green-700 border-green-200'
                                                 }`}>

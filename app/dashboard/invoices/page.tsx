@@ -136,7 +136,7 @@ export default function InvoicesPage() {
                                     <td className="px-6 py-4 font-bold text-primary tabular-nums">{inv.txId || `INV-${inv._id.substring(0, 6)}`}</td>
                                     <td className="px-6 py-4 text-slate-700">{inv.entity}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-widest ${inv.type === 'Revenue' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest ${inv.type === 'Revenue' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
                                             {inv.type || 'Revenue'}
                                         </span>
                                     </td>
@@ -147,10 +147,10 @@ export default function InvoicesPage() {
                                         {inv.amount - (inv.totalPaid || 0) <= 0 ? "-" : `₵${(inv.amount - (inv.totalPaid || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${inv.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                            inv.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                                inv.status === 'Unpaid' || inv.status === 'Pending' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                                    'bg-slate-50 text-slate-600 border border-slate-100'
+                                        <span className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter border ${inv.status === 'Settled' ? 'bg-green-50 text-green-600 border-green-200' :
+                                            inv.status === 'Partial' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                                inv.status === 'Unpaid' || inv.status === 'Pending' ? 'bg-red-50 text-red-600 border-red-200' :
+                                                    'bg-slate-50 text-slate-600 border-slate-200'
                                             }`}>
                                             {inv.status}
                                         </span>

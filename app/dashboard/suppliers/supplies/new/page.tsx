@@ -14,7 +14,8 @@ import {
     Package,
     Loader2,
     DollarSign,
-    Search
+    Search,
+    RefreshCw
 } from "lucide-react";
 import AssetSelectorModal from "@/app/dashboard/components/AssetSelectorModal";
 
@@ -48,6 +49,40 @@ export default function NewSupplyReceiptPage() {
     const [inventory, setInventory] = useState<any[]>([]);
     const [showAssetModal, setShowAssetModal] = useState(false);
     const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
+
+    const generateSKU = (name: string, unit: string, supplier: string) => {
+        const namePart = (name || "PROD").slice(0, 4).toUpperCase().padEnd(4, 'X');
+        const unitPart = (unit || "U").slice(0, 1).toUpperCase();
+        const supplierPart = (supplier || "SUP").slice(0, 3).toUpperCase().padEnd(3, 'X');
+        const randPart = Math.floor(1000 + Math.random() * 9000);
+        return `${namePart}-${unitPart}-${supplierPart}-${randPart}`;
+    };
+
+    // Auto-generate SKUs when name, unit or supplier changes
+    useEffect(() => {
+        const newItems = formData.items.map(item => {
+            if (!item.name) return item;
+
+            // Extract segments to check if SKU is out of sync
+            const namePart = item.name.slice(0, 4).toUpperCase().padEnd(4, 'X');
+            const unitPart = item.unit.slice(0, 1).toUpperCase();
+            const supplierPart = (formData.supplier || "SUP").slice(0, 3).toUpperCase().padEnd(3, 'X');
+            const currentPrefix = `${namePart}-${unitPart}-${supplierPart}`;
+
+            // If SKU is missing or prefix doesn't match the current details
+            if (!item.sku || !item.sku.startsWith(currentPrefix)) {
+                const autoSku = generateSKU(item.name, item.unit, formData.supplier);
+                return { ...item, sku: autoSku };
+            }
+            return item;
+        });
+
+        // Only update if something actually changed to avoid infinite loop
+        const hasChanges = JSON.stringify(newItems) !== JSON.stringify(formData.items);
+        if (hasChanges) {
+            setFormData(prev => ({ ...prev, items: newItems }));
+        }
+    }, [formData.items, formData.supplier]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -265,14 +300,10 @@ export default function NewSupplyReceiptPage() {
                                                 <input
                                                     type="text"
                                                     required
-                                                    readOnly
                                                     value={item.name}
-                                                    onClick={() => {
-                                                        setActiveItemIndex(index);
-                                                        setShowAssetModal(true);
-                                                    }}
-                                                    className="w-full bg-white border border-border px-3 py-1.5 rounded-sm text-xs focus:outline-none focus:border-primary cursor-pointer hover:bg-slate-50 transition-colors"
-                                                    placeholder="Click to select product..."
+                                                    onChange={(e) => updateItem(index, 'name', e.target.value)}
+                                                    className="w-full bg-white border border-border px-3 py-1.5 rounded-sm text-xs focus:outline-none focus:border-primary transition-colors"
+                                                    placeholder="Type name or use search..."
                                                 />
                                                 <button
                                                     type="button"
@@ -289,14 +320,27 @@ export default function NewSupplyReceiptPage() {
                                     </div>
                                     <div className="md:col-span-2 flex flex-col gap-1.5">
                                         <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">SKU</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={item.sku}
-                                            onChange={(e) => updateItem(index, 'sku', e.target.value)}
-                                            className="bg-white border border-border px-3 py-1.5 rounded-sm text-xs focus:outline-none focus:border-primary font-mono"
-                                            placeholder="SKU"
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                required
+                                                readOnly
+                                                value={item.sku}
+                                                className="w-full bg-slate-100 border border-border px-3 py-1.5 rounded-sm text-[10px] focus:outline-none focus:ring-0 cursor-not-allowed text-secondary font-mono"
+                                                placeholder="AUTO SKU"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newSku = generateSKU(item.name, item.unit, formData.supplier);
+                                                    updateItem(index, 'sku', newSku);
+                                                }}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                                                title="Regenerate SKU"
+                                            >
+                                                <RefreshCw size={10} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="md:col-span-2 flex flex-col gap-1.5">
                                         <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Batch ID</label>

@@ -162,12 +162,10 @@ export default function SupplyRegistryPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                                                <Calendar size={12} className="text-primary opacity-50" />
+
                                                 {new Date(r.arrivalDate).toLocaleDateString()}
                                             </div>
-                                            <div className="text-[10px] text-secondary mt-0.5 uppercase tracking-tighter">
-                                                {new Date(r.arrivalDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
+
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-xs font-semibold text-slate-600">{r.supplier}</div>

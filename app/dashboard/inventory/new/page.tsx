@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { RefreshCw } from "lucide-react";
 
 export default function RecordNewArrivalPage() {
     const router = useRouter();
@@ -36,6 +37,23 @@ export default function RecordNewArrivalPage() {
         unitPrice: 0,
         supplierPrice: 0
     });
+
+    const [isManualSKU, setIsManualSKU] = useState(false);
+
+    const generateSKU = (name: string, unit: string, supplier: string) => {
+        const namePart = (name || "PROD").slice(0, 4).toUpperCase().padEnd(4, 'X');
+        const unitPart = (unit || "U").slice(0, 1).toUpperCase();
+        const supplierPart = (supplier || "SUP").slice(0, 3).toUpperCase().padEnd(3, 'X');
+        const randPart = Math.floor(1000 + Math.random() * 9000);
+        return `${namePart}-${unitPart}-${supplierPart}-${randPart}`;
+    };
+
+    useEffect(() => {
+        if (!isManualSKU && (formData.name || formData.supplier)) {
+            const newSku = generateSKU(formData.name, formData.unit, formData.supplier);
+            setFormData(prev => ({ ...prev, sku: newSku }));
+        }
+    }, [formData.name, formData.unit, formData.supplier, isManualSKU]);
 
     useEffect(() => {
         const fetchSuppliers = async () => {
@@ -107,10 +125,25 @@ export default function RecordNewArrivalPage() {
                                         type="text"
                                         required
                                         value={formData.sku}
-                                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                                        placeholder="e.g. SKU-420-GLY"
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, sku: e.target.value });
+                                            setIsManualSKU(true);
+                                        }}
+                                        placeholder="e.g. GLYP-L-DIZ-4829"
                                         className="w-full bg-muted border border-border px-9 py-2 rounded-sm text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newSku = generateSKU(formData.name, formData.unit, formData.supplier);
+                                            setFormData(prev => ({ ...prev, sku: newSku }));
+                                            setIsManualSKU(false); // Reset to "auto" mode when regenerating
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:text-primary transition-colors"
+                                        title="Regenerate SKU"
+                                    >
+                                        <RefreshCw size={14} />
+                                    </button>
                                 </div>
                             </div>
 
@@ -305,11 +338,14 @@ export default function RecordNewArrivalPage() {
                     <div className="flex gap-4">
                         <button
                             type="button"
-                            onClick={() => setFormData({
-                                name: "", sku: "", category: "Ambient Temperature", stock: 0,
-                                unit: "Liters", hazardClass: "None", batchId: "",
-                                expiryDate: "", supplier: "", unitPrice: 0, supplierPrice: 0
-                            })}
+                            onClick={() => {
+                                setFormData({
+                                    name: "", sku: "", category: "Ambient Temperature", stock: 0,
+                                    unit: "Liters", hazardClass: "None", batchId: "",
+                                    expiryDate: "", supplier: "", unitPrice: 0, supplierPrice: 0
+                                });
+                                setIsManualSKU(false);
+                            }}
                             className="flex items-center gap-2 text-xs font-bold text-secondary uppercase tracking-widest px-6 py-2.5 rounded-sm hover:bg-muted transition-colors"
                         >
                             <RotateCcw size={14} /> Reset Form
@@ -325,6 +361,6 @@ export default function RecordNewArrivalPage() {
                     </div>
                 </div>
             </div>
-        </form>
+        </form >
     );
 }

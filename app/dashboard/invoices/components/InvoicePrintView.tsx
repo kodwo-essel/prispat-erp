@@ -53,7 +53,12 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                     </div>
                     <div className="text-right">
                         <h2 className="text-4xl font-black text-slate-200 uppercase tracking-tighter mb-2">TAX INVOICE</h2>
-                        <div className="text-sm font-bold text-primary font-mono">{invoice.invoiceId || invoice._id}</div>
+                        <div className="text-sm font-bold text-primary font-mono">{invoice.invoiceId || invoice.txId || invoice._id}</div>
+                        <div className="mt-1">
+                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border uppercase tracking-widest ${invoice.type === 'Revenue' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                                {invoice.type || 'Revenue'}
+                            </span>
+                        </div>
                         <div className="text-[10px] text-secondary font-bold uppercase tracking-widest mt-1">Invoice Reference</div>
                     </div>
                 </div>

@@ -36,6 +36,9 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
+    // Analytics State
+    const [stats, setStats] = useState({ inbound: 0, sold: 0 });
+
     useEffect(() => {
         const fetchItemData = async () => {
             try {
@@ -47,24 +50,45 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                     const itemData = json.data;
                     setItem(itemData);
 
-                    // Fetch real activities relating to this asset from finance
-                    const finRes = await fetch("/api/finance");
-                    const finJson = await finRes.json();
+                    // Fetch analytics data
+                    const [finRes, supRes, ordRes, allSupRes] = await Promise.all([
+                        fetch("/api/finance"),
+                        fetch("/api/supplies"),
+                        fetch("/api/orders"),
+                        fetch("/api/suppliers")
+                    ]);
+
+                    const [finJson, supJson, ordJson, allSupJson] = await Promise.all([
+                        finRes.json(),
+                        supRes.json(),
+                        ordRes.json(),
+                        allSupRes.json()
+                    ]);
+
                     if (finJson.success) {
-                        // Filter transactions that mention this item's name or SKU
                         const related = finJson.data.filter((tx: any) =>
                             tx.entity.toLowerCase().includes(itemData.name.toLowerCase()) ||
                             (tx.description && tx.description.toLowerCase().includes(itemData.name.toLowerCase()))
                         );
                         setActivities(related);
                     }
-                }
 
-                // Fetch all suppliers for the dropdown
-                const supRes = await fetch("/api/suppliers");
-                const supJson = await supRes.json();
-                if (supJson.success) {
-                    setAllSuppliers(supJson.data);
+                    if (supJson.success && ordJson.success) {
+                        const inbound = supJson.data
+                            .filter((s: any) => s.sku === itemData.sku && s.batchId === itemData.batchId)
+                            .reduce((sum: number, s: any) => sum + (Number(s.quantity) || 0), 0);
+
+                        const sold = ordJson.data.reduce((sum: number, order: any) => {
+                            const orderItem = order.items.find((i: any) => i.sku === itemData.sku && i.batchId === itemData.batchId);
+                            return sum + (orderItem ? orderItem.quantity : 0);
+                        }, 0);
+
+                        setStats({ inbound, sold });
+                    }
+
+                    if (allSupJson.success) {
+                        setAllSuppliers(allSupJson.data);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch item details:", error);
@@ -119,10 +143,10 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
     const calculateHealthIndex = () => {
         if (!item) return 0;
         const stockLevel = item.stock;
-        if (stockLevel > 500) return 95;
-        if (stockLevel > 100) return 75;
-        if (stockLevel > 0) return 40;
-        return 5;
+        if (stockLevel >= 100) return 95;
+        if (stockLevel >= 25) return 75;
+        if (stockLevel >= 10) return 40;
+        return 10;
     };
 
     if (loading) {
@@ -268,11 +292,16 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                 {/* Left Section: Core Stats & Specs */}
                 <div className="lg:col-span-2 flex flex-col gap-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
-                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Current Stock</div>
-                            <div className="text-2xl font-bold text-primary tabular-nums">{item.stock} <span className="text-sm font-medium">{item.unit}</span></div>
+                        <div className="bg-white border border-border p-5 rounded-sm shadow-sm relative overflow-hidden group">
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Available Inventory</div>
+                            <div className={`text-2xl font-bold tabular-nums ${item.stock < 10 ? 'text-red-600' : item.stock < 25 ? 'text-orange-600' : 'text-primary'}`}>
+                                {item.stock} <span className="text-sm font-medium">{item.unit}</span>
+                            </div>
                             <div className="mt-2 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className={`h-full ${item.stock > 100 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${Math.min((item.stock / 1000) * 100, 100)}%` }} />
+                                <div className={`h-full transition-all duration-500 ${item.stock < 10 ? 'bg-red-500' : item.stock < 25 ? 'bg-orange-500' : 'bg-green-500'}`} style={{ width: `${Math.min((item.stock / (stats.inbound || 1)) * 100, 100)}%` }} />
+                            </div>
+                            <div className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
+                                {((item.stock / (stats.inbound || 1)) * 100).toFixed(0)}% of total arrivals remaining
                             </div>
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
@@ -283,11 +312,26 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                             </div>
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
-                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Health Status</div>
-                            <div className={`text-2xl font-bold uppercase tabular-nums ${item.status === 'Active' ? 'text-green-600' : 'text-orange-600'}`}>{item.status}</div>
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Operational Status</div>
+                            <div className={`text-2xl font-bold uppercase tabular-nums ${item.stock === 0 ? 'text-red-600' : item.stock < 25 ? 'text-orange-600' : 'text-green-600'}`}>
+                                {item.stock === 0 ? 'Out of Stock' : item.stock < 25 ? 'Low Stock' : 'Stable'}
+                            </div>
                             <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1">
                                 <Clock size={12} /> Expiry: {new Date(item.expiryDate).toLocaleDateString()}
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white border border-border p-5 rounded-sm shadow-sm border-l-4 border-l-blue-500">
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Inbound</div>
+                            <div className="text-2xl font-bold text-primary tabular-nums">{stats.inbound} <span className="text-sm font-medium opacity-50">{item.unit}</span></div>
+                            <div className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Sum of all batch arrivals</div>
+                        </div>
+                        <div className="bg-white border border-border p-5 rounded-sm shadow-sm border-l-4 border-l-orange-500">
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Gross Velocity (Sold)</div>
+                            <div className="text-2xl font-bold text-orange-600 tabular-nums">{stats.sold} <span className="text-sm font-medium opacity-50">{item.unit}</span></div>
+                            <div className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Total distributed to date</div>
                         </div>
                     </div>
 
@@ -439,14 +483,18 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                         </div>
                     </div>
 
-                    {item.stock < 100 && (
-                        <div className="bg-orange-50 border border-orange-200 p-5 rounded-sm flex flex-col gap-3">
-                            <div className="flex items-center gap-2 text-orange-700">
-                                <AlertTriangle size={16} />
-                                <h3 className="text-xs font-black uppercase tracking-widest">Active System Alert</h3>
+                    {item.stock < 25 && (
+                        <div className={`${item.stock < 10 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-orange-50 border-orange-200 text-orange-800'} border p-5 rounded-sm flex flex-col gap-3 shadow-sm`}>
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle size={16} className={item.stock < 10 ? 'text-red-600' : 'text-orange-600'} />
+                                <h3 className="text-xs font-black uppercase tracking-widest">
+                                    {item.stock < 10 ? 'Critical System Alert' : 'Stock Depletion Warning'}
+                                </h3>
                             </div>
-                            <p className="text-[11px] text-orange-800 leading-relaxed font-medium">
-                                Critical stock threshold breached. Immediate procurement cycle initiation recommended.
+                            <p className="text-[11px] leading-relaxed font-medium">
+                                {item.stock < 10
+                                    ? "ASSET DEPLETED: Immediate re-stocking protocol required to prevent operational stall."
+                                    : "LOW BUFFER: Stock level has dropped below safety threshold. Procurement initiation recommended."}
                             </p>
                         </div>
                     )}

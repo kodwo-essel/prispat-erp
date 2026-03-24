@@ -60,13 +60,13 @@ export async function GET() {
         });
 
         // Low Stock Alerts
-        const lowStockItems = inventoryItems.filter(item => item.stock < 100 && item.status !== "Out of Stock");
+        const lowStockItems = inventoryItems.filter(item => item.stock < 25 && item.status !== "Out of Stock");
         lowStockItems.forEach(item => {
             alerts.push({
                 type: "STOCK",
-                title: `LOW STOCK: ${item.name}`,
+                title: `${item.stock < 10 ? 'CRITICAL LOW' : 'LOW STOCK'}: ${item.name}`,
                 description: `Warehouse threshold breach (${item.stock} units remain).`,
-                severity: item.stock < 20 ? "high" : "medium",
+                severity: item.stock < 10 ? "high" : "medium",
                 link: `/dashboard/inventory/${item._id}`
             });
         });
@@ -139,7 +139,46 @@ export async function GET() {
             type: tx.type
         }));
 
-        // 5. Revenue Trend (Last 7 Days)
+        // 5. Weekly Revenue Analytics (Monday-Start Calendar Weeks)
+        const currentDay = now.getDay();
+        const daysSinceMonday = (currentDay === 0 ? 6 : currentDay - 1);
+
+        const thisMonday = new Date(now);
+        thisMonday.setDate(now.getDate() - daysSinceMonday);
+        thisMonday.setHours(0, 0, 0, 0);
+
+        const lastMonday = new Date(thisMonday);
+        lastMonday.setDate(thisMonday.getDate() - 7);
+
+        const weeklyRevenueData = await Finance.aggregate([
+            {
+                $match: {
+                    date: { $gte: lastMonday },
+                    type: { $in: ["Revenue", "A/R"] },
+                    isInvoice: false,
+                    status: "Settled"
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $cond: [
+                            { $gte: ["$date", thisMonday] },
+                            "current",
+                            "previous"
+                        ]
+                    },
+                    total: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const weeklyRevenue = weeklyRevenueData.find(r => r._id === "current")?.total || 0;
+        const previousWeeklyRevenue = weeklyRevenueData.find(r => r._id === "previous")?.total || 0;
+        const revDiff = weeklyRevenue - previousWeeklyRevenue;
+        const revPercent = previousWeeklyRevenue > 0 ? (revDiff / previousWeeklyRevenue) * 100 : (weeklyRevenue > 0 ? 100 : 0);
+
+        // Rename variables for clarity if needed, but keeping original for trend compatibility
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(now.getDate() - 7);
         sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -222,9 +261,9 @@ export async function GET() {
             success: true,
             data: {
                 stats: [
+                    { label: "Weekly Revenue", value: `₵${weeklyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, change: `${revPercent >= 0 ? '+' : ''}${revPercent.toFixed(1)}%`, trend: revPercent >= 0 ? "up" : "down" },
                     { label: "Active Inventory Items", value: activeInventoryCount.toLocaleString(), change: "Live", trend: "neutral" },
                     { label: "Pending Shipments", value: pendingShipmentsCount.toString(), change: "Derived", trend: "neutral" },
-                    { label: "Active Suppliers", value: activeSuppliersCount.toString(), change: "Verified", trend: "up" },
                     { label: "Total Asset Value", value: `₵${totalAssetValue.toLocaleString()}`, change: "Calculated", trend: "up" },
                 ],
                 alerts: alerts.slice(0, 5),

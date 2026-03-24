@@ -225,12 +225,7 @@ export default function SupplyRegistryPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => setSelectedReceipt(r)}
-                                                    className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight border border-primary text-primary hover:bg-primary/5 flex items-center gap-1.5 transition-colors"
-                                                >
-                                                    <Printer size={10} /> Export
-                                                </button>
+
                                                 <Link
                                                     href={`/dashboard/suppliers/supplies/${r._id}`}
                                                     className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight bg-primary text-white hover:bg-primary-dark flex items-center gap-1.5 transition-colors"

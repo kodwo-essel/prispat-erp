@@ -22,7 +22,7 @@ export default function InventoryPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("All Categories");
-    const [statusFilter, setStatusFilter] = useState("All Statuses");
+    const [statusFilter, setStatusFilter] = useState("All");
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -74,7 +74,11 @@ export default function InventoryPage() {
             (item.chemical && item.chemical.toLowerCase().includes(searchQuery.toLowerCase()));
 
         const matchesCategory = categoryFilter === "All Categories" || item.category === categoryFilter;
-        const matchesStatus = statusFilter === "All Statuses" || item.status === statusFilter;
+        const currentStatus = item.stock === 0 ? "Out of Stock" :
+            item.stock < 25 ? "Low Inventory" :
+                "In Stock";
+
+        const matchesStatus = statusFilter === "All" || currentStatus === statusFilter;
 
         return matchesSearch && matchesCategory && matchesStatus;
     });
@@ -147,16 +151,20 @@ export default function InventoryPage() {
                         <option>Equipment</option>
                         <option>General</option>
                     </select>
-                    <select
-                        className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                        <option>All Statuses</option>
-                        <option>In Stock</option>
-                        <option>Low Inventory</option>
-                        <option>Critical Outage</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Status:</span>
+                        <div className="flex bg-muted p-1 rounded-sm border border-border">
+                            {["All", "In Stock", "Low Inventory", "Out of Stock"].map((status) => (
+                                <button
+                                    key={status}
+                                    onClick={() => setStatusFilter(status)}
+                                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all whitespace-nowrap ${statusFilter === status ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                                >
+                                    {status}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
                 <div className="text-xs text-secondary font-medium">Showing {filteredInventory.length} records</div>
             </div>
@@ -207,14 +215,19 @@ export default function InventoryPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-xs font-bold text-primary tabular-nums">{item.stock}</div>
+                                        <div className={`text-xs font-bold tabular-nums ${item.stock < 10 ? 'text-red-600' :
+                                            item.stock < 25 ? 'text-orange-600' :
+                                                'text-green-600'
+                                            }`}>
+                                            {item.stock}
+                                        </div>
                                         <div className="text-[10px] text-secondary">{item.unit}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-orange-600 tabular-nums">
                                             {getSoldQuantity(item.sku, item.batchId)}
                                         </div>
-                                        <div className="text-[10px] text-secondary">Units Sold</div>
+
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-blue-600 tabular-nums">
@@ -222,7 +235,7 @@ export default function InventoryPage() {
                                                 ? `₵${item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                                 : '-'}
                                         </div>
-                                        <div className="text-[9px] text-secondary lowercase">Cost Basis</div>
+
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</div>
@@ -238,10 +251,18 @@ export default function InventoryPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
-                                            <span className={`h-1.5 w-1.5 rounded-full ${item.status === 'In Stock' ? 'bg-green-500' :
-                                                item.status === 'Low Inventory' ? 'bg-orange-500' : 'bg-red-500'
+                                            <span className={`h-1.5 w-1.5 rounded-full ${item.stock === 0 ? 'bg-red-500' :
+                                                item.stock < 25 ? 'bg-orange-500' :
+                                                    'bg-green-500'
                                                 }`}></span>
-                                            <span className="text-xs font-medium text-secondary">{item.status}</span>
+                                            <span className={`text-xs font-medium ${item.stock === 0 ? 'text-red-600' :
+                                                item.stock < 25 ? 'text-orange-600' :
+                                                    'text-secondary'
+                                                }`}>
+                                                {item.stock === 0 ? 'Out of Stock' :
+                                                    item.stock < 25 ? 'Low Inventory' :
+                                                        'In Stock'}
+                                            </span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">

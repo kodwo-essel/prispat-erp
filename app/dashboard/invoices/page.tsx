@@ -7,18 +7,23 @@ import {
     Search,
     FileText,
     ArrowRight,
-    Download,
-    Printer,
     Loader2,
-    Calendar,
-    ChevronLeft,
-    ChevronRight
+    CheckCircle,
+    XCircle,
+    Clock,
+    Filter
 } from "lucide-react";
+import TablePagination from "@/app/dashboard/components/TablePagination";
 
 export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [typeFilter, setTypeFilter] = useState<"All" | "Revenue" | "Expense">("All");
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
 
     useEffect(() => {
         const fetchInvoices = async () => {
@@ -38,9 +43,22 @@ export default function InvoicesPage() {
         fetchInvoices();
     }, []);
 
-    const filteredInvoices = invoices.filter(inv =>
-        inv.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (inv.txId && inv.txId.toLowerCase().includes(searchQuery.toLowerCase()))
+    const filteredInvoices = invoices.filter(inv => {
+        const matchesSearch = inv.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (inv.txId && inv.txId.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchesType = typeFilter === "All" || inv.type === typeFilter;
+        return matchesSearch && matchesType;
+    });
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, typeFilter]);
+
+    const totalPages = Math.ceil(filteredInvoices.length / pageSize);
+    const paginatedInvoices = filteredInvoices.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
     );
 
     return (
@@ -50,13 +68,13 @@ export default function InvoicesPage() {
                     <h1 className="text-2xl font-bold text-primary">Billing & Invoices</h1>
                     <p className="text-sm text-secondary mt-1">Manage and generate professional invoices for institutional clients.</p>
                 </div>
-                <Link href="/dashboard/invoices/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
+                <Link href="/dashboard/invoices/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider font-bold">
                     <Plus size={14} /> Create New Invoice
                 </Link>
             </div>
 
-            <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between gap-4">
-                <div className="relative flex-grow max-w-sm">
+            <div className="bg-white border border-border p-4 rounded-sm flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+                <div className="relative flex-grow max-w-sm w-full">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
                     <input
                         type="text"
@@ -66,8 +84,19 @@ export default function InvoicesPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="text-[10px] font-bold text-secondary uppercase tracking-widest">
-                    Real-time Billing Sync Active
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Filter Type:</span>
+                    <div className="flex bg-muted p-1 rounded-sm border border-border">
+                        {(["All", "Revenue", "Expense"] as const).map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setTypeFilter(type)}
+                                className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -83,32 +112,42 @@ export default function InvoicesPage() {
                         <span className="text-sm font-medium">No invoices found.</span>
                     </div>
                 ) : (
-                    <table className="w-full text-left border-collapse font-medium">
+                    <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-muted border-b border-border">
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Invoice #</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Client</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Date</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Total</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Paid</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Balance</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
+                            <tr className="bg-muted border-b border-border text-[10px] font-bold uppercase tracking-widest text-secondary">
+                                <th className="px-4 py-3 text-center">#</th>
+                                <th className="px-6 py-3">Invoice #</th>
+                                <th className="px-6 py-3">Client</th>
+                                <th className="px-6 py-3">Type</th>
+                                <th className="px-6 py-3">Date</th>
+                                <th className="px-6 py-3">Total</th>
+                                <th className="px-6 py-3">Paid</th>
+                                <th className="px-6 py-3">Balance</th>
+                                <th className="px-6 py-3">Status</th>
+                                <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border text-xs">
-                            {filteredInvoices.map((inv) => (
+                        <tbody className="divide-y divide-border text-xs font-medium">
+                            {paginatedInvoices.map((inv, index) => (
                                 <tr key={inv._id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-4 py-4 text-center">
+                                        <span className="text-[10px] font-bold text-slate-400 tabular-nums">{(currentPage - 1) * pageSize + index + 1}</span>
+                                    </td>
                                     <td className="px-6 py-4 font-bold text-primary tabular-nums">{inv.txId || `INV-${inv._id.substring(0, 6)}`}</td>
                                     <td className="px-6 py-4 text-slate-700">{inv.entity}</td>
-                                    <td className="px-6 py-4 text-secondary">{new Date(inv.date).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-widest ${inv.type === 'Revenue' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                                            {inv.type || 'Revenue'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-secondary tabular-nums">{new Date(inv.date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 tabular-nums">₵{inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     <td className="px-6 py-4 tabular-nums text-green-600 font-bold">₵{(inv.totalPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     <td className={`px-6 py-4 tabular-nums font-bold ${inv.amount - (inv.totalPaid || 0) <= 0 ? "text-slate-900" : "text-red-600"}`}>
                                         {inv.amount - (inv.totalPaid || 0) <= 0 ? "-" : `₵${(inv.amount - (inv.totalPaid || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${inv.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${inv.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :
                                             inv.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
                                                 inv.status === 'Unpaid' || inv.status === 'Pending' ? 'bg-red-50 text-red-600 border border-red-100' :
                                                     'bg-slate-50 text-slate-600 border border-slate-100'
@@ -116,10 +155,10 @@ export default function InvoicesPage() {
                                             {inv.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right tabular-nums">
                                         <Link
                                             href={`/dashboard/invoices/${inv._id}`}
-                                            className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest ml-2"
+                                            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
                                         >
                                             Details <ArrowRight size={10} />
                                         </Link>
@@ -130,17 +169,13 @@ export default function InvoicesPage() {
                     </table>
                 )}
 
-                <div className="px-6 py-3 bg-muted border-t border-border flex items-center justify-between mt-auto">
-                    <div className="text-[10px] text-secondary uppercase tracking-widest font-bold">Invoicing Registry Audit</div>
-                    <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
-                            <ChevronLeft size={12} /> Previous
-                        </button>
-                        <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
-                            Next <ChevronRight size={12} />
-                        </button>
-                    </div>
-                </div>
+                <TablePagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalRecords={filteredInvoices.length}
+                    pageSize={pageSize}
+                />
             </div>
         </div>
     );

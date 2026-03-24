@@ -14,7 +14,9 @@ import {
     Loader2,
     AlertCircle,
     ExternalLink,
-    Filter as FilterIcon
+    Filter as FilterIcon,
+    TrendingUp,
+    TrendingDown
 } from "lucide-react";
 import { exportToCSV } from "@/lib/exportUtils";
 import TablePagination from "@/app/dashboard/components/TablePagination";
@@ -25,7 +27,7 @@ export default function FinancePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [typeFilter, setTypeFilter] = useState("All Types");
+    const [typeFilter, setTypeFilter] = useState("All");
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -87,17 +89,35 @@ export default function FinancePage() {
     // Calculate dynamic stats from both transactions and invoices
     const stats = useMemo(() => {
         const now = new Date();
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const currentDay = now.getDay();
+        const daysSinceMonday = (currentDay === 0 ? 6 : currentDay - 1);
+        const thisMonday = new Date(now);
+        thisMonday.setDate(now.getDate() - daysSinceMonday);
+        thisMonday.setHours(0, 0, 0, 0);
 
-        // Weekly Revenue: Sum of all settled PAY-* / revenue transactions in the last 7 days
+        const lastMonday = new Date(thisMonday);
+        lastMonday.setDate(thisMonday.getDate() - 7);
+
+        // Weekly Revenue (Current Mon - Now)
         const weeklyRevenue = transactions.reduce((sum, tx) => {
-            const isRecent = new Date(tx.date).getTime() >= sevenDaysAgo.getTime();
-            if (!isRecent) return sum;
-            if (tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+            const txDate = new Date(tx.date).getTime();
+            if (txDate >= thisMonday.getTime() && tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
                 return sum + (Number(tx.amount) || 0);
             }
             return sum;
         }, 0);
+
+        // Previous Week Revenue (Last Mon - Last Sun)
+        const previousWeekRevenue = transactions.reduce((sum, tx) => {
+            const txDate = new Date(tx.date).getTime();
+            if (txDate >= lastMonday.getTime() && txDate < thisMonday.getTime() && tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+                return sum + (Number(tx.amount) || 0);
+            }
+            return sum;
+        }, 0);
+
+        const revDiff = weeklyRevenue - previousWeekRevenue;
+        const revPercent = previousWeekRevenue > 0 ? (revDiff / previousWeekRevenue) * 100 : (weeklyRevenue > 0 ? 100 : 0);
 
         // Total Expenditure: Sum of all expense-type transactions
         const totalExpenditure = transactions
@@ -121,7 +141,13 @@ export default function FinancePage() {
 
         const netPosition = totalRevenue - totalExpenditure;
 
-        return { weeklyRevenue, totalExpenditure, accountsReceivable, netPosition };
+        return {
+            weeklyRevenue,
+            totalExpenditure,
+            accountsReceivable,
+            netPosition,
+            revPercent
+        };
     }, [transactions, invoices]);
 
     const filteredTransactions = transactions.filter(tx => {
@@ -130,7 +156,7 @@ export default function FinancePage() {
             tx.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
             tx.category.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesType = typeFilter === "All Types" || tx.type === typeFilter;
+        const matchesType = typeFilter === "All" || tx.type === typeFilter;
 
         return matchesSearch && matchesType;
     });
@@ -179,22 +205,37 @@ export default function FinancePage() {
             {/* Metrics Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
-                    { label: "Weekly Revenue", value: stats.weeklyRevenue, color: "text-primary", info: "Live Calculation" },
+                    {
+                        label: "Revenue (This Week)",
+                        value: stats.weeklyRevenue,
+                        color: "text-primary",
+                        info: stats.revPercent === 0 ? "No Prior Activity" : `${stats.revPercent > 0 ? '+' : ''}${stats.revPercent.toFixed(1)}% vs Last Week`,
+                        trend: stats.revPercent > 0 ? 'up' : stats.revPercent < 0 ? 'down' : 'neutral'
+                    },
                     { label: "Total Expenditure", value: stats.totalExpenditure, color: "text-primary", info: "Institutional Spend" },
                     { label: "Accounts Receivable", value: stats.accountsReceivable, color: "text-amber-600", info: "Pending Invoices" },
                     { label: "Net Fiscal Position", value: stats.netPosition, color: "text-primary", info: "Current Liquidity" },
                 ].map((m, idx) => (
                     <div key={idx} className="bg-white border border-border p-4 rounded-sm h-[88px] flex flex-col justify-between">
                         <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">{m.label}</div>
-                        {loading ? (
-                            <div className="flex items-center gap-2 animate-pulse">
-                                <div className="h-6 w-24 bg-muted rounded-sm"></div>
-                                <Loader2 size={12} className="animate-spin text-slate-300" />
-                            </div>
-                        ) : (
-                            <div className={`text-xl font-bold ${m.color}`}>₵{m.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        )}
-                        <div className={`text-[10px] font-medium mt-1 ${m.info === 'Live Calculation' ? 'text-green-600 font-bold' : 'text-slate-400'}`}>
+                        <div className="flex items-end justify-between">
+                            {loading ? (
+                                <div className="flex items-center gap-2 animate-pulse">
+                                    <div className="h-6 w-24 bg-muted rounded-sm"></div>
+                                    <Loader2 size={12} className="animate-spin text-slate-300" />
+                                </div>
+                            ) : (
+                                <>
+                                    <div className={`text-xl font-bold ${m.color}`}>₵{m.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                    {m.trend && m.trend !== 'neutral' && (
+                                        <div className={`flex items-center gap-0.5 text-[10px] font-bold ${m.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                            {m.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                        <div className={`text-[10px] font-medium mt-1 ${m.label === 'Revenue (This Week)' && !loading ? (stats.revPercent >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold') : 'text-slate-400'}`}>
                             {loading ? "Synchronizing..." : m.info}
                         </div>
                     </div>
@@ -215,18 +256,18 @@ export default function FinancePage() {
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <FilterIcon size={14} className="text-secondary" />
-                        <select
-                            className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary font-bold"
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                        >
-                            <option value="All Types">All Types</option>
-                            <option value="Revenue">Revenue Only</option>
-                            <option value="Expense">Expense Only</option>
-                            <option value="Payroll">Payroll</option>
-                            <option value="Tax">Tax</option>
-                        </select>
+                        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Nature:</span>
+                        <div className="flex bg-muted p-1 rounded-sm border border-border overflow-x-auto max-w-full">
+                            {["All", "Revenue", "Expense", "Payroll", "Tax"].map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setTypeFilter(type)}
+                                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all whitespace-nowrap ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -255,6 +296,7 @@ export default function FinancePage() {
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Linked Invoice/Ref</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Entity</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Type</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Amount</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">Status</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
@@ -292,6 +334,14 @@ export default function FinancePage() {
                                     </td>
                                     <td className="px-4 py-2.5 text-xs text-slate-700">{tx.entity}</td>
                                     <td className="px-4 py-2.5 text-xs text-secondary">{tx.category}</td>
+                                    <td className="px-4 py-2.5">
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-tight ${tx.type === 'Revenue' ? 'bg-green-50 text-green-700 border border-green-100' :
+                                            tx.type === 'Expense' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                                                'bg-slate-50 text-slate-600 border border-slate-200'
+                                            }`}>
+                                            {tx.type}
+                                        </span>
+                                    </td>
                                     <td className={`px-4 py-2.5 text-xs text-right font-bold tabular-nums ${tx.type === 'Revenue' || tx.type === 'Settlement' ? 'text-green-600' : 'text-primary'}`}>
                                         {tx.type === 'Revenue' || tx.type === 'Settlement' ? '+' : '-'}₵{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>

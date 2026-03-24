@@ -54,7 +54,7 @@ export async function POST(request: Request) {
             txId: invId,
             orderId,
             entity: customer.name,
-            type: isCreditSale ? "A/R" : "Revenue",
+            type: "Revenue",
             amount: totalAmount,
             category: "Sales Fulfillment",
             recordedBy: userName,

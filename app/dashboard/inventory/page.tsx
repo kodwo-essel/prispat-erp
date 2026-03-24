@@ -10,9 +10,11 @@ import {
     ChevronLeft,
     ChevronRight,
     Loader2,
-    History
+    History,
+    Filter
 } from "lucide-react";
 import { exportToCSV } from "@/lib/exportUtils";
+import TablePagination from "@/app/dashboard/components/TablePagination";
 
 export default function InventoryPage() {
     const [inventory, setInventory] = useState<any[]>([]);
@@ -21,6 +23,10 @@ export default function InventoryPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("All Categories");
     const [statusFilter, setStatusFilter] = useState("All Statuses");
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
 
     const handleExport = () => {
         const exportData = filteredInventory.map(item => ({
@@ -72,6 +78,17 @@ export default function InventoryPage() {
 
         return matchesSearch && matchesCategory && matchesStatus;
     });
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, categoryFilter, statusFilter]);
+
+    const totalPages = Math.ceil(filteredInventory.length / pageSize);
+    const paginatedInventory = filteredInventory.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+    );
 
     const getSoldQuantity = (sku: string, batchId: string) => {
         return orders.reduce((total, order) => {
@@ -155,6 +172,7 @@ export default function InventoryPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-muted border-b border-border">
+                                <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">#</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">SKU / Batch</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Product Name</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Supplier</th>
@@ -168,8 +186,13 @@ export default function InventoryPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filteredInventory.map((item) => (
+                            {paginatedInventory.map((item, index) => (
                                 <tr key={item._id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-4 py-4">
+                                        <div className="flex items-center justify-center">
+                                            <span className="text-[10px] font-bold text-slate-400 tabular-nums">{(currentPage - 1) * pageSize + index + 1}</span>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-primary tabular-nums">{item.sku}</div>
                                         <div className="text-[9px] font-mono text-secondary mt-0.5">{item.batchId}</div>
@@ -232,21 +255,13 @@ export default function InventoryPage() {
                     </table>
                 )}
 
-                {/* Pagination Placeholder */}
-                <div className="px-6 py-3 bg-muted border-t border-border flex items-center justify-between mt-auto">
-                    <div className="text-[10px] text-secondary">Authorized access: Records reflect latest sync with Central Hub.</div>
-                    <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
-                            <ChevronLeft size={12} /> Previous
-                        </button>
-                        <div className="flex items-center gap-2">
-                            <span className="h-6 w-6 bg-primary text-white text-[10px] flex items-center justify-center font-bold rounded-sm shadow-sm">1</span>
-                        </div>
-                        <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
-                            Next <ChevronRight size={12} />
-                        </button>
-                    </div>
-                </div>
+                <TablePagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalRecords={filteredInventory.length}
+                    pageSize={pageSize}
+                />
             </div>
         </div>
     );

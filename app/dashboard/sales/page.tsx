@@ -16,13 +16,12 @@ import {
     XCircle,
     Trash2,
     Truck,
-    Edit2,
-    Save,
     FileText,
     ExternalLink
 } from "lucide-react";
 import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
 import OrderManageDrawer from "./OrderManageDrawer";
+import TablePagination from "@/app/dashboard/components/TablePagination";
 
 export default function SalesPage() {
     const [orders, setOrders] = useState<any[]>([]);
@@ -31,6 +30,10 @@ export default function SalesPage() {
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [typeFilter, setTypeFilter] = useState<"All" | "Credit" | "Cash">("All");
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
 
     // Modal State
     const [modalConfig, setModalConfig] = useState<{
@@ -189,6 +192,17 @@ export default function SalesPage() {
         return matchesSearch && matchesType;
     });
 
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, typeFilter]);
+
+    const totalPages = Math.ceil(filteredOrders.length / pageSize);
+    const paginatedOrders = filteredOrders.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+    );
+
     return (
         <div className="flex flex-col gap-6">
             {/* Header Area */}
@@ -268,19 +282,25 @@ export default function SalesPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-muted border-b border-border">
+                                <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">#</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Order ID</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Customer Entity</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Total Value</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Date</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Status</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Sale Type</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Related Invoice</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Ref / Invoice</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filteredOrders.map((order) => (
+                            {paginatedOrders.map((order, index) => (
                                 <tr key={order._id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-4 py-4">
+                                        <div className="flex items-center justify-center">
+                                            <span className="text-[10px] font-bold text-slate-400 tabular-nums">{(currentPage - 1) * pageSize + index + 1}</span>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 text-xs font-bold text-primary tabular-nums">{order.orderId}</td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-bold text-slate-900">
@@ -336,21 +356,13 @@ export default function SalesPage() {
                     </table>
                 )}
 
-                {/* Pagination Placeholder */}
-                <div className="px-6 py-3 bg-muted border-t border-border flex items-center justify-between mt-auto">
-                    <div className="text-[10px] text-secondary">Audit Trail active: Every dispatch records operator identity.</div>
-                    <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
-                            <ChevronLeft size={12} /> Previous
-                        </button>
-                        <div className="flex items-center gap-2">
-                            <span className="h-6 w-6 bg-primary text-white text-[10px] flex items-center justify-center font-bold rounded-sm shadow-sm">1</span>
-                        </div>
-                        <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-not-allowed">
-                            Next <ChevronRight size={12} />
-                        </button>
-                    </div>
-                </div>
+                <TablePagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    totalRecords={filteredOrders.length}
+                    pageSize={pageSize}
+                />
             </div>
 
             <ConfirmationModal

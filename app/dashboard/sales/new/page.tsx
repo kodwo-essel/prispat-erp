@@ -15,6 +15,7 @@ import {
     ShoppingBag
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import AssetSelectorModal from "@/app/dashboard/components/AssetSelectorModal";
 
 function NewOrderForm() {
     const router = useRouter();
@@ -38,9 +39,8 @@ function NewOrderForm() {
 
     // Search States
     const [customerSearch, setCustomerSearch] = useState("");
-    const [itemSearch, setItemSearch] = useState("");
     const [showCustomerSearch, setShowCustomerSearch] = useState(false);
-    const [showItemSearch, setShowItemSearch] = useState(false);
+    const [showAssetModal, setShowAssetModal] = useState(false);
     const [userName, setUserName] = useState("System Automator");
 
     useEffect(() => {
@@ -75,10 +75,8 @@ function NewOrderForm() {
         c.name.toLowerCase().includes(customerSearch.toLowerCase())
     );
 
-    const filteredInventory = inventory.filter(i =>
-        i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-        i.sku.toLowerCase().includes(itemSearch.toLowerCase())
-    );
+    // Filtered inventory is now handled inside the AssetSelectorModal or passed as prop
+    // We just keep the raw inventory for finding batches in addItem
 
     const addItem = (item: any) => {
         const batches = inventory
@@ -105,7 +103,7 @@ function NewOrderForm() {
                 total: oldestBatch.unitPrice || 0
             }]);
         }
-        setShowItemSearch(false);
+        setShowAssetModal(false);
     };
 
     const removeItem = (sku: string, batchId: string) => {
@@ -328,47 +326,19 @@ function NewOrderForm() {
                             <div className="relative">
                                 <button
                                     type="button"
-                                    onClick={() => setShowItemSearch(!showItemSearch)}
+                                    onClick={() => setShowAssetModal(true)}
                                     className="flex items-center gap-2 text-[10px] font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-sm hover:bg-primary/10 transition-colors uppercase tracking-widest border border-primary/20"
                                 >
                                     <Plus size={12} /> Add Agrochemicals
                                 </button>
-                                {showItemSearch && (
-                                    <div className="absolute top-full right-0 bg-white border border-border shadow-xl rounded-sm z-50 w-72 mt-2 p-2">
-                                        <div className="relative mb-2">
-                                            <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-secondary opacity-50" />
-                                            <input
-                                                type="text"
-                                                placeholder="Search by SKU or Name..."
-                                                className="w-full bg-muted border border-border pl-8 pr-3 py-1.5 rounded-sm text-xs focus:outline-none focus:border-primary"
-                                                autoFocus
-                                                value={itemSearch}
-                                                onChange={(e) => setItemSearch(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="max-h-48 overflow-y-auto flex flex-col">
-                                            {filteredInventory.length === 0 ? (
-                                                <div className="p-3 text-[10px] text-secondary italic">No items found in inventory.</div>
-                                            ) : (
-                                                filteredInventory.map(i => (
-                                                    <div
-                                                        key={i._id}
-                                                        onClick={() => addItem(i)}
-                                                        className="p-2 hover:bg-slate-50 cursor-pointer rounded-sm flex flex-col border-b border-muted"
-                                                    >
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="text-[10px] font-bold text-primary">{i.name}</span>
-                                                            <span className="text-[9px] font-bold text-slate-400">{i.sku}</span>
-                                                        </div>
-                                                        <div className="flex justify-between items-center mt-0.5" >
-                                                            <span className="text-[9px] text-secondary">Stock: {i.stock} {i.unit}</span>
-                                                            <span className="text-[9px] font-black text-slate-700">₵{i.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                        </div >
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
+                                {showAssetModal && (
+                                    <AssetSelectorModal
+                                        isOpen={showAssetModal}
+                                        onClose={() => setShowAssetModal(false)}
+                                        onSelect={(item) => addItem(item)}
+                                        inventory={inventory}
+                                        title="Select Product for Order"
+                                    />
                                 )}
                             </div>
                         </div>

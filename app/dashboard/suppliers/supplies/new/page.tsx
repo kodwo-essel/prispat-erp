@@ -13,8 +13,10 @@ import {
     Calendar,
     Package,
     Loader2,
-    DollarSign
+    DollarSign,
+    Search
 } from "lucide-react";
+import AssetSelectorModal from "@/app/dashboard/components/AssetSelectorModal";
 
 interface ReceiptItem {
     name: string;
@@ -44,6 +46,8 @@ export default function NewSupplyReceiptPage() {
     });
 
     const [inventory, setInventory] = useState<any[]>([]);
+    const [showAssetModal, setShowAssetModal] = useState(false);
+    const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -80,22 +84,21 @@ export default function NewSupplyReceiptPage() {
         setFormData({ ...formData, items: [...formData.items, newItem] });
     };
 
-    const handleProductSelect = (index: number, sku: string) => {
-        const selected = inventory.find(i => i.sku === sku);
-        if (selected) {
-            const newItems = [...formData.items];
-            newItems[index] = {
-                ...newItems[index],
-                name: selected.name,
-                sku: selected.sku,
-                category: selected.category,
-                unit: selected.unit,
-                unitPrice: selected.unitPrice || 0,
-                supplierPrice: selected.supplierPrice || 0,
-                hazardClass: selected.hazardClass,
-            };
-            setFormData({ ...formData, items: newItems });
-        }
+    const handleProductSelect = (index: number, item: any) => {
+        const newItems = [...formData.items];
+        newItems[index] = {
+            ...newItems[index],
+            name: item.name,
+            sku: item.sku,
+            category: item.category,
+            unit: item.unit,
+            unitPrice: item.unitPrice || 0,
+            supplierPrice: item.supplierPrice || 0,
+            hazardClass: item.hazardClass || "None",
+        };
+        setFormData({ ...formData, items: newItems });
+        setShowAssetModal(false);
+        setActiveItemIndex(null);
     };
 
     const removeItem = (index: number) => {
@@ -258,34 +261,30 @@ export default function NewSupplyReceiptPage() {
                                     <div className="md:col-span-3 flex flex-col gap-1.5">
                                         <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Product Name</label>
                                         <div className="relative">
-                                            <input
-                                                type="text"
-                                                required
-                                                list={`inventory-list-${index}`}
-                                                value={item.name}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    updateItem(index, 'name', val);
-                                                    // If user selected from datalist, val will match a name
-                                                    const match = inventory.find(i => i.name === val);
-                                                    if (match) handleProductSelect(index, match.sku);
-                                                }}
-                                                className="w-full bg-white border border-border px-3 py-1.5 rounded-sm text-xs focus:outline-none focus:border-primary"
-                                                placeholder="Start typing product name..."
-                                            />
-                                            <datalist id={`inventory-list-${index}`}>
-                                                {Array.from(new Set(inventory
-                                                    .filter(i => !formData.supplier || i.supplier === formData.supplier)
-                                                    .map(i => i.sku)))
-                                                    .map(sku => {
-                                                        const item = inventory.find(i => i.sku === sku);
-                                                        return (
-                                                            <option key={sku} value={item?.name}>
-                                                                {sku} (Category: {item?.category})
-                                                            </option>
-                                                        );
-                                                    })}
-                                            </datalist>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    readOnly
+                                                    value={item.name}
+                                                    onClick={() => {
+                                                        setActiveItemIndex(index);
+                                                        setShowAssetModal(true);
+                                                    }}
+                                                    className="w-full bg-white border border-border px-3 py-1.5 rounded-sm text-xs focus:outline-none focus:border-primary cursor-pointer hover:bg-slate-50 transition-colors"
+                                                    placeholder="Click to select product..."
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setActiveItemIndex(index);
+                                                        setShowAssetModal(true);
+                                                    }}
+                                                    className="p-1.5 bg-primary/5 text-primary border border-primary/20 rounded-sm hover:bg-primary/10 transition-colors"
+                                                >
+                                                    <Search size={14} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="md:col-span-2 flex flex-col gap-1.5">
@@ -438,6 +437,24 @@ export default function NewSupplyReceiptPage() {
                     </div>
                 </div>
             </div>
+
+            {showAssetModal && (
+                <AssetSelectorModal
+                    isOpen={showAssetModal}
+                    onClose={() => {
+                        setShowAssetModal(false);
+                        setActiveItemIndex(null);
+                    }}
+                    onSelect={(item) => {
+                        if (activeItemIndex !== null) {
+                            handleProductSelect(activeItemIndex, item);
+                        }
+                    }}
+                    inventory={inventory}
+                    title="Select Product for Receipt"
+                    showStock={false}
+                />
+            )}
         </form>
     );
 }

@@ -162,7 +162,7 @@ export default function FinancePage() {
                                 <Loader2 size={12} className="animate-spin text-slate-300" />
                             </div>
                         ) : (
-                            <div className={`text-xl font-bold ${m.color}`}>₵{m.value.toLocaleString()}</div>
+                            <div className={`text-xl font-bold ${m.color}`}>₵{m.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         )}
                         <div className={`text-[10px] font-medium mt-1 ${m.info === 'Live Calculation' ? 'text-green-600 font-bold' : 'text-slate-400'}`}>
                             {loading ? "Synchronizing..." : m.info}
@@ -249,7 +249,7 @@ export default function FinancePage() {
                                     <td className="px-4 py-2.5 text-xs text-slate-700">{tx.entity}</td>
                                     <td className="px-4 py-2.5 text-xs text-secondary">{tx.category}</td>
                                     <td className={`px-4 py-2.5 text-xs text-right font-bold tabular-nums ${tx.type === 'Revenue' || tx.type === 'Settlement' ? 'text-green-600' : 'text-primary'}`}>
-                                        {tx.type === 'Revenue' || tx.type === 'Settlement' ? '+' : '-'}₵{tx.amount.toLocaleString()}
+                                        {tx.type === 'Revenue' || tx.type === 'Settlement' ? '+' : '-'}₵{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
                                     <td className="px-4 py-2.5 text-center">
                                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${tx.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :

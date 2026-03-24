@@ -187,10 +187,10 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="font-black text-primary tabular-nums">{item.quantity} {item.unit}</div>
-                                            <div className="text-[9px] text-secondary uppercase">@ ₵{item.unitPrice}</div>
+                                            <div className="text-[9px] text-secondary uppercase">@ ₵{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="font-black text-primary tabular-nums">₵{(item.quantity * item.unitPrice).toLocaleString()}</div>
+                                            <div className="font-black text-primary tabular-nums">₵{(item.quantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                             <Link
                                                 href={`/dashboard/inventory/lookup?sku=${item.sku}&batchId=${item.batchId}`}
                                                 className="text-[9px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
@@ -218,7 +218,7 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                     <div className="bg-primary text-white p-8 rounded-sm shadow-lg flex flex-col items-center text-center gap-4 relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
                         <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Financial Settlement</span>
-                        <div className="text-4xl font-black tabular-nums tracking-tighter">₵{receipt.totalAmount.toLocaleString()}</div>
+                        <div className="text-4xl font-black tabular-nums tracking-tighter">₵{receipt.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         <div className="h-px w-12 bg-white/20" />
                         <p className="text-[10px] font-medium text-white/60 leading-relaxed uppercase tracking-widest">
                             Total Batch Valuation Based on Invoiced Rates

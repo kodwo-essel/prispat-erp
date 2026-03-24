@@ -180,7 +180,7 @@ export default function SupplyRegistryPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-xs font-black text-primary tabular-nums">₵{r.totalAmount.toLocaleString()}</div>
+                                            <div className="text-xs font-black text-primary tabular-nums">₵{r.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                             <div className="text-[10px] text-secondary uppercase">Gross Value</div>
                                         </td>
                                         <td className="px-6 py-4 text-right">

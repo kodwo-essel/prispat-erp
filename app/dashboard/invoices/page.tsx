@@ -102,10 +102,10 @@ export default function InvoicesPage() {
                                     <td className="px-6 py-4 font-bold text-primary tabular-nums">{inv.txId || `INV-${inv._id.substring(0, 6)}`}</td>
                                     <td className="px-6 py-4 text-slate-700">{inv.entity}</td>
                                     <td className="px-6 py-4 text-secondary">{new Date(inv.date).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4 tabular-nums">₵{inv.amount.toLocaleString()}</td>
-                                    <td className="px-6 py-4 tabular-nums text-green-600 font-bold">₵{(inv.totalPaid || 0).toLocaleString()}</td>
+                                    <td className="px-6 py-4 tabular-nums">₵{inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="px-6 py-4 tabular-nums text-green-600 font-bold">₵{(inv.totalPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     <td className={`px-6 py-4 tabular-nums font-bold ${inv.amount - (inv.totalPaid || 0) <= 0 ? "text-slate-900" : "text-red-600"}`}>
-                                        {inv.amount - (inv.totalPaid || 0) <= 0 ? "-" : `₵${(inv.amount - (inv.totalPaid || 0)).toLocaleString()}`}
+                                        {inv.amount - (inv.totalPaid || 0) <= 0 ? "-" : `₵${(inv.amount - (inv.totalPaid || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${inv.status === 'Settled' ? 'bg-green-50 text-green-600 border border-green-100' :

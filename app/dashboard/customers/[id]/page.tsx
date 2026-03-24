@@ -228,21 +228,21 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
                             <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Credit Utilization</div>
-                            <div className="text-2xl font-bold text-primary tabular-nums">₵{(customer.creditUsage || 0).toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-primary tabular-nums">₵{(customer.creditUsage || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             <div className="mt-2 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <div className="h-full bg-primary" style={{ width: `${Math.min(((customer.creditUsage || 0) / customer.creditLimit) * 100, 100)}%` }} />
                             </div>
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
                             <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Available Credit</div>
-                            <div className="text-2xl font-bold text-green-600 tabular-nums">₵{(customer.creditLimit - (customer.creditUsage || 0)).toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-green-600 tabular-nums">₵{(customer.creditLimit - (customer.creditUsage || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1">
-                                <TrendingUp size={12} /> Limit: ₵{customer.creditLimit.toLocaleString()}
+                                <TrendingUp size={12} /> Limit: ₵{customer.creditLimit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
                             <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Outstanding Balance</div>
-                            <div className="text-2xl font-bold text-orange-600 tabular-nums">₵{(customer.balance || 0).toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-orange-600 tabular-nums">₵{(customer.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1">
                                 <History size={12} /> Last Payment: N/A
                             </div>
@@ -306,7 +306,7 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
                                                 {tx.description || tx.type}
                                             </td>
                                             <td className={`px-6 py-4 font-bold tabular-nums ${tx.type === 'Revenue' ? 'text-green-600' : 'text-orange-600'}`}>
-                                                ₵{tx.amount.toLocaleString()}
+                                                ₵{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="px-6 py-4 text-xs text-secondary tabular-nums">{new Date(tx.date).toLocaleDateString()}</td>
                                             <td className="px-6 py-4">

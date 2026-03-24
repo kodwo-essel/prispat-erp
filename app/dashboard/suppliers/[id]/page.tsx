@@ -353,8 +353,9 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                                     <tr className="border-b border-border text-[10px] text-secondary font-bold uppercase">
                                         <th className="px-6 py-3 text-secondary tracking-widest">Asset Name</th>
                                         <th className="px-6 py-3 text-secondary tracking-widest">Category</th>
-                                        <th className="px-6 py-3 text-secondary tracking-widest">Stock Level</th>
-                                        <th className="px-6 py-3 text-secondary tracking-widest text-right">Unit Price</th>
+                                        <th className="px-6 py-3 text-secondary tracking-widest text-right">Selling Price</th>
+                                        <th className="px-6 py-3 text-secondary tracking-widest text-right">Supplier Price</th>
+                                        <th className="px-6 py-3 text-secondary tracking-widest text-right">Last Update</th>
                                         <th className="px-6 py-3 text-secondary tracking-widest text-right">Actions</th>
                                     </tr>
                                 </thead>
@@ -368,12 +369,11 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 text-xs text-secondary italic">{item.category}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${item.stock > 100 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                                    {item.stock} {item.unit}
-                                                </span>
+                                            <td className="px-6 py-4 text-right font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                            <td className="px-6 py-4 text-right font-bold text-blue-600 tabular-nums">₵{item.supplierPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</td>
+                                            <td className="px-6 py-4 text-right text-[10px] text-secondary tabular-nums">
+                                                {new Date(item.updatedAt).toLocaleDateString()}
                                             </td>
-                                            <td className="px-6 py-4 text-right font-bold text-primary tabular-nums">₵{item.unitPrice}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
                                                     onClick={() => {
@@ -460,13 +460,17 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase text-secondary">Current Stock</label>
-                                    <input name="stock" type="number" defaultValue={editingItem.stock} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Selling Price (₵)</label>
+                                    <input name="unitPrice" type="number" step="0.01" defaultValue={editingItem.unitPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase text-secondary">Unit Price (₵)</label>
-                                    <input name="unitPrice" type="number" defaultValue={editingItem.unitPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Supplier Price (₵)</label>
+                                    <input name="supplierPrice" type="number" step="0.01" defaultValue={editingItem.supplierPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
                                 </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase text-secondary">Current Stock</label>
+                                <input name="stock" type="number" defaultValue={editingItem.stock} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
                             </div>
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => { setIsItemModalOpen(false); setEditingItem(null); }} className="flex-1 border border-border py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors">Discard</button>

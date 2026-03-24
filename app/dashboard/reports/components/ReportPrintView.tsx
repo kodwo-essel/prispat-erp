@@ -112,15 +112,15 @@ export default function ReportPrintView({ reportData, startDate, endDate, select
                                     <div className="grid grid-cols-3 gap-6">
                                         <div className="bg-slate-50 p-6 rounded-sm border border-slate-100">
                                             <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Revenue</div>
-                                            <div className="text-2xl font-black text-green-600">₵{(Number(data.revenue) || 0).toLocaleString()}</div>
+                                            <div className="text-2xl font-black text-green-600">₵{(Number(data.revenue) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
                                         <div className="bg-slate-50 p-6 rounded-sm border border-slate-100">
                                             <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Expenses</div>
-                                            <div className="text-2xl font-black text-red-600">₵{(Number(data.expenses) || 0).toLocaleString()}</div>
+                                            <div className="text-2xl font-black text-red-600">₵{(Number(data.expenses) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
                                         <div className="bg-slate-50 p-6 rounded-sm border border-slate-100">
                                             <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Net Balance</div>
-                                            <div className="text-2xl font-black text-[#002d62]">₵{((Number(data.revenue) || 0) - (Number(data.expenses) || 0)).toLocaleString()}</div>
+                                            <div className="text-2xl font-black text-[#002d62]">₵{((Number(data.revenue) || 0) - (Number(data.expenses) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
                                     </div>
                                 )}
@@ -150,7 +150,7 @@ export default function ReportPrintView({ reportData, startDate, endDate, select
                                             {Object.entries(data.metrics || {}).map(([key, val]: [string, any]) => (
                                                 <tr key={key}>
                                                     <td className="px-6 py-4 text-xs font-bold text-slate-700 uppercase">{key.replace(/([A-Z])/g, ' $1').trim()}</td>
-                                                    <td className="px-6 py-4 text-xs font-bold text-right tabular-nums text-[#002d62]">{(Number(val) || 0).toLocaleString()}</td>
+                                                    <td className="px-6 py-4 text-xs font-bold text-right tabular-nums text-[#002d62]">{(Number(val) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

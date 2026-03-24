@@ -110,15 +110,15 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                                         <div className="text-[9px] text-secondary font-medium tracking-widest uppercase">{item.sku}</div>
                                     </td>
                                     <td className="py-4 text-right text-xs font-bold text-slate-700">{item.quantity}</td>
-                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{(item.unitPrice || item.price || 0).toLocaleString()}</td>
-                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * (item.unitPrice || item.price || 0)).toLocaleString()}</td>
+                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{(item.unitPrice || item.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * (item.unitPrice || item.price || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 </tr>
                             )) : (
                                 <tr>
                                     <td className="py-4 text-xs font-bold text-primary">{invoice.description || "General Service/Supply"}</td>
                                     <td className="py-4 text-right text-xs font-bold text-slate-700">1</td>
-                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{invoice.amount?.toLocaleString()}</td>
-                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{invoice.amount?.toLocaleString()}</td>
+                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{invoice.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{invoice.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 </tr>
                             )}
                         </tbody>
@@ -135,7 +135,7 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                         <div className="flex flex-col items-end gap-2 border-t-2 border-slate-200 pt-6">
                             <div className="flex justify-between w-64 text-[10px] font-bold text-secondary uppercase">
                                 <span>Subtotal:</span>
-                                <span className="tabular-nums">₵{invoice.amount?.toLocaleString()}</span>
+                                <span className="tabular-nums">₵{invoice.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between w-64 text-[10px] font-bold text-secondary uppercase">
                                 <span>Tax (0%):</span>
@@ -144,12 +144,12 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                             {totalPaid > 0 && (
                                 <div className="flex justify-between w-64 text-[10px] font-bold text-green-600 uppercase">
                                     <span>Total Paid:</span>
-                                    <span className="tabular-nums">₵{totalPaid.toLocaleString()}</span>
+                                    <span className="tabular-nums">₵{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             )}
                             <div className="flex justify-between w-80 text-lg font-black text-primary uppercase tracking-tighter mt-4 bg-primary/5 p-4 rounded-sm border border-primary/10">
                                 <span>{balance <= 0 ? 'Total:' : 'Balance Due:'}</span>
-                                <span className="tabular-nums font-mono text-2xl">₵{(balance <= 0 ? invoice.amount : balance)?.toLocaleString()}</span>
+                                <span className="tabular-nums font-mono text-2xl">₵{(balance <= 0 ? invoice.amount : balance)?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     );
@@ -181,7 +181,7 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                                             <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${p.status === 'Settled' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                                                 }`}>{p.status}</span>
                                         </td>
-                                        <td className="py-3 text-right text-xs font-black text-primary tabular-nums">₵{Number(p.amount).toLocaleString()}</td>
+                                        <td className="py-3 text-right text-xs font-black text-primary tabular-nums">₵{Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     </tr>
                                 ))}
                             </tbody>

@@ -33,7 +33,9 @@ export default function InventoryPage() {
             Status: item.status,
             BatchID: item.batchId,
             ExpiryDate: item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A",
-            Supplier: item.supplier
+            Supplier: item.supplier,
+            "Supplier Price": item.supplierPrice || 0,
+            "Selling Price": item.unitPrice || 0
         }));
         exportToCSV(exportData, `Inventory_Manifest_${new Date().toISOString().split('T')[0]}.csv`);
     };
@@ -158,7 +160,8 @@ export default function InventoryPage() {
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Supplier</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Stock</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Sold</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Pricing</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Supplier Price</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Selling Price</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Expiry</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Status</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
@@ -191,8 +194,12 @@ export default function InventoryPage() {
                                         <div className="text-[10px] text-secondary">Units Sold</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-xs font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString() || '0'}</div>
-                                        <div className="text-[9px] text-secondary">per {item.unit.replace(/s$/, '')}</div>
+                                        <div className="text-xs font-bold text-blue-600 tabular-nums">₵{item.supplierPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</div>
+                                        <div className="text-[9px] text-secondary lowercase">Cost Basis</div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</div>
+                                        <div className="text-[9px] text-secondary lowercase">per {item.unit.replace(/s$/, '')}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-medium text-secondary tabular-nums">

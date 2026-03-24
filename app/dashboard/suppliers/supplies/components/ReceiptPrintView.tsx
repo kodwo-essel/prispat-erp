@@ -118,8 +118,8 @@ export default function ReceiptPrintView({ receipt, onClose }: ReceiptPrintViewP
                                         <code className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded-sm">{item.batchId || "N/A"}</code>
                                     </td>
                                     <td className="py-4 text-right text-xs font-bold text-slate-700">{item.quantity} {item.unit}</td>
-                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{item.unitPrice.toLocaleString()}</td>
-                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * item.unitPrice).toLocaleString()}</td>
+                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -130,7 +130,7 @@ export default function ReceiptPrintView({ receipt, onClose }: ReceiptPrintViewP
                 <div className="flex flex-col items-end gap-2 border-t-2 border-slate-200 pt-6">
                     <div className="flex justify-between w-64 text-[10px] font-bold text-secondary uppercase">
                         <span>Subtotal Manifest:</span>
-                        <span className="tabular-nums">₵{receipt.totalAmount.toLocaleString()}</span>
+                        <span className="tabular-nums">₵{receipt.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between w-64 text-[10px] font-bold text-secondary uppercase">
                         <span>Logistics Levies:</span>
@@ -138,7 +138,7 @@ export default function ReceiptPrintView({ receipt, onClose }: ReceiptPrintViewP
                     </div>
                     <div className="flex justify-between w-80 text-lg font-black text-primary uppercase tracking-tighter mt-4 bg-primary/5 p-4 rounded-sm border border-primary/10">
                         <span>Net Value Received:</span>
-                        <span className="tabular-nums font-mono text-2xl">₵{receipt.totalAmount.toLocaleString()}</span>
+                        <span className="tabular-nums font-mono text-2xl">₵{receipt.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                 </div>
 

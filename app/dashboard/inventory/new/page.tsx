@@ -269,6 +269,7 @@ export default function RecordNewArrivalPage() {
                                 <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Selling Price (GHS)</label>
                                 <input
                                     type="number"
+                                    step="0.01"
                                     required
                                     value={formData.unitPrice}
                                     onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
@@ -280,6 +281,7 @@ export default function RecordNewArrivalPage() {
                                 <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Supplier Price (GHS)</label>
                                 <input
                                     type="number"
+                                    step="0.01"
                                     required
                                     value={formData.supplierPrice}
                                     onChange={(e) => setFormData({ ...formData, supplierPrice: Number(e.target.value) })}

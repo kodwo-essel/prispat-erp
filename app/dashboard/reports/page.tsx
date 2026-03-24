@@ -263,15 +263,15 @@ export default function ReportsPage() {
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                 <div className="bg-muted p-6 rounded-sm">
                                                     <div className="text-[9px] font-black text-secondary uppercase tracking-widest mb-1">Total Revenue</div>
-                                                    <div className="text-2xl font-black text-green-600">₵{data.revenue?.toLocaleString()}</div>
+                                                    <div className="text-2xl font-black text-green-600">₵{data.revenue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                                 </div>
                                                 <div className="bg-muted p-6 rounded-sm">
                                                     <div className="text-[9px] font-black text-secondary uppercase tracking-widest mb-1">Total Expenses</div>
-                                                    <div className="text-2xl font-black text-red-600">₵{data.expenses?.toLocaleString()}</div>
+                                                    <div className="text-2xl font-black text-red-600">₵{data.expenses?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                                 </div>
                                                 <div className="bg-muted p-6 rounded-sm">
                                                     <div className="text-[9px] font-black text-secondary uppercase tracking-widest mb-1">Net Balance</div>
-                                                    <div className="text-2xl font-black text-primary">₵{(data.revenue - data.expenses).toLocaleString()}</div>
+                                                    <div className="text-2xl font-black text-primary">₵{(data.revenue - data.expenses).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                                 </div>
                                             </div>
                                         )}
@@ -302,7 +302,7 @@ export default function ReportsPage() {
                                                     {Object.entries(data.metrics || {}).map(([key, val]: [string, any]) => (
                                                         <tr key={key}>
                                                             <td className="px-6 py-4 text-xs font-bold text-primary uppercase">{key.replace(/([A-Z])/g, ' $1').trim()}</td>
-                                                            <td className="px-6 py-4 text-xs font-bold text-right tabular-nums">{val.toLocaleString()}</td>
+                                                            <td className="px-6 py-4 text-xs font-bold text-right tabular-nums">{val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>

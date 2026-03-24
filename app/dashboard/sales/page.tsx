@@ -220,7 +220,7 @@ export default function SalesPage() {
                 </div>
                 <div className="bg-white border border-border p-4 rounded-sm">
                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Aggregate Revenue (MTD)</div>
-                    <div className="text-xl font-bold text-primary">₵{mtdRevenue.toLocaleString()}</div>
+                    <div className="text-xl font-bold text-primary">₵{mtdRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
             </div>
 
@@ -288,7 +288,7 @@ export default function SalesPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-xs font-black text-slate-900 tabular-nums">₵{order.totalAmount.toLocaleString()}</div>
+                                        <div className="text-xs font-black text-slate-900 tabular-nums">₵{order.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         <div className="text-[10px] text-secondary uppercase font-bold tracking-tighter">Settled</div>
                                     </td>
                                     <td className="px-6 py-4 text-right">

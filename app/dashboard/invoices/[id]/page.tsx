@@ -251,8 +251,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                                             <div className="text-[9px] text-secondary mt-1 uppercase tracking-tight">SKU: {item.sku} • Batch: {item.batchId}</div>
                                         </td>
                                         <td className="py-6 text-xs text-right tabular-nums">{(Number(item.quantity) || 0).toFixed(2)}</td>
-                                        <td className="py-6 text-xs text-right tabular-nums">₵{(Number(item.price) || 0).toLocaleString()}.00</td>
-                                        <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{((Number(item.quantity) || 0) * (Number(item.price) || 0)).toLocaleString()}.00</td>
+                                        <td className="py-6 text-xs text-right tabular-nums">₵{(Number(item.price) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                        <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{((Number(item.quantity) || 0) * (Number(item.price) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     </tr>
                                 ))
                             ) : (
@@ -262,8 +262,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                                         <div className="text-[9px] text-secondary mt-1 uppercase tracking-tight">Fiscal Category: {invoice.category}</div>
                                     </td>
                                     <td className="py-6 text-xs text-right tabular-nums">1.00</td>
-                                    <td className="py-6 text-xs text-right tabular-nums">₵{(Number(invoice.amount) || 0).toLocaleString()}.00</td>
-                                    <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{(Number(invoice.amount) || 0).toLocaleString()}.00</td>
+                                    <td className="py-6 text-xs text-right tabular-nums">₵{(Number(invoice.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{(Number(invoice.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 </tr>
                             )}
                         </tbody>

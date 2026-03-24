@@ -202,11 +202,11 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase text-secondary">Unit Price (₵)</label>
-                                    <input name="unitPrice" type="number" defaultValue={item.unitPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
+                                    <input name="unitPrice" type="number" step="0.01" defaultValue={item.unitPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase text-secondary">Supplier Price (₵)</label>
-                                    <input name="supplierPrice" type="number" defaultValue={item.supplierPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
+                                    <input name="supplierPrice" type="number" step="0.01" defaultValue={item.supplierPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
                                 </div>
                             </div>
                             <div className="grid grid-cols-3 gap-4">
@@ -318,11 +318,11 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
                                     <span className="text-secondary font-medium">Selling Price:</span>
-                                    <span className="text-primary font-bold tabular-nums">₵{item.unitPrice || 0}</span>
+                                    <span className="text-primary font-bold tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
                                     <span className="text-secondary font-medium">Supplier Price:</span>
-                                    <span className="text-primary font-bold tabular-nums">₵{item.supplierPrice || 0}</span>
+                                    <span className="text-primary font-bold tabular-nums">₵{item.supplierPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</span>
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
                                     <span className="text-secondary font-medium">National Registry:</span>

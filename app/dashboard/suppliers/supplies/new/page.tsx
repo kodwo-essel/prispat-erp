@@ -162,7 +162,7 @@ export default function NewSupplyReceiptPage() {
                     <div className="text-xs font-bold uppercase tracking-widest">Shipment Overview</div>
                     <div className="flex items-center gap-4 text-primary font-black tabular-nums bg-primary/5 px-4 py-1.5 rounded-sm">
                         <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Total Value:</span>
-                        <span>₵{calculateTotal().toLocaleString()}</span>
+                        <span>₵{calculateTotal().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                 </div>
 
@@ -336,6 +336,7 @@ export default function NewSupplyReceiptPage() {
                                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-secondary">₵</span>
                                             <input
                                                 type="number"
+                                                step="0.01"
                                                 required
                                                 value={item.unitPrice}
                                                 onChange={(e) => updateItem(index, 'unitPrice', Number(e.target.value))}
@@ -374,7 +375,7 @@ export default function NewSupplyReceiptPage() {
                                     <div className="md:col-span-2 flex flex-col gap-1.5">
                                         <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Sub-total</label>
                                         <div className="h-[34px] flex items-center px-3 bg-slate-100 border border-slate-200 rounded-sm text-xs font-black text-primary">
-                                            ₵{(item.quantity * item.unitPrice).toLocaleString()}
+                                            ₵{(item.quantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </div>
                                     </div>
                                 </div>

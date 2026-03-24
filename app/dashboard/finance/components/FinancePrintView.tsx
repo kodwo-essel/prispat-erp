@@ -99,7 +99,7 @@ export default function FinancePrintView({ transaction, onClose }: FinancePrintV
                         </div>
                         <div className="flex flex-col gap-2 bg-primary/5 p-6 rounded-sm border border-primary/10 items-center justify-center">
                             <span className="text-[10px] font-black uppercase tracking-widest text-secondary">Settlement Value</span>
-                            <div className="text-4xl font-black text-primary tabular-nums tracking-tighter">₵{transaction.amount?.toLocaleString()}</div>
+                            <div className="text-4xl font-black text-primary tabular-nums tracking-tighter">₵{transaction.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             <div className="text-[10px] font-bold uppercase text-primary mt-1">{transaction.type} Flow</div>
                         </div>
                     </div>

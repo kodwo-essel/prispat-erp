@@ -173,7 +173,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
                                     <DollarSign size={100} />
                                 </div>
                                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary">Value in GHS</span>
-                                <div className="text-5xl font-black tabular-nums tracking-tighter text-primary">₵{tx.amount?.toLocaleString()}</div>
+                                <div className="text-5xl font-black tabular-nums tracking-tighter text-primary">₵{tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                 <div className="flex items-center gap-1.5 mt-2 bg-muted px-3 py-1 rounded-full">
                                     {tx.type === 'Revenue' ? <ArrowUpRight size={14} className="text-green-600" /> : <ArrowDownRight size={14} className="text-red-600" />}
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">{tx.type} Inflow</span>

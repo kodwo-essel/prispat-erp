@@ -220,7 +220,7 @@ const OrderManageDrawer: React.FC<OrderManageDrawerProps> = ({
                                 <tfoot className="bg-muted/50 border-t border-border font-bold">
                                     <tr className="text-xs">
                                         <td className="px-4 py-3 uppercase tracking-wider text-secondary">Total Value</td>
-                                        <td className="px-4 py-3 text-right text-primary tabular-nums text-sm">₵{order.totalAmount.toLocaleString()}</td>
+                                        <td className="px-4 py-3 text-right text-primary tabular-nums text-sm">₵{order.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     </tr>
                                 </tfoot>
                             </table>

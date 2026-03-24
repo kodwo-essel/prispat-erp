@@ -362,7 +362,7 @@ function NewOrderForm() {
                                                         </div>
                                                         <div className="flex justify-between items-center mt-0.5" >
                                                             <span className="text-[9px] text-secondary">Stock: {i.stock} {i.unit}</span>
-                                                            <span className="text-[9px] font-black text-slate-700">₵{i.unitPrice?.toLocaleString()}</span>
+                                                            <span className="text-[9px] font-black text-slate-700">₵{i.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                         </div >
                                                     </div>
                                                 ))
@@ -413,10 +413,10 @@ function NewOrderForm() {
                                                     />
                                                 </td>
                                                 <td className="py-4 text-xs font-bold text-slate-700 text-right tabular-nums">
-                                                    ₵{item.unitPrice.toLocaleString()}
+                                                    ₵{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="py-4 text-xs font-black text-slate-900 text-right tabular-nums">
-                                                    ₵{item.total.toLocaleString()}
+                                                    ₵{item.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="py-4 text-right">
                                                     <button
@@ -446,7 +446,7 @@ function NewOrderForm() {
                         <div className="flex flex-col gap-4">
                             <div className="flex justify-between items-center text-[10px] font-bold text-secondary uppercase tracking-widest">
                                 <span>Sub-Total Manifest</span>
-                                <span>₵{totalAmount.toLocaleString()}</span>
+                                <span>₵{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between items-center text-[10px] font-bold text-secondary uppercase tracking-widest">
                                 <span>Export Levies (VAT)</span>
@@ -455,7 +455,7 @@ function NewOrderForm() {
                             <div className="border-t border-dashed border-border pt-4 mt-2">
                                 <div className="flex justify-between items-center">
                                     <span className="text-[11px] font-black text-primary uppercase tracking-widest">Net Payable Value</span>
-                                    <span className="text-xl font-black text-primary tabular-nums">₵{totalAmount.toLocaleString()}</span>
+                                    <span className="text-xl font-black text-primary tabular-nums">₵{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
                         </div>

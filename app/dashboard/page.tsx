@@ -174,7 +174,7 @@ export default function DashboardPage() {
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
-                                    tickFormatter={(value) => `₵${value}`}
+                                    tickFormatter={(value) => `₵${Number(value).toLocaleString()}`}
                                 />
                                 <Tooltip
                                     contentStyle={{
@@ -214,7 +214,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="mt-8 grid grid-cols-2 gap-4 w-full border-t border-border pt-6">
                         <div className="text-center">
-                            <div className="text-[10px] font-black text-[#002d62]">₵{mtdRevenue?.toLocaleString() || 0}</div>
+                            <div className="text-[10px] font-black text-[#002d62]">₵{mtdRevenue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</div>
                             <div className="text-[8px] font-bold text-secondary uppercase tracking-tight">MTD Revenue</div>
                         </div>
                         <div className="text-center border-l border-border">
@@ -279,7 +279,7 @@ export default function DashboardPage() {
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    formatter={(value: any) => value ? `₵${Number(value).toLocaleString()}` : "₵0"}
+                                    formatter={(value: any) => value ? `₵${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₵0.00"}
                                     contentStyle={{ backgroundColor: '#002d62', border: 'none', borderRadius: '4px', fontSize: '10px', color: '#fff' }}
                                 />
                             </PieChart>
@@ -289,7 +289,7 @@ export default function DashboardPage() {
                         {financialDistribution.map((item, i) => (
                             <div key={i} className="flex items-center justify-between text-[10px] font-bold uppercase">
                                 <span className={item.name === 'Revenue' ? 'text-[#002d62]' : 'text-slate-400'}>{item.name}</span>
-                                <span className="text-[#002d62]">₵{item.value.toLocaleString()}</span>
+                                <span className="text-[#002d62]">₵{item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         ))}
                     </div>

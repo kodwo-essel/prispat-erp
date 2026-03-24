@@ -118,8 +118,18 @@ export default function ReceiptPrintView({ receipt, onClose }: ReceiptPrintViewP
                                         <code className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded-sm">{item.batchId || "N/A"}</code>
                                     </td>
                                     <td className="py-4 text-right text-xs font-bold text-slate-700">{item.quantity} {item.unit}</td>
-                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * item.supplierPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">
+                                        ₵{(() => {
+                                            const cost = Number(item.supplierPrice) > 0 ? Number(item.supplierPrice) : Number(item.unitPrice || 0);
+                                            return cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        })()}
+                                    </td>
+                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">
+                                        ₵{(() => {
+                                            const cost = Number(item.supplierPrice) > 0 ? Number(item.supplierPrice) : Number(item.unitPrice || 0);
+                                            return (item.quantity * cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        })()}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>

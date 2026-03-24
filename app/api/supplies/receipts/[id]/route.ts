@@ -76,3 +76,47 @@ export async function DELETE(
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
 }
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        await dbConnect();
+        const { id } = await params;
+        const body = await req.json();
+        const { arrivalDate } = body;
+
+        if (!arrivalDate) {
+            return NextResponse.json({ success: false, error: "Arrival date is required" }, { status: 400 });
+        }
+
+        const receipt = await SupplyReceipt.findById(id);
+        if (!receipt) {
+            return NextResponse.json({ success: false, error: "Receipt not found" }, { status: 404 });
+        }
+
+        const oldArrivalDate = receipt.arrivalDate;
+
+        // 1. Update Supply records associated with this receipt
+        // A receipt item matches a Supply record by sku, batchId, supplier and the OLD arrivalDate
+        for (const item of receipt.items) {
+            await Supply.updateMany(
+                {
+                    sku: item.sku,
+                    batchId: item.batchId,
+                    supplier: receipt.supplier,
+                    arrivalDate: oldArrivalDate
+                },
+                { $set: { arrivalDate: new Date(arrivalDate) } }
+            );
+        }
+
+        // 2. Update the Receipt itself
+        receipt.arrivalDate = new Date(arrivalDate);
+        await receipt.save();
+
+        return NextResponse.json({ success: true, data: receipt });
+    } catch (error: any) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+}

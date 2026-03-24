@@ -14,7 +14,9 @@ import {
     FileText,
     History,
     Printer,
-    Trash2
+    Trash2,
+    Pencil,
+    X
 } from "lucide-react";
 import ReceiptPrintView from "./components/ReceiptPrintView";
 
@@ -25,31 +27,63 @@ export default function SupplyRegistryPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingReceipt, setEditingReceipt] = useState<any>(null);
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState("");
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                // Fetch both for comparison or fallback
-                const [recRes, itemRes] = await Promise.all([
-                    fetch("/api/supplies/receipts"),
-                    fetch("/api/supplies")
-                ]);
-
-                const recJson = await recRes.json();
-                const itemJson = await itemRes.json();
-
-                if (recJson.success) setReceipts(recJson.data);
-                if (itemJson.success) setItems(itemJson.data);
-            } catch (error) {
-                console.error("Failed to fetch supply data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchData();
     }, []);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [recRes, itemRes] = await Promise.all([
+                fetch("/api/supplies/receipts"),
+                fetch("/api/supplies")
+            ]);
+
+            const recJson = await recRes.json();
+            const itemJson = await itemRes.json();
+
+            if (recJson.success) setReceipts(recJson.data);
+            if (itemJson.success) setItems(itemJson.data);
+        } catch (error) {
+            console.error("Failed to fetch supply data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEditSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingReceipt) return;
+
+        setEditLoading(true);
+        setEditError("");
+
+        try {
+            const res = await fetch(`/api/supplies/receipts/${editingReceipt._id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ arrivalDate: editingReceipt.arrivalDate })
+            });
+
+            const json = await res.json();
+            if (json.success) {
+                await fetchData();
+                setIsEditModalOpen(false);
+                setEditingReceipt(null);
+            } else {
+                setEditError(json.error || "Failed to update receipt.");
+            }
+        } catch (err: any) {
+            setEditError(err.message || "An unexpected error occurred.");
+        } finally {
+            setEditLoading(false);
+        }
+    };
 
     const filteredReceipts = receipts.filter(r =>
         r.receiptNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -178,30 +212,50 @@ export default function SupplyRegistryPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-xs font-black text-primary tabular-nums">₵{r.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                            <div className="text-xs font-black text-primary tabular-nums">₵{(r.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                             <div className="text-[10px] text-secondary uppercase">Gross Value</div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${r.status === 'Received' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                r.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' :
+                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${r.status === 'Received' || r.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' :
+                                                r.status === 'Disputed' ? 'bg-red-50 text-red-600 border-red-100' :
                                                     'bg-slate-50 text-slate-500 border-slate-100'
                                                 }`}>
                                                 {r.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => setSelectedReceipt(r)}
-                                                className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight border border-primary text-primary hover:bg-primary/5 flex items-center gap-1.5 transition-colors"
-                                            >
-                                                <Printer size={10} /> Export
-                                            </button>
-                                            <Link
-                                                href={`/dashboard/suppliers/supplies/${r._id}`}
-                                                className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight bg-primary text-white hover:bg-primary-dark flex items-center gap-1.5 transition-colors"
-                                            >
-                                                <FileText size={10} /> View
-                                            </Link>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => setSelectedReceipt(r)}
+                                                    className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight border border-primary text-primary hover:bg-primary/5 flex items-center gap-1.5 transition-colors"
+                                                >
+                                                    <Printer size={10} /> Export
+                                                </button>
+                                                <Link
+                                                    href={`/dashboard/suppliers/supplies/${r._id}`}
+                                                    className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight bg-primary text-white hover:bg-primary-dark flex items-center gap-1.5 transition-colors"
+                                                >
+                                                    <FileText size={10} /> View
+                                                </Link>
+                                                <button
+                                                    onClick={() => {
+                                                        const baseDate = r.arrivalDate || r.createdAt;
+                                                        const d = new Date(baseDate);
+                                                        // Adjust for local timezone to get the correct YYYY-MM-DD
+                                                        const offset = d.getTimezoneOffset() * 60000;
+                                                        const localDate = new Date(d.getTime() - offset).toISOString().split('T')[0];
+
+                                                        setEditingReceipt({
+                                                            ...r,
+                                                            arrivalDate: localDate
+                                                        });
+                                                        setIsEditModalOpen(true);
+                                                    }}
+                                                    className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
+                                                >
+                                                    <Pencil size={10} /> Edit
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -255,6 +309,91 @@ export default function SupplyRegistryPage() {
                     receipt={selectedReceipt}
                     onClose={() => setSelectedReceipt(null)}
                 />
+            )}
+
+            {/* Edit Modal */}
+            {isEditModalOpen && editingReceipt && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white border border-border rounded-sm shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-slate-50">
+                            <div className="flex items-center gap-2">
+                                <Pencil size={16} className="text-primary" />
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Edit Shipment Arrival</h3>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditingReceipt(null);
+                                    setEditError("");
+                                }}
+                                className="text-secondary hover:text-primary transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditSubmit} className="p-6 flex flex-col gap-6">
+                            <div className="flex flex-col gap-4 p-4 bg-blue-50 border border-blue-100 rounded-sm">
+                                <div className="text-[10px] font-bold text-blue-700 uppercase tracking-widest flex items-center gap-2">
+                                    <FileText size={12} /> Receipt Metadata
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="text-[9px] text-blue-600/60 font-bold uppercase tracking-tight">Receipt Number</div>
+                                        <div className="text-xs font-mono font-bold text-blue-900">{editingReceipt.receiptNumber}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-[9px] text-blue-600/60 font-bold uppercase tracking-tight">Supplier</div>
+                                        <div className="text-xs font-bold text-blue-900">{editingReceipt.supplier}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Corrected Arrival Date</label>
+                                <div className="relative">
+                                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary opacity-50" />
+                                    <input
+                                        type="date"
+                                        required
+                                        value={editingReceipt.arrivalDate}
+                                        onChange={(e) => setEditingReceipt({ ...editingReceipt, arrivalDate: e.target.value })}
+                                        className="w-full bg-muted border border-border px-9 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
+                                    />
+                                </div>
+                                <p className="text-[9px] text-secondary">Correcting this date will also update the logistics audit logs for all items in this shipment.</p>
+                            </div>
+
+                            {editError && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-widest p-4 rounded-sm">
+                                    {editError}
+                                </div>
+                            )}
+
+                            <div className="flex items-center gap-3 pt-4 border-t border-border">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsEditModalOpen(false);
+                                        setEditingReceipt(null);
+                                        setEditError("");
+                                    }}
+                                    className="flex-1 px-4 py-2.5 rounded-sm text-[10px] font-bold uppercase tracking-widest text-secondary hover:bg-muted transition-colors border border-border"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={editLoading}
+                                    className="flex-1 bg-primary text-white px-4 py-2.5 rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-primary-dark transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {editLoading ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
         </div>
     );

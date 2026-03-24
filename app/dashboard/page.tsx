@@ -52,6 +52,7 @@ export default function DashboardPage() {
     const [inventoryByCategory, setInventoryByCategory] = useState<any[]>([]);
     const [financialDistribution, setFinancialDistribution] = useState<any[]>([]);
     const [supplierDistribution, setSupplierDistribution] = useState<any[]>([]);
+    const [config, setConfig] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -69,6 +70,7 @@ export default function DashboardPage() {
                     setInventoryByCategory(json.data.inventoryByCategory || []);
                     setFinancialDistribution(json.data.financialDistribution || []);
                     setSupplierDistribution(json.data.supplierDistribution || []);
+                    setConfig(json.data.config);
                 }
             } catch (error) {
                 console.error("Failed to fetch dashboard stats:", error);
@@ -113,11 +115,18 @@ export default function DashboardPage() {
             {/* Welcome Title */}
             <div className="flex justify-between items-end">
                 <div>
-                    <h1 className="text-2xl font-bold">Operational Overview</h1>
+                    <h1 className="text-2xl font-bold">{config?.organizationName || "Operational Overview"}</h1>
                     <p className="text-sm text-secondary mt-1">Real-time surveillance of national distribution and warehouse metrics.</p>
                 </div>
-                <div className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em] bg-muted px-3 py-1 rounded-sm border border-border">
-                    Node Status: GH-ACCRA-CORE-01
+                <div className="flex flex-col items-end gap-1">
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em] bg-muted px-3 py-1 rounded-sm border border-border">
+                        Node Status: {config?.systemNodeId || "GH-ACCRA-CORE-01"}
+                    </div>
+                    {config?.organizationName && (
+                        <div className="text-[8px] font-black text-primary uppercase tracking-widest opacity-40">
+                            Central Command Hub
+                        </div>
+                    )}
                 </div>
             </div>
 

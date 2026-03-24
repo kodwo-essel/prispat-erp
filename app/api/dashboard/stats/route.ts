@@ -3,10 +3,17 @@ import dbConnect from "@/lib/dbConnect";
 import Inventory from "@/models/Inventory";
 import Supplier from "@/models/Supplier";
 import Finance from "@/models/Finance";
+import SystemConfig from "@/models/SystemConfig";
 
 export async function GET() {
     try {
         await dbConnect();
+
+        // 0. Fetch Global Config
+        const config = await SystemConfig.findOne({}) || {
+            organizationName: "Prispat Prime Distribution",
+            systemNodeId: "GH-ACCRA-CORE-01"
+        };
 
         // 1. Inventory Stats
         const inventoryItems = await Inventory.find({});
@@ -273,7 +280,11 @@ export async function GET() {
                 inventorySummary,
                 inventoryByCategory,
                 financialDistribution,
-                supplierDistribution
+                supplierDistribution,
+                config: {
+                    organizationName: config.organizationName,
+                    systemNodeId: config.systemNodeId
+                }
             }
         });
     } catch (error: any) {

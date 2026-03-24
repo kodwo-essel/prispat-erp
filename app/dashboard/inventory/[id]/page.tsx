@@ -313,10 +313,17 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
                             <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Operational Status</div>
-                            <div className={`text-2xl font-bold uppercase tabular-nums ${item.stock === 0 ? 'text-red-600' : item.stock < 25 ? 'text-orange-600' : 'text-green-600'}`}>
-                                {item.stock === 0 ? 'Out of Stock' : item.stock < 25 ? 'Low Stock' : 'Stable'}
+                            <div className="flex items-center mt-1">
+                                <span className={`text-[9px] font-bold px-3 py-0.5 rounded-full border uppercase tracking-widest ${item.stock === 0 ? 'bg-red-50 text-red-700 border-red-200' :
+                                    item.stock < 25 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                        'bg-green-50 text-green-700 border-green-200'
+                                    }`}>
+                                    {item.stock === 0 ? 'OUT' :
+                                        item.stock < 25 ? 'LOW' :
+                                            'IN'}
+                                </span>
                             </div>
-                            <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1">
+                            <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-2">
                                 <Clock size={12} /> Expiry: {new Date(item.expiryDate).toLocaleDateString()}
                             </div>
                         </div>

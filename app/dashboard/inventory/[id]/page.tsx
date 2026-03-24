@@ -192,19 +192,27 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                     <select name="category" defaultValue={item.category} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary">
                                         <option>Herbicide</option>
                                         <option>Fertilizer</option>
-                                        <option>Pesticide</option>
+                                        <option>Insecticide</option>
+                                        <option>Fungicide</option>
                                         <option>Equipment</option>
+                                        <option>General</option>
                                     </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Unit Price (₵)</label>
+                                    <input name="unitPrice" type="number" defaultValue={item.unitPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Supplier Price (₵)</label>
+                                    <input name="supplierPrice" type="number" defaultValue={item.supplierPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
                                 </div>
                             </div>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase text-secondary">Current Stock</label>
                                     <input name="stock" type="number" defaultValue={item.stock} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase text-secondary">Unit Price (₵)</label>
-                                    <input name="unitPrice" type="number" defaultValue={item.unitPrice} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase text-secondary">Hazard Class</label>
@@ -309,8 +317,12 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                     <span className="text-primary font-bold underline cursor-pointer">{item.supplier}</span>
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
-                                    <span className="text-secondary font-medium">Unit Price:</span>
+                                    <span className="text-secondary font-medium">Selling Price:</span>
                                     <span className="text-primary font-bold tabular-nums">₵{item.unitPrice || 0}</span>
+                                </div>
+                                <div className="grid grid-cols-2 text-xs">
+                                    <span className="text-secondary font-medium">Supplier Price:</span>
+                                    <span className="text-primary font-bold tabular-nums">₵{item.supplierPrice || 0}</span>
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
                                     <span className="text-secondary font-medium">National Registry:</span>

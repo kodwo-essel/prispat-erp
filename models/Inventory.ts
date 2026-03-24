@@ -48,6 +48,10 @@ const InventorySchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        supplierPrice: {
+            type: Number,
+            default: 0,
+        },
     },
     {
         timestamps: true,

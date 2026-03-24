@@ -227,13 +227,24 @@ function RecordTransactionForm() {
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                     className="w-full bg-muted border border-border px-4 py-2.5 rounded-sm text-sm focus:outline-none focus:border-primary transition-colors">
-                                    <option>Agro-Input Sales</option>
-                                    <option>Sales Fulfillment</option>
-                                    <option>Procurement Cost</option>
-                                    <option>Logistics Fee</option>
-                                    <option>Personnel Payroll</option>
-                                    <option>Institutional Tax</option>
-                                    <option>Capital Equipment</option>
+                                    {formData.type === "Revenue" ? (
+                                        <>
+                                            <option>Agro-Input Sales</option>
+                                            <option>Sales Fulfillment</option>
+                                            <option>Consultancy Fee</option>
+                                            <option>Other Revenue</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option>Procurement Cost</option>
+                                            <option>Logistics Fee</option>
+                                            <option>Personnel Payroll</option>
+                                            <option>Institutional Tax</option>
+                                            <option>Capital Equipment</option>
+                                            <option>General Expense</option>
+                                            <option>Utility Bill</option>
+                                        </>
+                                    )}
                                 </select>
                             </div>
 

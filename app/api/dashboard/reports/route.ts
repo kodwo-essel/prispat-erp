@@ -89,6 +89,7 @@ export async function POST(request: Request) {
             reportData.finance = {
                 revenue,
                 expenses,
+                net: revenue - expenses,
                 metrics: {
                     totalTransactions: txs.filter(t => t.isInvoice || (t.type === "Expense" && !t.parentInvoiceId)).length,
                     pendingCollections: txs.filter(t => t.calculatedStatus === "Pending" && t.type === "A/R").reduce((acc, t) => acc + (t.amount || 0), 0),

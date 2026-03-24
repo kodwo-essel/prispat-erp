@@ -125,6 +125,8 @@ export default function InventoryPage() {
                         <option>Fertilizer</option>
                         <option>Insecticide</option>
                         <option>Fungicide</option>
+                        <option>Equipment</option>
+                        <option>General</option>
                     </select>
                     <select
                         className="bg-white border border-border px-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"

@@ -209,7 +209,7 @@ export async function GET() {
                     status: "Settled"
                 }
             },
-            { $group: { _id: "$type", value: { $sum: "$amount" } } },
+            { $group: { _id: "$type", value: { $sum: { $cond: [{ $in: ["$type", ["Expense", "Payroll", "Tax"]] }, { $multiply: ["$amount", -1] }, "$amount"] } } } },
             { $project: { name: "$_id", value: 1, _id: 0 } }
         ]);
 

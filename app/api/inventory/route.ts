@@ -29,7 +29,8 @@ export async function POST(request: Request) {
             batchId: body.batchId,
             expiryDate: body.expiryDate,
             supplier: body.supplier,
-            unitPrice: body.unitPrice
+            unitPrice: body.unitPrice,
+            supplierPrice: body.supplierPrice || 0
         };
         await Supply.create(supplyEntry);
 
@@ -43,13 +44,36 @@ export async function POST(request: Request) {
         if (inventoryItem) {
             // Increment existing stock
             inventoryItem.stock += Number(body.stock);
-            inventoryItem.unitPrice = body.unitPrice; // Update to latest price
+            inventoryItem.unitPrice = body.unitPrice; // Update to latest selling price
+            inventoryItem.supplierPrice = body.supplierPrice || 0; // Update to latest cost price
             inventoryItem.expiryDate = body.expiryDate; // Update to latest expiry
             inventoryItem.status = inventoryItem.stock > 0 ? "In Stock" : "Low Inventory";
             await inventoryItem.save();
         } else {
             // Create new inventory record
-            inventoryItem = await Inventory.create(body);
+            inventoryItem = await Inventory.create({
+                ...body,
+                supplierPrice: body.supplierPrice || 0
+            });
+        }
+
+        // 3. Create an "Expense" type invoice for the supplier if supplierPrice is provided
+        if (body.supplierPrice && body.supplierPrice > 0) {
+            const Finance = (await import("@/models/Finance")).default;
+            const suffix = `${Date.now().toString().slice(-8)}`;
+            const expenseInvoice = {
+                txId: `INV-${suffix}`,
+                entity: body.supplier,
+                type: "Expense",
+                category: "Procurement Cost",
+                amount: Number(body.supplierPrice) * Number(body.stock),
+                date: new Date(),
+                status: "Pending",
+                isInvoice: true,
+                description: `Automatic expense for ${body.stock} ${body.unit} of ${body.name} (SKU: ${body.sku}, Batch: ${body.batchId})`,
+                recordedBy: "System Automator"
+            };
+            await Finance.create(expenseInvoice);
         }
 
         return NextResponse.json({ success: true, data: inventoryItem }, { status: 201 });

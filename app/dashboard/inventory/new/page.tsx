@@ -33,7 +33,8 @@ export default function RecordNewArrivalPage() {
         batchId: "",
         expiryDate: "",
         supplier: "",
-        unitPrice: 0
+        unitPrice: 0,
+        supplierPrice: 0
     });
 
     useEffect(() => {
@@ -174,6 +175,8 @@ export default function RecordNewArrivalPage() {
                                     <option>Cold Chain Required</option>
                                     <option>Hazardous Vault</option>
                                     <option>Restricted Access</option>
+                                    <option>Equipment</option>
+                                    <option>General</option>
                                 </select>
                             </div>
                         </div>
@@ -261,16 +264,29 @@ export default function RecordNewArrivalPage() {
                             <Info size={14} className="text-secondary" />
                             <h3 className="text-[10px] font-bold uppercase tracking-widest text-secondary">Financial Clearance</h3>
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Unit Cost (GHS)</label>
-                            <input
-                                type="number"
-                                required
-                                value={formData.unitPrice}
-                                onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                                placeholder="0.00"
-                                className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Selling Price (GHS)</label>
+                                <input
+                                    type="number"
+                                    required
+                                    value={formData.unitPrice}
+                                    onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
+                                    placeholder="0.00"
+                                    className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Supplier Price (GHS)</label>
+                                <input
+                                    type="number"
+                                    required
+                                    value={formData.supplierPrice}
+                                    onChange={(e) => setFormData({ ...formData, supplierPrice: Number(e.target.value) })}
+                                    placeholder="0.00"
+                                    className="w-full bg-muted border border-border px-4 py-2 rounded-sm text-sm focus:outline-none focus:border-primary"
+                                />
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -290,7 +306,7 @@ export default function RecordNewArrivalPage() {
                             onClick={() => setFormData({
                                 name: "", sku: "", category: "Ambient Temperature", stock: 0,
                                 unit: "Liters", hazardClass: "None", batchId: "",
-                                expiryDate: "", supplier: "", unitPrice: 0
+                                expiryDate: "", supplier: "", unitPrice: 0, supplierPrice: 0
                             })}
                             className="flex items-center gap-2 text-xs font-bold text-secondary uppercase tracking-widest px-6 py-2.5 rounded-sm hover:bg-muted transition-colors"
                         >

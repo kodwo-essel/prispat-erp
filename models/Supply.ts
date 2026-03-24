@@ -42,6 +42,10 @@ const SupplySchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        supplierPrice: {
+            type: Number,
+            default: 0,
+        },
         arrivalDate: {
             type: Date,
             default: Date.now,

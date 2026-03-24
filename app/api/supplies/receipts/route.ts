@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import SupplyReceipt from "@/models/SupplyReceipt";
 import Inventory from "@/models/Inventory";
 import Supply from "@/models/Supply";
+import Finance from "@/models/Finance";
 
 export async function GET() {
     try {
@@ -21,7 +22,8 @@ export async function POST(req: Request) {
         const { items, supplier, arrivalDate, receiptNumber, notes } = body;
 
         // 1. Calculate and Create the Supply Receipt
-        const totalAmount = items.reduce((sum: number, item: any) => sum + (item.unitPrice * item.quantity), 0);
+        // Total amount is based on CUSTOMER COST (supplierPrice)
+        const totalAmount = items.reduce((sum: number, item: any) => sum + (Number(item.supplierPrice || 0) * item.quantity), 0);
         const receipt = await SupplyReceipt.create({
             items,
             supplier,
@@ -44,12 +46,12 @@ export async function POST(req: Request) {
                 batchId: item.batchId,
                 expiryDate: item.expiryDate,
                 supplier: supplier,
-                unitPrice: item.unitPrice,
+                unitPrice: item.unitPrice, // Latest selling price
+                supplierPrice: item.supplierPrice, // Latest cost price
                 arrivalDate: arrivalDate
             });
 
             // Update/Create Aggregate Inventory
-            // We now track unique items PER BATCH
             let inventoryItem = await Inventory.findOne({
                 sku: item.sku,
                 supplier: supplier,
@@ -57,14 +59,15 @@ export async function POST(req: Request) {
             });
 
             if (inventoryItem) {
-                // Increment existing stock for this specific vendor item
+                // Increment existing stock
                 inventoryItem.stock += Number(item.quantity);
                 inventoryItem.unitPrice = item.unitPrice;
+                inventoryItem.supplierPrice = item.supplierPrice;
                 inventoryItem.expiryDate = item.expiryDate;
                 inventoryItem.status = inventoryItem.stock > 0 ? "In Stock" : "Low Inventory";
                 await inventoryItem.save();
             } else {
-                // Create new inventory record specifically for this product/vendor combo
+                // Create new inventory record
                 await Inventory.create({
                     name: item.name,
                     sku: item.sku,
@@ -76,9 +79,31 @@ export async function POST(req: Request) {
                     expiryDate: item.expiryDate,
                     supplier: supplier,
                     unitPrice: item.unitPrice,
+                    supplierPrice: item.supplierPrice,
                     status: "In Stock"
                 });
             }
+        }
+
+        // 3. Automated Expense Logging for the shipment
+        if (totalAmount > 0) {
+            await Finance.create({
+                txId: `EXP-REC-${receiptNumber}-${Date.now().toString().slice(-4)}`,
+                entity: supplier,
+                amount: totalAmount,
+                type: "Expense",
+                category: "Procurement",
+                status: "Settled",
+                isInvoice: true,
+                date: new Date(arrivalDate),
+                description: `Bulk procurement shipment: REF #${receiptNumber} (${items.length} items)`,
+                recordedBy: "System Automator",
+                auditTrail: [{
+                    action: "Auto-generated from Supply Receipt",
+                    by: "System Automator",
+                    time: new Date()
+                }]
+            });
         }
 
         return NextResponse.json({ success: true, data: receipt }, { status: 201 });

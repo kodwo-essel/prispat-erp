@@ -7,6 +7,7 @@ const ReceiptItemSchema = new mongoose.Schema({
     quantity: { type: Number, required: true },
     unit: { type: String, required: true },
     unitPrice: { type: Number, required: true },
+    supplierPrice: { type: Number, default: 0 },
     batchId: { type: String, required: true },
     expiryDate: { type: Date, required: true },
     hazardClass: { type: String, default: "None" }

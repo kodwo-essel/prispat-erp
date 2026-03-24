@@ -23,6 +23,7 @@ interface ReceiptItem {
     quantity: number;
     unit: string;
     unitPrice: number;
+    supplierPrice: number;
     batchId: string;
     expiryDate: string;
     hazardClass: string;
@@ -71,6 +72,7 @@ export default function NewSupplyReceiptPage() {
             quantity: 1,
             unit: "Liters",
             unitPrice: 0,
+            supplierPrice: 0,
             batchId: "",
             expiryDate: "",
             hazardClass: "None"
@@ -88,6 +90,8 @@ export default function NewSupplyReceiptPage() {
                 sku: selected.sku,
                 category: selected.category,
                 unit: selected.unit,
+                unitPrice: selected.unitPrice || 0,
+                supplierPrice: selected.supplierPrice || 0,
                 hazardClass: selected.hazardClass,
             };
             setFormData({ ...formData, items: newItems });
@@ -107,7 +111,7 @@ export default function NewSupplyReceiptPage() {
     };
 
     const calculateTotal = () => {
-        return formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+        return formData.items.reduce((sum, item) => sum + (item.quantity * item.supplierPrice), 0);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -330,8 +334,24 @@ export default function NewSupplyReceiptPage() {
                                             </select>
                                         </div>
                                     </div>
+                                    <div className="md:col-span-2 flex flex-col gap-1.5 text-blue-600">
+                                        <label className="text-[9px] font-bold uppercase tracking-tighter">Supplier Price (Cost)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold opacity-60">₵</span>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                required
+                                                value={item.supplierPrice}
+                                                onChange={(e) => updateItem(index, 'supplierPrice', Number(e.target.value))}
+                                                className="w-full bg-white border border-blue-200 pl-5 pr-2 py-1.5 rounded-sm text-xs focus:outline-none focus:border-blue-500 font-bold tabular-nums"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div className="md:col-span-2 flex flex-col gap-1.5">
-                                        <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Unit Price</label>
+                                        <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Selling Price</label>
                                         <div className="relative">
                                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-secondary">₵</span>
                                             <input
@@ -373,9 +393,9 @@ export default function NewSupplyReceiptPage() {
                                         />
                                     </div>
                                     <div className="md:col-span-2 flex flex-col gap-1.5">
-                                        <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Sub-total</label>
-                                        <div className="h-[34px] flex items-center px-3 bg-slate-100 border border-slate-200 rounded-sm text-xs font-black text-primary">
-                                            ₵{(item.quantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        <label className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Sub-total (Cost)</label>
+                                        <div className="h-[34px] flex items-center px-3 bg-blue-50 border border-blue-100 rounded-sm text-xs font-black text-blue-700">
+                                            ₵{(item.quantity * item.supplierPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </div>
                                     </div>
                                 </div>

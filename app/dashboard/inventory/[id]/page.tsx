@@ -322,7 +322,11 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
                                     <span className="text-secondary font-medium">Supplier Price:</span>
-                                    <span className="text-primary font-bold tabular-nums">₵{item.supplierPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</span>
+                                    <span className="text-primary font-bold tabular-nums">
+                                        {item.supplierPrice && item.supplierPrice > 0
+                                            ? `₵${item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                            : '-'}
+                                    </span>
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
                                     <span className="text-secondary font-medium">National Registry:</span>

@@ -103,7 +103,7 @@ export default function ReceiptPrintView({ receipt, onClose }: ReceiptPrintViewP
                                 <th className="py-4 text-[10px] font-bold uppercase text-secondary">Product / SKU</th>
                                 <th className="py-4 text-[10px] font-bold uppercase text-secondary">Batch ID</th>
                                 <th className="py-4 text-right text-[10px] font-bold uppercase text-secondary">Quantity</th>
-                                <th className="py-4 text-right text-[10px] font-bold uppercase text-secondary">Unit Price</th>
+                                <th className="py-4 text-right text-[10px] font-bold uppercase text-secondary">Cost Price</th>
                                 <th className="py-4 text-right text-[10px] font-bold uppercase text-secondary">Total (₵)</th>
                             </tr>
                         </thead>
@@ -118,8 +118,8 @@ export default function ReceiptPrintView({ receipt, onClose }: ReceiptPrintViewP
                                         <code className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded-sm">{item.batchId || "N/A"}</code>
                                     </td>
                                     <td className="py-4 text-right text-xs font-bold text-slate-700">{item.quantity} {item.unit}</td>
-                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * item.supplierPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 </tr>
                             ))}
                         </tbody>

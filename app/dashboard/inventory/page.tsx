@@ -194,7 +194,11 @@ export default function InventoryPage() {
                                         <div className="text-[10px] text-secondary">Units Sold</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-xs font-bold text-blue-600 tabular-nums">₵{item.supplierPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</div>
+                                        <div className="text-xs font-bold text-blue-600 tabular-nums">
+                                            {item.supplierPrice && item.supplierPrice > 0
+                                                ? `₵${item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                : '-'}
+                                        </div>
                                         <div className="text-[9px] text-secondary lowercase">Cost Basis</div>
                                     </td>
                                     <td className="px-6 py-4">

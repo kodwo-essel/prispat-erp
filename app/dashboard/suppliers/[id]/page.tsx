@@ -370,7 +370,11 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                                             </td>
                                             <td className="px-6 py-4 text-xs text-secondary italic">{item.category}</td>
                                             <td className="px-6 py-4 text-right font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                            <td className="px-6 py-4 text-right font-bold text-blue-600 tabular-nums">₵{item.supplierPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</td>
+                                            <td className="px-6 py-4 text-right font-bold text-blue-600 tabular-nums">
+                                                {item.supplierPrice && item.supplierPrice > 0
+                                                    ? `₵${item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                    : '-'}
+                                            </td>
                                             <td className="px-6 py-4 text-right text-[10px] text-secondary tabular-nums">
                                                 {new Date(item.updatedAt).toLocaleDateString()}
                                             </td>

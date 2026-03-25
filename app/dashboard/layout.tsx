@@ -19,18 +19,8 @@ export default function DashboardLayout({
                 {/* Main Content Area */}
                 <main className="flex-grow flex flex-col min-w-0 overflow-hidden">
                     {/* Top Header */}
-                    <header className="h-16 bg-white border-b border-border px-8 flex items-center justify-between shrink-0 print:hidden">
-                        <div className="flex items-center gap-4">
-                            <div className="h-8 w-8 bg-primary/10 rounded-sm flex items-center justify-center text-primary">
-                                <Leaf size={16} />
-                            </div>
-                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/5 px-3 py-1 rounded-sm border border-primary/10">
-                                System Core
-                            </h2>
-                            <div className="bg-green-50 text-green-600 text-[9px] font-bold px-2 py-0.5 rounded-full border border-green-100 uppercase tracking-tighter">
-                                Session Secure
-                            </div>
-                        </div>
+                    <header className="h-16 bg-white border-b border-border px-8 flex items-center justify-end shrink-0 print:hidden">
+
 
                         <div className="flex items-center gap-6">
                             <Clock />

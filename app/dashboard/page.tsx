@@ -54,12 +54,40 @@ export default function DashboardPage() {
     const [financialDistribution, setFinancialDistribution] = useState<any[]>([]);
     const [supplierDistribution, setSupplierDistribution] = useState<any[]>([]);
     const [config, setConfig] = useState<any>(null);
+    const [productSalesData, setProductSalesData] = useState<any[]>([]);
+    const [topProducts, setTopProducts] = useState<any[]>([]);
+    const [salesDateRange, setSalesDateRange] = useState({
+        start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        end: new Date().toISOString().split('T')[0]
+    });
+    const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        const fetchProductSales = async () => {
+            try {
+                const res = await fetch(`/api/dashboard/product-sales?startDate=${salesDateRange.start}&endDate=${salesDateRange.end}`);
+                const json = await res.json();
+                if (json.success) {
+                    setProductSalesData(json.data.chartData);
+                    setTopProducts(json.data.topProducts);
+                    // Default to top 5 products if none selected
+                    if (selectedProducts.length === 0 && json.data.topProducts.length > 0) {
+                        setSelectedProducts(json.data.topProducts.slice(0, 5).map((p: any) => p._id));
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch product sales:", error);
+            }
+        };
+
+        fetchProductSales();
+    }, [salesDateRange]);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -149,28 +177,27 @@ export default function DashboardPage() {
                     <div
                         key={stat.label}
                         className={`p-6 rounded-sm shadow-sm border transition-all duration-300 hover:shadow-md ${stat.label === "Estimated Net Value"
-                                ? "bg-[#002d62] border-[#002d62] text-white ring-4 ring-[#002d62]/10"
-                                : "bg-white border-border text-primary"
+                            ? "bg-white border-[#002d62] ring-4 ring-[#002d62]/5 shadow-lg"
+                            : "bg-white border-border"
                             }`}
                     >
                         <div className="flex items-center justify-between mb-2">
-                            <div className={`text-[10px] font-bold uppercase tracking-[0.2em] ${stat.label === "Estimated Net Value" ? "text-white/60" : "text-secondary"
-                                }`}>
+                            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">
                                 {stat.label}
                             </div>
-                            <div className={stat.label === "Estimated Net Value" ? "text-white/40" : "text-secondary opacity-50"}>
+                            <div className="text-secondary opacity-50">
                                 {getIcon(stat.label)}
                             </div>
                         </div>
                         <div className="flex items-end justify-between">
-                            <div className={`text-3xl font-black tracking-tight ${stat.label === "Estimated Net Value" ? "text-white" : "text-primary"
+                            <div className={`text-3xl font-black tracking-tight ${stat.label === "Estimated Net Value" ? "text-[#002d62]" : "text-primary"
                                 }`}>
                                 {stat.value}
                             </div>
-                            <div className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest ${stat.label === "Estimated Net Value" ? "text-white/80" : (
-                                    stat.trend === 'up' ? 'text-green-600' :
-                                        stat.trend === 'down' ? 'text-red-600' : 'text-slate-400'
-                                )
+                            <div className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest ${stat.label === "Estimated Net Value" ? "text-[#002d62]" : (
+                                stat.trend === 'up' ? 'text-green-600' :
+                                    stat.trend === 'down' ? 'text-red-600' : 'text-slate-400'
+                            )
                                 }`}>
                                 {stat.trend === 'up' && <TrendingUp size={12} />}
                                 {stat.trend === 'down' && <TrendingDown size={12} />}
@@ -222,15 +249,16 @@ export default function DashboardPage() {
                                     />
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: '#002d62',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            color: '#fff',
+                                            backgroundColor: '#ffffff',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '2px',
                                             fontSize: '10px',
                                             fontWeight: 800,
-                                            textTransform: 'uppercase'
+                                            textTransform: 'uppercase',
+                                            color: '#002d62',
+                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                                         }}
-                                        itemStyle={{ fontSize: '10px' }}
+                                        itemStyle={{ color: '#002d62', fontSize: '10px' }}
                                     />
                                     <Area
                                         type="monotone"
@@ -396,7 +424,16 @@ export default function DashboardPage() {
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#002d62', border: 'none', borderRadius: '4px', fontSize: '10px', color: '#fff' }}
+                                        contentStyle={{
+                                            backgroundColor: '#ffffff',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '2px',
+                                            fontSize: '10px',
+                                            fontWeight: 800,
+                                            textTransform: 'uppercase',
+                                            color: '#002d62',
+                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                        }}
                                     />
                                     <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} />
                                 </PieChart>
@@ -430,7 +467,16 @@ export default function DashboardPage() {
                                     </Pie>
                                     <Tooltip
                                         formatter={(value: any) => value ? `₵${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₵0.00"}
-                                        contentStyle={{ backgroundColor: '#002d62', border: 'none', borderRadius: '4px', fontSize: '10px', color: '#fff' }}
+                                        contentStyle={{
+                                            backgroundColor: '#ffffff',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '2px',
+                                            fontSize: '10px',
+                                            fontWeight: 800,
+                                            textTransform: 'uppercase',
+                                            color: '#002d62',
+                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                        }}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -444,6 +490,87 @@ export default function DashboardPage() {
                             </div>
                         ))}
                     </div>
+                </div>
+            </div>
+
+            {/* Row 4: Product Sales Analytics */}
+            <div className="bg-white border border-border rounded-sm p-6 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                    <div>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#002d62]">Product Sales Analytics</h3>
+                        <p className="text-[10px] text-secondary font-bold uppercase mt-1">Volume tracking for top-performing products</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-muted p-1 rounded-sm border border-border">
+                        <input
+                            type="date"
+                            value={salesDateRange.start}
+                            onChange={(e) => setSalesDateRange(prev => ({ ...prev, start: e.target.value }))}
+                            className="text-[10px] font-bold bg-transparent border-none outline-none text-primary uppercase"
+                        />
+                        <span className="text-[10px] font-black text-secondary">TO</span>
+                        <input
+                            type="date"
+                            value={salesDateRange.end}
+                            onChange={(e) => setSalesDateRange(prev => ({ ...prev, end: e.target.value }))}
+                            className="text-[10px] font-bold bg-transparent border-none outline-none text-primary uppercase"
+                        />
+                    </div>
+                </div>
+
+                <div className="h-[350px] w-full">
+                    {mounted && productSalesData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={productSalesData}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis
+                                    dataKey="date"
+                                    tick={{ fontSize: 10, fontWeight: 700, fill: "#64748b" }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    tick={{ fontSize: 10, fontWeight: 700, fill: "#64748b" }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: '#ffffff',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '2px',
+                                        fontSize: '10px',
+                                        fontWeight: 800,
+                                        textTransform: 'uppercase',
+                                        color: '#002d62',
+                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                    }}
+                                    itemStyle={{ color: '#002d62' }}
+                                />
+                                <Legend
+                                    layout="horizontal"
+                                    verticalAlign="top"
+                                    align="right"
+                                    iconType="circle"
+                                    wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px' }}
+                                />
+                                {topProducts.slice(0, 8).map((prod, index) => (
+                                    <Bar
+                                        key={prod._id}
+                                        dataKey={prod._id}
+                                        fill={COLORS[index % COLORS.length]}
+                                        radius={[2, 2, 0, 0]}
+                                        stackId="a"
+                                    />
+                                ))}
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-secondary opacity-50 text-[10px] font-bold uppercase tracking-widest">
+                            No sales data found for the selected period
+                        </div>
+                    )}
                 </div>
             </div>
 

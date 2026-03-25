@@ -249,10 +249,10 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="font-black text-primary tabular-nums">{item.quantity} {item.unit}</div>
-                                            <div className="text-[9px] text-secondary uppercase">@ ₵{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                            <div className="text-[9px] text-secondary uppercase">@ ₵{(item.supplierPrice || item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="font-black text-primary tabular-nums">₵{(item.quantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                            <div className="font-black text-primary tabular-nums">₵{(item.quantity * (item.supplierPrice || item.unitPrice)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                             <Link
                                                 href={`/dashboard/inventory/lookup?sku=${item.sku}&batchId=${item.batchId}`}
                                                 className="text-[9px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:underline"

@@ -296,6 +296,8 @@ export async function GET() {
             {
                 $match: {
                     date: { $gte: todayStart, $lte: todayEnd },
+                    type: { $in: ["Revenue", "A/R", "Settlement"] },
+                    isInvoice: false,
                     status: "Settled"
                 }
             },

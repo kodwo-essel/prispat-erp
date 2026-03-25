@@ -286,6 +286,30 @@ export async function GET() {
         ]);
         const mtdRevenue = mtdRevenueData[0]?.total || 0;
 
+        // Today's Stats
+        const todayStart = new Date(now);
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(now);
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const todayStatsData = await Finance.aggregate([
+            {
+                $match: {
+                    date: { $gte: todayStart, $lte: todayEnd },
+                    status: "Settled"
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    revenue: { $sum: { $cond: [{ $in: ["$type", ["Revenue", "A/R", "Settlement"]] }, "$amount", 0] } },
+                    expenses: { $sum: { $cond: [{ $in: ["$type", ["Expense", "Payroll", "Tax"]] }, "$amount", 0] } }
+                }
+            }
+        ]);
+        const todayRevenue = todayStatsData[0]?.revenue || 0;
+        const todayExpenses = todayStatsData[0]?.expenses || 0;
+
         // Inventory health summary
         const inventorySummary = {
             totalItems: activeInventoryCount,
@@ -327,6 +351,8 @@ export async function GET() {
             data: {
                 stats: [
                     { label: "Net Liquidity", value: `₵${netLiquidity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, change: "Cash Position", trend: netLiquidity >= 0 ? "up" : "down" },
+                    { label: "Today's Revenue", value: `₵${todayRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, change: "Today", trend: "up" },
+                    { label: "Today's Expenses", value: `₵${todayExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, change: "Today", trend: "down" },
                     { label: "Weekly Revenue", value: `₵${weeklyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, change: `${revPercent >= 0 ? '+' : ''}${revPercent.toFixed(1)}%`, trend: revPercent >= 0 ? "up" : "down" },
                     { label: "Accounts Receivable", value: `₵${totalReceivable.toLocaleString()}`, change: "Expected", trend: "neutral" },
                     { label: "Accounts Payable", value: `₵${totalPayable.toLocaleString()}`, change: "Outstanding", trend: "down" },

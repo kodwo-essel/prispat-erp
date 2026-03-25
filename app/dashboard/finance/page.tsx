@@ -145,12 +145,36 @@ export default function FinancePage() {
             return sum;
         }, 0);
 
+        // Today's Stats
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const todayRevenue = transactions.reduce((sum, tx) => {
+            const txDate = new Date(tx.date).getTime();
+            if (txDate >= todayStart.getTime() && txDate <= todayEnd.getTime() && tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+                return sum + (Number(tx.amount) || 0);
+            }
+            return sum;
+        }, 0);
+
+        const todayExpenses = transactions.reduce((sum, tx) => {
+            const txDate = new Date(tx.date).getTime();
+            if (txDate >= todayStart.getTime() && txDate <= todayEnd.getTime() && tx.status === 'Settled' && (tx.type === 'Expense' || tx.type === 'Payroll' || tx.type === 'Tax')) {
+                return sum + (Number(tx.amount) || 0);
+            }
+            return sum;
+        }, 0);
+
         const netPosition = totalRevenue - totalExpenditure;
         const opRatio = totalRevenue > 0 ? (totalExpenditure / totalRevenue) * 100 : 0;
         const grossMargin = totalRevenue > 0 ? ((totalRevenue - totalExpenditure) / totalRevenue) * 100 : 0;
 
         return {
             weeklyRevenue,
+            todayRevenue,
+            todayExpenses,
             totalExpenditure,
             accountsReceivable,
             accountsPayable,
@@ -242,8 +266,10 @@ export default function FinancePage() {
             )}
 
             {/* Metrics Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
                 {[
+                    { label: "Today's Revenue", value: `₵${stats.todayRevenue.toLocaleString()}`, color: "text-[#002d62]", info: "Settled Today" },
+                    { label: "Today's Expenses", value: `₵${stats.todayExpenses.toLocaleString()}`, color: "text-red-600", info: "Paid Today" },
                     { label: "Revenue (Mon-Sun)", value: `₵${stats.weeklyRevenue.toLocaleString()}`, color: "text-[#002d62]", info: stats.revPercent === 0 ? "No Prior Activity" : `${stats.revPercent > 0 ? '+' : ''}${stats.revPercent.toFixed(1)}% Trend`, trend: stats.revPercent > 0 ? 'up' : 'down' },
                     { label: "Net Liquidity", value: `₵${stats.netPosition.toLocaleString()}`, color: "text-[#002d62]", info: "Available Cash" },
                     { label: "Accounts Receivable", value: `₵${stats.accountsReceivable.toLocaleString()}`, color: "text-emerald-600", info: "Pending Inflow" },

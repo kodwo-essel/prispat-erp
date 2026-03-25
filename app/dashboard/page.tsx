@@ -95,6 +95,8 @@ export default function DashboardPage() {
             case "Pending Shipments": return <Truck size={16} />;
             case "Accounts Receivable": return <TrendingUp size={16} />;
             case "Accounts Payable": return <TrendingDown size={16} />;
+            case "Today's Revenue": return <TrendingUp size={16} />;
+            case "Today's Expenses": return <TrendingDown size={16} />;
             case "Net Liquidity": return <DollarSign size={16} />;
             case "Active Suppliers": return <Users size={16} />;
             case "Total Asset Value": return <DollarSign size={16} />;

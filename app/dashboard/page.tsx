@@ -100,6 +100,7 @@ export default function DashboardPage() {
             case "Net Liquidity": return <DollarSign size={16} />;
             case "Active Suppliers": return <Users size={16} />;
             case "Total Asset Value": return <DollarSign size={16} />;
+            case "Estimated Net Value": return <Fingerprint size={16} />;
             default: return <Activity size={16} />;
         }
     };
@@ -145,15 +146,31 @@ export default function DashboardPage() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat) => (
-                    <div key={stat.label} className="bg-white border border-border p-6 rounded-sm shadow-sm">
+                    <div
+                        key={stat.label}
+                        className={`p-6 rounded-sm shadow-sm border transition-all duration-300 hover:shadow-md ${stat.label === "Estimated Net Value"
+                                ? "bg-[#002d62] border-[#002d62] text-white ring-4 ring-[#002d62]/10"
+                                : "bg-white border-border text-primary"
+                            }`}
+                    >
                         <div className="flex items-center justify-between mb-2">
-                            <div className="text-[10px] font-bold uppercase tracking-widest text-secondary">{stat.label}</div>
-                            <div className="text-secondary opacity-50">{getIcon(stat.label)}</div>
+                            <div className={`text-[10px] font-bold uppercase tracking-[0.2em] ${stat.label === "Estimated Net Value" ? "text-white/60" : "text-secondary"
+                                }`}>
+                                {stat.label}
+                            </div>
+                            <div className={stat.label === "Estimated Net Value" ? "text-white/40" : "text-secondary opacity-50"}>
+                                {getIcon(stat.label)}
+                            </div>
                         </div>
                         <div className="flex items-end justify-between">
-                            <div className="text-3xl font-bold text-primary">{stat.value}</div>
-                            <div className={`flex items-center gap-1 text-xs font-bold ${stat.trend === 'up' ? 'text-green-600' :
-                                stat.trend === 'down' ? 'text-red-600' : 'text-slate-400'
+                            <div className={`text-3xl font-black tracking-tight ${stat.label === "Estimated Net Value" ? "text-white" : "text-primary"
+                                }`}>
+                                {stat.value}
+                            </div>
+                            <div className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest ${stat.label === "Estimated Net Value" ? "text-white/80" : (
+                                    stat.trend === 'up' ? 'text-green-600' :
+                                        stat.trend === 'down' ? 'text-red-600' : 'text-slate-400'
+                                )
                                 }`}>
                                 {stat.trend === 'up' && <TrendingUp size={12} />}
                                 {stat.trend === 'down' && <TrendingDown size={12} />}

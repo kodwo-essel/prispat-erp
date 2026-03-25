@@ -348,6 +348,8 @@ export async function GET() {
             { $project: { name: "$_id", value: "$count", _id: 0 } }
         ]);
 
+        const estimatedNetValue = totalAssetValue - totalPayable + totalReceivable + netLiquidity;
+
         return NextResponse.json({
             success: true,
             data: {
@@ -359,6 +361,7 @@ export async function GET() {
                     { label: "Accounts Receivable", value: `₵${totalReceivable.toLocaleString()}`, change: "Expected", trend: "neutral" },
                     { label: "Accounts Payable", value: `₵${totalPayable.toLocaleString()}`, change: "Outstanding", trend: "down" },
                     { label: "Total Asset Value", value: `₵${totalAssetValue.toLocaleString()}`, change: "Calculated", trend: "up" },
+                    { label: "Estimated Net Value", value: `₵${estimatedNetValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, change: "Business Equity", trend: "up" },
                 ],
                 alerts: alerts.slice(0, 5),
                 activities,

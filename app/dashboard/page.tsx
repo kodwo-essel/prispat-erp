@@ -55,6 +55,11 @@ export default function DashboardPage() {
     const [supplierDistribution, setSupplierDistribution] = useState<any[]>([]);
     const [config, setConfig] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -168,65 +173,67 @@ export default function DashboardPage() {
                         <Activity size={16} className="text-primary opacity-20" />
                     </div>
                     <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={revenueTrend}>
-                                <defs>
-                                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#002d62" stopOpacity={0.1} />
-                                        <stop offset="95%" stopColor="#002d62" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
-                                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis
-                                    dataKey="date"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
-                                    dy={10}
-                                    interval={Math.floor(revenueTrend.length / 6)}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
-                                    tickFormatter={(value) => `₵${Number(value).toLocaleString()}`}
-                                />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: '#002d62',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        color: '#fff',
-                                        fontSize: '10px',
-                                        fontWeight: 800,
-                                        textTransform: 'uppercase'
-                                    }}
-                                    itemStyle={{ fontSize: '10px' }}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="revenue"
-                                    stroke="#002d62"
-                                    strokeWidth={3}
-                                    fillOpacity={1}
-                                    fill="url(#colorRev)"
-                                    name="Revenue"
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="expenses"
-                                    stroke="#ef4444"
-                                    strokeWidth={2}
-                                    fillOpacity={1}
-                                    fill="url(#colorExp)"
-                                    name="Expenses"
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {mounted && (
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <AreaChart data={revenueTrend}>
+                                    <defs>
+                                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#002d62" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#002d62" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis
+                                        dataKey="date"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                                        dy={10}
+                                        interval={Math.floor(revenueTrend.length / 6)}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                                        tickFormatter={(value) => `₵${Number(value).toLocaleString()}`}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: '#002d62',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            color: '#fff',
+                                            fontSize: '10px',
+                                            fontWeight: 800,
+                                            textTransform: 'uppercase'
+                                        }}
+                                        itemStyle={{ fontSize: '10px' }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="revenue"
+                                        stroke="#002d62"
+                                        strokeWidth={3}
+                                        fillOpacity={1}
+                                        fill="url(#colorRev)"
+                                        name="Revenue"
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="expenses"
+                                        stroke="#ef4444"
+                                        strokeWidth={2}
+                                        fillOpacity={1}
+                                        fill="url(#colorExp)"
+                                        name="Expenses"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
@@ -267,51 +274,53 @@ export default function DashboardPage() {
                         <Package size={16} className="text-primary opacity-20" />
                     </div>
                     <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={inventoryTrend}>
-                                <defs>
-                                    <linearGradient id="colorInv" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#002d62" stopOpacity={0.1} />
-                                        <stop offset="95%" stopColor="#002d62" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis
-                                    dataKey="date"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 9, fontWeight: 800, fill: '#64748b' }}
-                                    dy={10}
-                                    interval={Math.floor(inventoryTrend.length / 6)}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    hide
-                                />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: '#002d62',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        color: '#fff',
-                                        fontSize: '10px',
-                                        fontWeight: 800,
-                                        textTransform: 'uppercase'
-                                    }}
-                                    formatter={(value) => `₵${Number(value).toLocaleString()}`}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="value"
-                                    stroke="#002d62"
-                                    strokeWidth={3}
-                                    fillOpacity={1}
-                                    fill="url(#colorInv)"
-                                    name="Inventory Value"
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {mounted && (
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <AreaChart data={inventoryTrend}>
+                                    <defs>
+                                        <linearGradient id="colorInv" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#002d62" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#002d62" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis
+                                        dataKey="date"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 9, fontWeight: 800, fill: '#64748b' }}
+                                        dy={10}
+                                        interval={Math.floor(inventoryTrend.length / 6)}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        hide
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: '#002d62',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            color: '#fff',
+                                            fontSize: '10px',
+                                            fontWeight: 800,
+                                            textTransform: 'uppercase'
+                                        }}
+                                        formatter={(value) => `₵${Number(value).toLocaleString()}`}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="value"
+                                        stroke="#002d62"
+                                        strokeWidth={3}
+                                        fillOpacity={1}
+                                        fill="url(#colorInv)"
+                                        name="Inventory Value"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
@@ -321,23 +330,25 @@ export default function DashboardPage() {
                         <Activity size={14} className="text-[#002d62] opacity-40" />
                     </div>
                     <div className="h-[250px] w-full flex flex-col items-center justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={inventoryByCategory}
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {inventoryByCategory.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip contentStyle={{ fontSize: '10px', textTransform: 'uppercase' }} />
-                                <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '8px', fontWeight: 'bold' }} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        {mounted && (
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <PieChart>
+                                    <Pie
+                                        data={inventoryByCategory}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {inventoryByCategory.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ fontSize: '10px', textTransform: 'uppercase' }} />
+                                    <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '8px', fontWeight: 'bold' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
             </div>
@@ -349,27 +360,29 @@ export default function DashboardPage() {
                         <Package size={14} className="text-primary opacity-40" />
                     </div>
                     <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={inventoryByCategory}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={70}
-                                    outerRadius={100}
-                                    paddingAngle={4}
-                                    dataKey="value"
-                                >
-                                    {inventoryByCategory.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#002d62', border: 'none', borderRadius: '4px', fontSize: '10px', color: '#fff' }}
-                                />
-                                <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        {mounted && (
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <PieChart>
+                                    <Pie
+                                        data={inventoryByCategory}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={70}
+                                        outerRadius={100}
+                                        paddingAngle={4}
+                                        dataKey="value"
+                                    >
+                                        {inventoryByCategory.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#002d62', border: 'none', borderRadius: '4px', fontSize: '10px', color: '#fff' }}
+                                    />
+                                    <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
@@ -380,27 +393,29 @@ export default function DashboardPage() {
                         <Activity size={14} className="text-primary opacity-40" />
                     </div>
                     <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={financialDistribution}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={0}
-                                    outerRadius={80}
-                                    paddingAngle={0}
-                                    dataKey="value"
-                                >
-                                    {financialDistribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.name === 'Revenue' ? '#002d62' : '#9ca3af'} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    formatter={(value: any) => value ? `₵${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₵0.00"}
-                                    contentStyle={{ backgroundColor: '#002d62', border: 'none', borderRadius: '4px', fontSize: '10px', color: '#fff' }}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        {mounted && (
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <PieChart>
+                                    <Pie
+                                        data={financialDistribution}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={0}
+                                        outerRadius={80}
+                                        paddingAngle={0}
+                                        dataKey="value"
+                                    >
+                                        {financialDistribution.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.name === 'Revenue' ? '#002d62' : '#9ca3af'} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(value: any) => value ? `₵${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₵0.00"}
+                                        contentStyle={{ backgroundColor: '#002d62', border: 'none', borderRadius: '4px', fontSize: '10px', color: '#fff' }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                     <div className="mt-4 flex flex-col gap-2">
                         {financialDistribution.map((item, i) => (

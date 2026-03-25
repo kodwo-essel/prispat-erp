@@ -374,12 +374,7 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                     <div className="text-[10px] text-secondary font-medium italic">
                                         This asset is linked to an unpaid procurement invoice.
                                     </div>
-                                    <Link
-                                        href={`/dashboard/finance/new?invoice=${item.financeRecord.txId}&redirect=${encodeURIComponent(`/dashboard/inventory/${id}`)}`}
-                                        className="bg-[#002d62] text-white px-8 py-2.5 rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center gap-2"
-                                    >
-                                        <DollarSign size={14} /> Process Payment
-                                    </Link>
+                                    
                                 </div>
                             )}
                         </div>

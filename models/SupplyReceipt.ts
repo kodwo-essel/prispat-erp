@@ -41,6 +41,9 @@ const SupplyReceiptSchema = new mongoose.Schema(
             type: String,
             enum: ["Received", "Verified", "Disputed"],
             default: "Received"
+        },
+        invoiceId: {
+            type: String,
         }
     },
     {

@@ -16,7 +16,9 @@ import {
     Printer,
     Trash2,
     Pencil,
-    X
+    X,
+    ExternalLink,
+    DollarSign
 } from "lucide-react";
 import ReceiptPrintView from "./components/ReceiptPrintView";
 
@@ -172,6 +174,7 @@ export default function SupplyRegistryPage() {
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Items</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Total Value</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Billing</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                                     </>
                                 ) : (
@@ -181,6 +184,7 @@ export default function SupplyRegistryPage() {
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Supplier</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Batch ID</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Quantity</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Invoice</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Audit</th>
                                     </>
                                 )}
@@ -197,7 +201,7 @@ export default function SupplyRegistryPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
 
-                                                {new Date(r.arrivalDate).toLocaleDateString()}
+                                                {new Date(r.arrivalDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </div>
 
                                         </td>
@@ -224,6 +228,18 @@ export default function SupplyRegistryPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
+                                            {r.invoiceId ? (
+                                                <Link
+                                                    href={`/dashboard/invoices/${r.invoiceId}`}
+                                                    className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                                                >
+                                                    {r.invoiceId.split('-').slice(0, 3).join('-')} <ExternalLink size={10} />
+                                                </Link>
+                                            ) : (
+                                                <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">No Invoice</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
 
                                                 <Link
@@ -232,6 +248,7 @@ export default function SupplyRegistryPage() {
                                                 >
                                                     <FileText size={10} /> View
                                                 </Link>
+
                                                 <button
                                                     onClick={() => {
                                                         const baseDate = r.arrivalDate || r.createdAt;
@@ -258,7 +275,7 @@ export default function SupplyRegistryPage() {
                                 filteredItems.map((s) => (
                                     <tr key={s._id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 text-xs font-bold text-slate-700">
-                                            {new Date(s.arrivalDate).toLocaleDateString()}
+                                            {new Date(s.arrivalDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-xs font-bold text-primary">{s.name}</div>
@@ -272,13 +289,35 @@ export default function SupplyRegistryPage() {
                                             <div className="text-xs font-black text-slate-900 tabular-nums">+{s.quantity}</div>
                                             <div className="text-[10px] text-secondary">{s.unit}</div>
                                         </td>
+                                        <td className="px-6 py-4">
+                                            {s.invoiceId ? (
+                                                <Link
+                                                    href={`/dashboard/invoices/${s.invoiceId}`}
+                                                    className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary hover:underline hover:text-indigo-600 transition-colors"
+                                                >
+                                                    {s.invoiceId.split('-').slice(0, 2).join('-')} <ExternalLink size={10} />
+                                                </Link>
+                                            ) : (
+                                                <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">Pending</span>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 text-right">
-                                            <Link
-                                                href={`/dashboard/inventory/lookup?sku=${s.sku}&batchId=${s.batchId}`}
-                                                className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1 ml-auto w-fit"
-                                            >
-                                                Details <ArrowRight size={10} />
-                                            </Link>
+                                            <div className="flex items-center justify-end gap-2">
+                                                {s.invoiceId && (
+                                                    <Link
+                                                        href={`/dashboard/finance/new?invoice=${s.invoiceId}&type=Expense&redirect=/dashboard/suppliers/supplies`}
+                                                        className="text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-tight bg-green-600 text-white hover:bg-green-700 flex items-center gap-1.5 transition-colors"
+                                                    >
+                                                        <DollarSign size={10} /> Pay
+                                                    </Link>
+                                                )}
+                                                <Link
+                                                    href={`/dashboard/inventory/lookup?sku=${s.sku}&batchId=${s.batchId}`}
+                                                    className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
+                                                >
+                                                    View <ArrowRight size={10} />
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

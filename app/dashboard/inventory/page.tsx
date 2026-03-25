@@ -38,7 +38,7 @@ export default function InventoryPage() {
             Hazard: item.hazardClass || "None",
             Status: item.status,
             BatchID: item.batchId,
-            ExpiryDate: item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A",
+            ExpiryDate: item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A",
             Supplier: item.supplier,
             "Supplier Price": item.supplierPrice || 0,
             "Selling Price": item.unitPrice || 0
@@ -240,8 +240,8 @@ export default function InventoryPage() {
                                         <div className="text-[8px] text-slate-400 font-medium uppercase tracking-tighter">per {item.unit.replace(/s$/, '')}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-xs font-medium text-secondary tabular-nums">
-                                            {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}
+                                        <div className="text-[10px] font-bold text-secondary tabular-nums uppercase">
+                                            {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                                         </div>
                                         {item.expiryDate && new Date(item.expiryDate) < new Date() && (
                                             <div className="text-[8px] font-bold text-red-500 uppercase">Expired</div>

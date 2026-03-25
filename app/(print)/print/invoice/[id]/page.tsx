@@ -31,6 +31,18 @@ export default function InvoiceExportPage({ params }: { params: Promise<{ id: st
                         } catch (e) {
                             console.error("Failed to fetch linked order:", e);
                         }
+                    } else if (invData.type === "Expense") {
+                        // For procurement invoices, fetch the supply receipt by exact invoiceId
+                        try {
+                            const srRes = await fetch(`/api/supplies/receipts?invoiceId=${invData.txId}`);
+                            const srJson = await srRes.json();
+                            if (srJson.success && srJson.data.length > 0) {
+                                // Merge supply receipt items into invoice for the print view
+                                invData.items = srJson.data[0].items;
+                            }
+                        } catch (e) {
+                            console.error("Failed to fetch linked supply receipt:", e);
+                        }
                     }
                     // Fetch child payment records
                     try {

@@ -59,12 +59,17 @@ function RecordTransactionForm() {
                         const inv = outstanding.find((i: any) => i.txId === preselectedInvoice);
                         if (inv) {
                             const remaining = inv.amount - (inv.totalPaid || 0);
+                            const forcedType = searchParams.get("type");
+                            const forcedAmount = searchParams.get("amount");
+
                             setFormData(prev => ({
                                 ...prev,
                                 parentInvoiceId: preselectedInvoice,
+                                isInvoice: false, // preselecting an invoice means we are recording a payment
                                 entity: inv.entity,
-                                category: inv.category,
-                                amount: remaining.toString(),
+                                type: (forcedType === "Expense" || forcedType === "Revenue") ? forcedType : (inv.type || prev.type),
+                                category: (forcedType === "Expense" && !inv.category) ? "Procurement Cost" : (inv.category || prev.category),
+                                amount: forcedAmount || remaining.toString(),
                                 description: `Payment for Invoice ${preselectedInvoice}`
                             }));
                         }
@@ -353,7 +358,7 @@ function RecordTransactionForm() {
 
                                 <div className="bg-slate-50 p-6 flex flex-col items-center justify-center gap-2 mt-4 rounded-sm border border-slate-100">
                                     <div className="text-[8px] font-black text-secondary uppercase tracking-widest">Total Surcharge (USD)</div>
-                                    <div className={`text-4xl font-black tabular-nums tracking-tighter ${formData.type === 'Revenue' ? 'text-green-600' : 'text-primary'}`}>
+                                    <div className={`text-4xl font-black tabular-nums tracking-tighter ${formData.type === 'Revenue' ? 'text-green-600' : 'text-red-600'}`}>
                                         {formData.type === 'Revenue' ? '+' : '-'}${formData.amount || "0.00"}
                                     </div>
                                 </div>

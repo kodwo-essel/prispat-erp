@@ -99,8 +99,8 @@ export default function FinancialLedgerPage() {
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[10px] font-black text-primary uppercase tracking-tighter">{tx.category}</span>
                                         <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm border w-fit ${tx.type === 'Revenue' ? 'bg-green-50 text-green-700 border-green-100' :
-                                                tx.type === 'Expense' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                    'bg-slate-50 text-slate-600 border-slate-100'
+                                            tx.type === 'Expense' ? 'bg-red-50 text-red-700 border-red-100' :
+                                                'bg-slate-50 text-slate-600 border-slate-100'
                                             }`}>{tx.type}</span>
                                     </div>
                                 </td>
@@ -109,8 +109,8 @@ export default function FinancialLedgerPage() {
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                     <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${tx.status === 'Settled' ? 'bg-green-500 text-white' :
-                                            tx.status === 'Pending' ? 'bg-orange-500 text-white shadow-sm' :
-                                                'bg-red-600 text-white animate-pulse'
+                                        tx.status === 'Pending' ? 'bg-orange-500 text-white shadow-sm' :
+                                            'bg-red-600 text-white animate-pulse'
                                         }`}>{tx.status}</span>
                                 </td>
                                 <td className="px-6 py-4 text-right">

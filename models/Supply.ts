@@ -49,6 +49,9 @@ const SupplySchema = new mongoose.Schema(
         arrivalDate: {
             type: Date,
             default: Date.now,
+        },
+        invoiceId: {
+            type: String,
         }
     },
     {

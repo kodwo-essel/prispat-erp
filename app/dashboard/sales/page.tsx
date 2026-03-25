@@ -312,8 +312,8 @@ export default function SalesPage() {
                                         <div className="text-[10px] text-secondary uppercase font-bold tracking-tighter">Settled</div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="text-xs text-secondary font-bold tabular-nums">
-                                            {new Date(order.dispatchDate || order.createdAt).toLocaleDateString()}
+                                        <div className="text-[10px] text-secondary font-bold tabular-nums uppercase">
+                                            {new Date(order.dispatchDate || order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">

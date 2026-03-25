@@ -58,11 +58,23 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                     // If invoice is linked to an order, fetch order details for line items
                     if (inv.orderId) {
                         try {
-                            const ordRes = await fetch(`/api/orders/${invJson.data.orderId}`);
+                            const ordRes = await fetch(`/api/orders/${inv.orderId}`);
                             const ordJson = await ordRes.json();
                             if (ordJson.success) setOrder(ordJson.data);
                         } catch (e) {
                             console.error("Failed to fetch linked order:", e);
+                        }
+                    } else if (inv.type === "Expense") {
+                        // For procurement invoices, fetch the supply receipt by exact invoiceId
+                        try {
+                            const srRes = await fetch(`/api/supplies/receipts?invoiceId=${inv.txId}`);
+                            const srJson = await srRes.json();
+                            if (srJson.success && srJson.data.length > 0) {
+                                // Mock an "order" structure so the table rendering works
+                                setOrder({ items: srJson.data[0].items });
+                            }
+                        } catch (e) {
+                            console.error("Failed to fetch linked supply receipt:", e);
                         }
                     }
                 }
@@ -243,7 +255,9 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                             <tr className="border-b-2 border-primary/10">
                                 <th className="py-4 text-[10px] font-black uppercase tracking-widest text-secondary">Description of Service/Goods</th>
                                 <th className="py-4 text-[10px] font-black uppercase tracking-widest text-secondary text-right">Qty</th>
-                                <th className="py-4 text-[10px] font-black uppercase tracking-widest text-secondary text-right">Unit Price</th>
+                                <th className="py-4 text-[10px] font-black uppercase tracking-widest text-secondary text-right">
+                                    {invoice.type === "Expense" ? "Supplier Price" : "Unit Price"}
+                                </th>
                                 <th className="py-4 text-[10px] font-black uppercase tracking-widest text-secondary text-right">Total</th>
                             </tr>
                         </thead>
@@ -256,8 +270,12 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                                             <div className="text-[9px] text-secondary mt-1 uppercase tracking-tight">SKU: {item.sku} • Batch: {item.batchId}</div>
                                         </td>
                                         <td className="py-6 text-xs text-right tabular-nums">{(Number(item.quantity) || 0).toFixed(2)}</td>
-                                        <td className="py-6 text-xs text-right tabular-nums">₵{(Number(item.unitPrice || item.price) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                        <td className="py-6 text-xs text-right font-black text-primary tabular-nums">₵{((Number(item.quantity) || 0) * (Number(item.unitPrice || item.price) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                        <td className="py-6 text-xs text-right tabular-nums">
+                                            ₵{(Number(invoice.type === "Expense" ? (item.supplierPrice || item.unitPrice) : (item.unitPrice || item.price)) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </td>
+                                        <td className="py-6 text-xs text-right font-black text-primary tabular-nums">
+                                            ₵{((Number(item.quantity) || 0) * (Number(invoice.type === "Expense" ? (item.supplierPrice || item.unitPrice) : (item.unitPrice || item.price)) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </td>
                                     </tr>
                                 ))
                             ) : (

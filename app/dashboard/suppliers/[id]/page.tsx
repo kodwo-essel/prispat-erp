@@ -25,6 +25,8 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
     const { id } = use(params);
     const [supplier, setSupplier] = useState<any>(null);
     const [suppliedItems, setSuppliedItems] = useState<any[]>([]);
+    const [supplyReceipts, setSupplyReceipts] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<"assets" | "procurement">("assets");
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [updateLoading, setUpdateLoading] = useState(false);
@@ -69,6 +71,13 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                             item.supplier.toLowerCase() === supplierData.name.toLowerCase()
                         );
                         setSuppliedItems(related);
+                    }
+
+                    // Fetch procurement receipts for this supplier
+                    const receiptRes = await fetch(`/api/supplies/receipts?supplier=${encodeURIComponent(supplierData.name)}`);
+                    const receiptJson = await receiptRes.json();
+                    if (receiptJson.success) {
+                        setSupplyReceipts(receiptJson.data);
                     }
                 }
             } catch (error) {
@@ -291,10 +300,12 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                             </div>
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
-                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Operational Area</div>
-                            <div className="text-lg font-bold text-primary truncate" title={supplier.location}>{supplier.location}</div>
-                            <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1">
-                                <MapPin size={12} /> Regional Hub
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Outstanding Balance</div>
+                            <div className="text-2xl font-black text-red-600 tabular-nums">
+                                ₵{supplyReceipts.reduce((acc, curr) => acc + ((curr.financeRecord?.amount || 0) - (curr.financeRecord?.totalPaid || 0)), 0).toLocaleString()}
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1 uppercase tracking-tighter">
+                                <CreditCard size={12} /> Pending Settlement
                             </div>
                         </div>
                     </div>
@@ -339,67 +350,183 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                         </div>
                     </div>
 
-                    <section className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
-                        <div className="bg-muted px-6 py-4 border-b border-border flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <FlaskConical size={16} className="text-primary" />
-                                <h3 className="text-xs font-bold uppercase tracking-widest">Active Asset Contributions</h3>
+                    <div className="flex items-center gap-1 border-b border-border mb-6">
+                        <button
+                            onClick={() => setActiveTab("assets")}
+                            className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === "assets"
+                                ? "border-primary text-primary bg-primary/5"
+                                : "border-transparent text-secondary hover:text-primary hover:bg-slate-50"
+                                }`}
+                        >
+                            Active Asset Contributions ({suppliedItems.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("procurement")}
+                            className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${activeTab === "procurement"
+                                ? "border-primary text-primary bg-primary/5"
+                                : "border-transparent text-secondary hover:text-primary hover:bg-slate-50"
+                                }`}
+                        >
+                            Procurement & Financial History ({supplyReceipts.length})
+                        </button>
+                    </div>
+
+                    {activeTab === "assets" ? (
+                        <section className="bg-white border border-border rounded-sm shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="bg-muted px-6 py-4 border-b border-border flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <FlaskConical size={16} className="text-primary" />
+                                    <h3 className="text-xs font-bold uppercase tracking-widest">Active Asset Contributions</h3>
+                                </div>
+                                <span className="text-[10px] font-bold text-secondary uppercase">{suppliedItems.length} Registered Units</span>
                             </div>
-                            <span className="text-[10px] font-bold text-secondary uppercase">{suppliedItems.length} Registered Units</span>
-                        </div>
-                        {suppliedItems.length > 0 ? (
-                            <table className="w-full text-left text-sm">
-                                <thead>
-                                    <tr className="border-b border-border text-[10px] text-secondary font-bold uppercase">
-                                        <th className="px-6 py-3 text-secondary tracking-widest">Asset Name</th>
-                                        <th className="px-6 py-3 text-secondary tracking-widest">Category</th>
-                                        <th className="px-6 py-3 text-secondary tracking-widest text-right">Selling Price</th>
-                                        <th className="px-6 py-3 text-secondary tracking-widest text-right">Supplier Price</th>
-                                        <th className="px-6 py-3 text-secondary tracking-widest text-right">Last Update</th>
-                                        <th className="px-6 py-3 text-secondary tracking-widest text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {suppliedItems.map((item) => (
-                                        <tr key={item._id} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-primary flex items-center gap-2">
-                                                {item.name}
-                                                <Link href={`/dashboard/inventory/${item._id}`} className="text-secondary hover:text-primary transition-colors">
-                                                    <ExternalLink size={10} />
-                                                </Link>
-                                            </td>
-                                            <td className="px-6 py-4 text-xs text-secondary italic">{item.category}</td>
-                                            <td className="px-6 py-4 text-right font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                            <td className="px-6 py-4 text-right font-bold text-blue-600 tabular-nums">
-                                                {item.supplierPrice && item.supplierPrice > 0
-                                                    ? `₵${item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                                    : '-'}
-                                            </td>
-                                            <td className="px-6 py-4 text-right text-[10px] text-secondary tabular-nums">
-                                                {new Date(item.updatedAt).toLocaleDateString()}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingItem(item);
-                                                        setIsItemModalOpen(true);
-                                                    }}
-                                                    className="text-secondary hover:text-primary transition-colors"
-                                                >
-                                                    <Edit3 size={14} />
-                                                </button>
-                                            </td>
+                            {suppliedItems.length > 0 ? (
+                                <table className="w-full text-left text-sm">
+                                    <thead>
+                                        <tr className="border-b border-border text-[10px] text-secondary font-bold uppercase">
+                                            <th className="px-6 py-3 text-secondary tracking-widest">Asset Name</th>
+                                            <th className="px-6 py-3 text-secondary tracking-widest">Category</th>
+                                            <th className="px-6 py-3 text-secondary tracking-widest text-right">Batch #</th>
+                                            <th className="px-6 py-3 text-secondary tracking-widest text-right">Selling Price</th>
+                                            <th className="px-6 py-3 text-secondary tracking-widest text-right">Supplier Price</th>
+                                            <th className="px-6 py-3 text-secondary tracking-widest text-right">Last Update</th>
+                                            <th className="px-6 py-3 text-secondary tracking-widest text-right">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <div className="p-12 text-center flex flex-col items-center gap-3">
-                                <FlaskConical size={32} className="text-slate-200" />
-                                <p className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em]">No operational assets linked to this entity</p>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {suppliedItems.map((item) => (
+                                            <tr key={item._id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-primary flex items-center gap-2">
+                                                    {item.name}
+                                                    <Link href={`/dashboard/inventory/${item._id}`} className="text-secondary hover:text-primary transition-colors">
+                                                        <ExternalLink size={10} />
+                                                    </Link>
+                                                </td>
+                                                <td className="px-6 py-4 text-xs text-secondary italic">{item.category}</td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <code className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded-sm border border-slate-200">
+                                                        {item.batchId}
+                                                    </code>
+                                                </td>
+                                                <td className="px-6 py-4 text-right font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td className="px-6 py-4 text-right font-bold text-blue-600 tabular-nums">
+                                                    {item.supplierPrice && item.supplierPrice > 0
+                                                        ? `₵${item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                        : '-'}
+                                                </td>
+                                                <td className="px-6 py-4 text-right text-[10px] text-secondary tabular-nums uppercase font-bold">
+                                                    {new Date(item.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingItem(item);
+                                                            setIsItemModalOpen(true);
+                                                        }}
+                                                        className="text-secondary hover:text-primary transition-colors"
+                                                    >
+                                                        <Edit3 size={14} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="p-12 text-center flex flex-col items-center gap-3">
+                                    <FlaskConical size={32} className="text-slate-200" />
+                                    <p className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em]">No operational assets linked to this entity</p>
+                                </div>
+                            )}
+                        </section>
+                    ) : (
+                        <section className="bg-white border border-border rounded-sm shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="bg-muted px-6 py-4 border-b border-border flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <CreditCard size={16} className="text-primary" />
+                                    <h3 className="text-xs font-bold uppercase tracking-widest">Procurement & Financial History</h3>
+                                </div>
+                                <span className="text-[10px] font-bold text-secondary uppercase">{supplyReceipts.length} Batches Received</span>
                             </div>
-                        )}
-                    </section>
+                            {supplyReceipts.length > 0 ? (
+                                <table className="w-full text-left text-sm">
+                                    <thead>
+                                        <tr className="border-b border-border text-[10px] text-secondary font-bold uppercase bg-slate-50">
+                                            <th className="px-6 py-3 tracking-widest">Receipt #</th>
+                                            <th className="px-6 py-3 tracking-widest">Date</th>
+                                            <th className="px-6 py-3 tracking-widest text-right">Total (₵)</th>
+                                            <th className="px-6 py-3 tracking-widest text-right text-emerald-600">Paid</th>
+                                            <th className="px-6 py-3 tracking-widest text-right text-red-600">Remaining</th>
+                                            <th className="px-6 py-3 tracking-widest text-center">Status</th>
+                                            <th className="px-6 py-3 tracking-widest text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {supplyReceipts.map((r) => {
+                                            const total = r.financeRecord?.amount || 0;
+                                            const paid = r.financeRecord?.totalPaid || 0;
+                                            const remaining = total - paid;
+                                            const status = r.financeRecord?.status || "Unpaid";
+
+                                            return (
+                                                <tr key={r._id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <Link href={`/dashboard/suppliers/supplies/${r._id}`} className="font-bold text-primary hover:underline">
+                                                            {r.receiptNumber}
+                                                        </Link>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-xs font-bold text-secondary uppercase tabular-nums">
+                                                        {new Date(r.arrivalDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right font-bold tabular-nums">
+                                                        ₵{total.toLocaleString()}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right font-bold text-emerald-600 tabular-nums">
+                                                        ₵{paid.toLocaleString()}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right font-bold text-red-600 tabular-nums">
+                                                        ₵{remaining.toLocaleString()}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${status === "Settled" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                                            status === "Partial" ? "bg-orange-50 text-orange-700 border-orange-200" :
+                                                                "bg-red-50 text-red-700 border-red-200"
+                                                            }`}>
+                                                            {status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-3">
+                                                            {remaining > 0 && (
+                                                                <Link
+                                                                    href={`/dashboard/finance/new?invoice=${r.invoiceId}&type=Expense&redirect=${encodeURIComponent(`/dashboard/suppliers/${id}`)}`}
+                                                                    className="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1"
+                                                                >
+                                                                    Pay Now
+                                                                </Link>
+                                                            )}
+                                                            <Link
+                                                                href={`/dashboard/invoices/${r.invoiceId}`}
+                                                                className="text-secondary hover:text-primary transition-colors"
+                                                                title="View Invoice"
+                                                            >
+                                                                <ExternalLink size={14} />
+                                                            </Link>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="p-12 text-center flex flex-col items-center gap-3">
+                                    <Plus size={32} className="text-slate-200" />
+                                    <p className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em]">No procurement history found</p>
+                                </div>
+                            )}
+                        </section>
+                    )}
                 </div>
 
                 {/* Right Section: Strategic Actions */}

@@ -22,6 +22,8 @@ import { exportToCSV } from "@/lib/exportUtils";
 import TablePagination from "@/app/dashboard/components/TablePagination";
 
 export default function FinancePage() {
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [transactions, setTransactions] = useState<any[]>([]);
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,6 +35,11 @@ export default function FinancePage() {
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 10;
 
+    const formatDate = (date: any) => {
+        if (!date) return "N/A";
+        return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
     const handleExport = () => {
         if (!transactions || transactions.length === 0) return;
         const exportData = transactions.map(tx => ({
@@ -41,50 +48,48 @@ export default function FinancePage() {
             Category: tx.category,
             Nature: tx.type,
             Amount: tx.amount,
-            Date: new Date(tx.date).toLocaleDateString(),
+            Date: new Date(tx.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
             Status: tx.status,
             Reference: tx.reference || "N/A"
         }));
         exportToCSV(exportData, `Fiscal_Audit_Ledger_${new Date().toISOString().split('T')[0]}.csv`);
     };
 
-    useEffect(() => {
-        const fetchFinance = async () => {
-            setLoading(true);
-            setError(null);
+    const fetchFinance = async () => {
+        setLoading(true);
+        setError(null);
 
-            const timer = setTimeout(() => {
-                if (loading) setError("System is taking longer than usual to sync. Please check your connection.");
-            }, 8000);
+        try {
+            const params = new URLSearchParams();
+            if (startDate) params.append("startDate", startDate);
+            if (endDate) params.append("endDate", endDate);
 
-            try {
-                // Fetch transactions (PAY-*, TX-*) and invoices (INV-*) in parallel
-                const [txRes, invRes] = await Promise.all([
-                    fetch("/api/finance", { cache: "no-store" }),
-                    fetch("/api/finance/invoices", { cache: "no-store" })
-                ]);
-                const txJson = await txRes.json();
-                const invJson = await invRes.json();
+            const [txRes, invRes] = await Promise.all([
+                fetch(`/api/finance?${params.toString()}`, { cache: "no-store" }),
+                fetch("/api/finance/invoices", { cache: "no-store" })
+            ]);
+            const txJson = await txRes.json();
+            const invJson = await invRes.json();
 
-                if (txJson.success) {
-                    setTransactions(txJson.data || []);
-                } else {
-                    setError(txJson.error || "Failed to retrieve fiscal data.");
-                }
-                if (invJson.success) {
-                    setInvoices(invJson.data || []);
-                }
-            } catch (error) {
-                console.error("Failed to fetch finance:", error);
-                setError("Network error: Could not reach central ledger.");
-            } finally {
-                setLoading(false);
-                clearTimeout(timer);
+            if (txJson.success) {
+                setTransactions(txJson.data || []);
+            } else {
+                setError(txJson.error || "Failed to retrieve fiscal data.");
             }
-        };
+            if (invJson.success) {
+                setInvoices(invJson.data || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch finance:", error);
+            setError("Network error: Could not reach central ledger.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchFinance();
-    }, []);
+    }, [startDate, endDate]);
 
     // Calculate dynamic stats from both transactions and invoices
     const stats = useMemo(() => {
@@ -124,14 +129,15 @@ export default function FinancePage() {
             .filter(tx => ['Expense', 'Payroll', 'Tax'].includes(String(tx.type).trim()))
             .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
-        // A/R: Sum of remaining balances on non-settled invoices (from invoices endpoint)
+        // A/R & A/P
         const accountsReceivable = invoices
-            .filter(inv =>
-                inv.status !== "Cancelled" && inv.status !== "Settled"
-            )
+            .filter(inv => (inv.type === "Revenue" || inv.type === "A/R") && inv.status !== "Cancelled" && inv.status !== "Settled")
             .reduce((sum, inv) => sum + ((Number(inv.amount) || 0) - (Number(inv.totalPaid) || 0)), 0);
 
-        // Total Revenue: Sum of all settled payments
+        const accountsPayable = invoices
+            .filter(inv => inv.type === "Expense" && inv.status !== "Cancelled" && inv.status !== "Settled")
+            .reduce((sum, inv) => sum + ((Number(inv.amount) || 0) - (Number(inv.totalPaid) || 0)), 0);
+
         const totalRevenue = transactions.reduce((sum, tx) => {
             if (tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
                 return sum + (Number(tx.amount) || 0);
@@ -140,13 +146,18 @@ export default function FinancePage() {
         }, 0);
 
         const netPosition = totalRevenue - totalExpenditure;
+        const opRatio = totalRevenue > 0 ? (totalExpenditure / totalRevenue) * 100 : 0;
+        const grossMargin = totalRevenue > 0 ? ((totalRevenue - totalExpenditure) / totalRevenue) * 100 : 0;
 
         return {
             weeklyRevenue,
             totalExpenditure,
             accountsReceivable,
+            accountsPayable,
             netPosition,
-            revPercent
+            revPercent,
+            opRatio,
+            grossMargin
         };
     }, [transactions, invoices]);
 
@@ -175,19 +186,47 @@ export default function FinancePage() {
     return (
         <div className="flex flex-col gap-6">
             {/* Header Area */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                    <h1 className="text-2xl font-bold">Fiscal Audit Ledger</h1>
+                    <h1 className="text-2xl font-bold uppercase tracking-tight">Fiscal Audit Ledger</h1>
                     <p className="text-sm text-secondary mt-1">Real-time recording of institutional revenue and expenditure.</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                    {/* Compact Date Range Filter */}
+                    <div className={`flex items-center gap-0 rounded-sm border text-xs font-bold overflow-hidden transition-colors bg-white ${startDate || endDate ? 'border-[#002d62]' : 'border-border'}`}>
+                        <div className="px-3 py-2 border-r border-border text-[9px] font-black uppercase tracking-widest text-secondary">
+                            Period
+                        </div>
+                        <input
+                            type="date"
+                            className="px-3 py-2 text-[10px] font-bold focus:outline-none bg-transparent border-r border-border text-primary"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                        />
+                        <span className="px-1 text-[10px] text-slate-300">→</span>
+                        <input
+                            type="date"
+                            className="px-3 py-2 text-[10px] font-bold focus:outline-none bg-transparent text-primary"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                        />
+                        {(startDate || endDate) && (
+                            <button
+                                onClick={() => { setStartDate(""); setEndDate(""); }}
+                                className="px-2 py-2 text-secondary hover:text-red-500 border-l border-border text-xs transition-colors"
+                                title="Clear date range"
+                            >
+                                ×
+                            </button>
+                        )}
+                    </div>
                     <button
                         onClick={handleExport}
                         className="flex items-center gap-2 text-xs font-bold text-primary border border-primary px-4 py-2 rounded-sm hover:bg-primary/5 uppercase tracking-wider transition-colors"
                     >
-                        <Download size={14} /> Export Ledger (CSV)
+                        <Download size={14} /> Export
                     </button>
-                    <Link href="/dashboard/finance/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider">
+                    <Link href="/dashboard/finance/new" className="btn-primary flex items-center gap-2 text-xs uppercase tracking-wider shadow-sm">
                         <Plus size={14} /> Record Transaction
                     </Link>
                 </div>
@@ -203,31 +242,24 @@ export default function FinancePage() {
             )}
 
             {/* Metrics Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {[
-                    {
-                        label: "Revenue (This Week)",
-                        value: stats.weeklyRevenue,
-                        color: "text-primary",
-                        info: stats.revPercent === 0 ? "No Prior Activity" : `${stats.revPercent > 0 ? '+' : ''}${stats.revPercent.toFixed(1)}% vs Last Week`,
-                        trend: stats.revPercent > 0 ? 'up' : stats.revPercent < 0 ? 'down' : 'neutral'
-                    },
-                    { label: "Total Expenditure", value: stats.totalExpenditure, color: "text-primary", info: "Institutional Spend" },
-                    { label: "Accounts Receivable", value: stats.accountsReceivable, color: "text-amber-600", info: "Pending Invoices" },
-                    { label: "Net Fiscal Position", value: stats.netPosition, color: "text-primary", info: "Current Liquidity" },
+                    { label: "Revenue (Mon-Sun)", value: `₵${stats.weeklyRevenue.toLocaleString()}`, color: "text-[#002d62]", info: stats.revPercent === 0 ? "No Prior Activity" : `${stats.revPercent > 0 ? '+' : ''}${stats.revPercent.toFixed(1)}% Trend`, trend: stats.revPercent > 0 ? 'up' : 'down' },
+                    { label: "Net Liquidity", value: `₵${stats.netPosition.toLocaleString()}`, color: "text-[#002d62]", info: "Available Cash" },
+                    { label: "Accounts Receivable", value: `₵${stats.accountsReceivable.toLocaleString()}`, color: "text-emerald-600", info: "Pending Inflow" },
+                    { label: "Accounts Payable", value: `₵${stats.accountsPayable.toLocaleString()}`, color: "text-red-600", info: "Pending Outflow" },
+                    { label: "Operating Ratio", value: `${stats.opRatio.toFixed(1)}%`, color: "text-[#002d62]", info: "Cost Efficiency" },
+                    { label: "Net Margin", value: `${stats.grossMargin.toFixed(1)}%`, color: stats.grossMargin > 0 ? "text-emerald-600" : "text-red-600", info: "Profitability" },
                 ].map((m, idx) => (
-                    <div key={idx} className="bg-white border border-border p-4 rounded-sm h-[88px] flex flex-col justify-between">
+                    <div key={idx} className="bg-white border border-border p-4 rounded-sm h-[88px] flex flex-col justify-between shadow-sm">
                         <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">{m.label}</div>
                         <div className="flex items-end justify-between">
                             {loading ? (
-                                <div className="flex items-center gap-2 animate-pulse">
-                                    <div className="h-6 w-24 bg-muted rounded-sm"></div>
-                                    <Loader2 size={12} className="animate-spin text-slate-300" />
-                                </div>
+                                <div className="h-6 w-24 bg-muted rounded-sm animate-pulse" />
                             ) : (
                                 <>
-                                    <div className={`text-xl font-bold ${m.color}`}>₵{m.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                    {m.trend && m.trend !== 'neutral' && (
+                                    <div className={`text-sm font-black ${m.color}`}>{m.value}</div>
+                                    {m.trend && (
                                         <div className={`flex items-center gap-0.5 text-[10px] font-bold ${m.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
                                             {m.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                                         </div>
@@ -235,40 +267,41 @@ export default function FinancePage() {
                                 </>
                             )}
                         </div>
-                        <div className={`text-[10px] font-medium mt-1 ${m.label === 'Revenue (This Week)' && !loading ? (stats.revPercent >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold') : 'text-slate-400'}`}>
-                            {loading ? "Synchronizing..." : m.info}
+                        <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
+                            {loading ? "Syncing..." : m.info}
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Filters Bar */}
-            <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-grow">
-                    <div className="relative flex-grow max-w-sm">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
-                        <input
-                            type="text"
-                            placeholder="Search by Tx ID, Entity or Category..."
-                            className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+            {/* Filters Bar (search + category only) */}
+            <div className="bg-white border border-border p-3 rounded-sm flex flex-wrap items-center gap-3 shadow-sm">
+                <div className="relative flex-grow max-w-sm min-w-[200px]">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
+                    <input
+                        type="text"
+                        placeholder="Filter by ID, Entity or Category..."
+                        className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary font-medium"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Type:</span>
+                    <div className="flex bg-muted p-1 rounded-sm border border-border">
+                        {["All", "Revenue", "Expense", "Payroll", "Tax"].map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setTypeFilter(type)}
+                                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm transition-all whitespace-nowrap ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                            >
+                                {type}
+                            </button>
+                        ))}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Nature:</span>
-                        <div className="flex bg-muted p-1 rounded-sm border border-border overflow-x-auto max-w-full">
-                            {["All", "Revenue", "Expense", "Payroll", "Tax"].map((type) => (
-                                <button
-                                    key={type}
-                                    onClick={() => setTypeFilter(type)}
-                                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all whitespace-nowrap ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
-                                >
-                                    {type}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                </div>
+                <div className="ml-auto text-[10px] font-bold text-secondary uppercase tracking-widest">
+                    {filteredTransactions.length} Record{filteredTransactions.length !== 1 ? 's' : ''}
                 </div>
             </div>
 
@@ -294,6 +327,7 @@ export default function FinancePage() {
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">#</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Transaction ID</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Linked Invoice/Ref</th>
+                                <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Date</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Entity</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Category</th>
                                 <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-secondary">Type</th>
@@ -332,11 +366,14 @@ export default function FinancePage() {
                                             </span>
                                         )}
                                     </td>
+                                    <td className="px-4 py-2.5 text-[10px] font-bold text-secondary uppercase tabular-nums">
+                                        {formatDate(tx.date)}
+                                    </td>
                                     <td className="px-4 py-2.5 text-xs text-slate-700">{tx.entity}</td>
                                     <td className="px-4 py-2.5 text-xs text-secondary">{tx.category}</td>
                                     <td className="px-4 py-2.5">
                                         <span className={`text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-tighter ${tx.type === 'Revenue' ? 'bg-green-50 text-green-700 border border-green-200' :
-                                            tx.type === 'Expense' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                            tx.type === 'Expense' ? 'bg-red-50 text-red-700 border border-red-200' :
                                                 'bg-slate-50 text-slate-600 border border-slate-300'
                                             }`}>
                                             {tx.type}

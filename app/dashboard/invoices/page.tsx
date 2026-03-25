@@ -136,11 +136,13 @@ export default function InvoicesPage() {
                                     <td className="px-6 py-4 font-bold text-primary tabular-nums">{inv.txId || `INV-${inv._id.substring(0, 6)}`}</td>
                                     <td className="px-6 py-4 text-slate-700">{inv.entity}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest ${inv.type === 'Revenue' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest ${inv.type === 'Revenue' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
                                             {inv.type || 'Revenue'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-secondary tabular-nums">{new Date(inv.date).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4 text-secondary tabular-nums uppercase font-bold text-[10px]">
+                                        {new Date(inv.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </td>
                                     <td className="px-6 py-4 tabular-nums">₵{inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     <td className="px-6 py-4 tabular-nums text-green-600 font-bold">₵{(inv.totalPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     <td className={`px-6 py-4 tabular-nums font-bold ${inv.amount - (inv.totalPaid || 0) <= 0 ? "text-slate-900" : "text-red-600"}`}>

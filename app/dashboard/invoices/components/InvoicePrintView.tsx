@@ -103,7 +103,9 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                             <tr className="border-b-2 border-slate-200">
                                 <th className="py-4 text-[10px] font-bold uppercase text-secondary">Description</th>
                                 <th className="py-4 text-right text-[10px] font-bold uppercase text-secondary">Quantity</th>
-                                <th className="py-4 text-right text-[10px] font-bold uppercase text-secondary">Unit Price</th>
+                                <th className="py-4 text-right text-[10px] font-bold uppercase text-secondary">
+                                    {invoice.type === "Expense" ? "Supplier Price" : "Unit Price"}
+                                </th>
                                 <th className="py-4 text-right text-[10px] font-bold uppercase text-secondary">Total (₵)</th>
                             </tr>
                         </thead>
@@ -115,8 +117,12 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                                         <div className="text-[9px] text-secondary font-medium tracking-widest uppercase">{item.sku}</div>
                                     </td>
                                     <td className="py-4 text-right text-xs font-bold text-slate-700">{item.quantity}</td>
-                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">₵{(item.unitPrice || item.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">₵{(item.quantity * (item.unitPrice || item.price || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">
+                                        ₵{(invoice.type === "Expense" ? (item.supplierPrice || item.unitPrice || 0) : (item.unitPrice || item.price || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="py-4 text-right text-xs font-black text-primary tabular-nums">
+                                        ₵{(item.quantity * (invoice.type === "Expense" ? (item.supplierPrice || item.unitPrice || 0) : (item.unitPrice || item.price || 0))).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </td>
                                 </tr>
                             )) : (
                                 <tr>

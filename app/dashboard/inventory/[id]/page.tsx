@@ -20,6 +20,7 @@ import {
     FlaskConical,
     BarChart3,
     Plus,
+    DollarSign,
     Loader2 as Loader
 } from "lucide-react";
 import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
@@ -341,6 +342,48 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                             <div className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Total distributed to date</div>
                         </div>
                     </div>
+
+                    {/* Financial Reference / Invoice Status */}
+                    {item.financeRecord && (
+                        <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden p-6 relative">
+                            <div className="absolute top-0 right-0 h-1 w-full bg-red-500" />
+                            <div className="flex items-center gap-3 mb-6">
+                                <DollarSign size={18} className="text-red-600" />
+                                <h3 className="text-xs font-black uppercase tracking-widest text-primary">Financial Settlement Reference</h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Invoiced Amount</span>
+                                    <span className="text-sm font-bold text-primary tabular-nums">₵{item.financeRecord.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Total Settled</span>
+                                    <span className="text-sm font-bold text-green-600 tabular-nums">₵{(item.financeRecord.totalPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Outstanding Arrears</span>
+                                    <span className={`text-sm font-black tabular-nums ${item.financeRecord.amount - (item.financeRecord.totalPaid || 0) > 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                                        ₵{(item.financeRecord.amount - (item.financeRecord.totalPaid || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {item.financeRecord.amount - (item.financeRecord.totalPaid || 0) > 0 && (
+                                <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
+                                    <div className="text-[10px] text-secondary font-medium italic">
+                                        This asset is linked to an unpaid procurement invoice.
+                                    </div>
+                                    <Link
+                                        href={`/dashboard/finance/new?invoice=${item.financeRecord.txId}&redirect=${encodeURIComponent(`/dashboard/inventory/${id}`)}`}
+                                        className="bg-[#002d62] text-white px-8 py-2.5 rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center gap-2"
+                                    >
+                                        <DollarSign size={14} /> Process Payment
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <section className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
                         <div className="bg-muted px-6 py-4 border-b border-border flex items-center gap-2">

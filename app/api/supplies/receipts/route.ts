@@ -5,10 +5,53 @@ import Inventory from "@/models/Inventory";
 import Supply from "@/models/Supply";
 import Finance from "@/models/Finance";
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
         await dbConnect();
-        const receipts = await SupplyReceipt.find({}).sort({ arrivalDate: -1 });
+        const { searchParams } = new URL(req.url);
+        const receiptNumber = searchParams.get("receiptNumber");
+        const invoiceId = searchParams.get("invoiceId");
+        const supplier = searchParams.get("supplier");
+
+        let match: any = {};
+        if (invoiceId) match.invoiceId = invoiceId;
+        else if (receiptNumber) match.receiptNumber = receiptNumber;
+        else if (supplier) match.supplier = { $regex: new RegExp(supplier, "i") };
+
+        const receipts = await SupplyReceipt.aggregate([
+            { $match: match },
+            { $sort: { arrivalDate: -1 } },
+            {
+                $lookup: {
+                    from: "finances",
+                    localField: "invoiceId",
+                    foreignField: "txId",
+                    as: "financeData"
+                }
+            },
+            {
+                $addFields: {
+                    financeRecord: { $arrayElemAt: ["$financeData", 0] }
+                }
+            },
+            // Include payment aggregation logic similarly to finance/[id]
+            {
+                $lookup: {
+                    from: "finances",
+                    localField: "invoiceId",
+                    foreignField: "parentInvoiceId",
+                    pipeline: [{ $match: { status: "Settled" } }],
+                    as: "childPayments"
+                }
+            },
+            {
+                $addFields: {
+                    "financeRecord.totalPaid": { $sum: "$childPayments.amount" }
+                }
+            },
+            { $project: { financeData: 0, childPayments: 0 } }
+        ]);
+
         return NextResponse.json({ success: true, data: receipts });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -33,6 +76,8 @@ export async function POST(req: Request) {
             totalAmount
         });
 
+        const txId = `EXP-REC-${receiptNumber}-${Date.now().toString().slice(-4)}`;
+
         // 2. Process each item for Inventory and Supply Audit
         for (const item of items) {
             // Log individual Supply event
@@ -48,7 +93,8 @@ export async function POST(req: Request) {
                 supplier: supplier,
                 unitPrice: item.unitPrice, // Latest selling price
                 supplierPrice: item.supplierPrice, // Latest cost price
-                arrivalDate: arrivalDate
+                arrivalDate: arrivalDate,
+                invoiceId: txId
             });
 
             // Update/Create Aggregate Inventory
@@ -88,22 +134,26 @@ export async function POST(req: Request) {
         // 3. Automated Expense Logging for the shipment
         if (totalAmount > 0) {
             await Finance.create({
-                txId: `EXP-REC-${receiptNumber}-${Date.now().toString().slice(-4)}`,
+                txId: txId,
                 entity: supplier,
                 amount: totalAmount,
                 type: "Expense",
                 category: "Procurement",
-                status: "Settled",
+                status: "Unpaid",
                 isInvoice: true,
                 date: new Date(arrivalDate),
                 description: `Bulk procurement shipment: REF #${receiptNumber} (${items.length} items)`,
                 recordedBy: "System Automator",
                 auditTrail: [{
-                    action: "Auto-generated from Supply Receipt",
+                    action: "Auto-generated from Supply Receipt (Unpaid)",
                     by: "System Automator",
                     time: new Date()
                 }]
             });
+
+            // Update receipt with invoiceId
+            receipt.invoiceId = txId;
+            await receipt.save();
         }
 
         return NextResponse.json({ success: true, data: receipt }, { status: 201 });

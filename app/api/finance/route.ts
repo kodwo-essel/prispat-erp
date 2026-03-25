@@ -15,11 +15,37 @@ export async function GET(request: Request) {
 
         const { searchParams } = new URL(request.url);
         const parentInvoiceId = searchParams.get("parentInvoiceId");
+        const txId = searchParams.get("txId");
+        const startDate = searchParams.get("startDate");
+        const endDate = searchParams.get("endDate");
 
         // If fetching child payments for a specific invoice, return them directly
         if (parentInvoiceId) {
             const payments = await Finance.find({ parentInvoiceId }).sort({ date: 1 }).lean();
             return NextResponse.json({ success: true, data: payments });
+        }
+
+        // If fetching a specific record by txId
+        if (txId) {
+            const record = await Finance.findOne({ txId }).lean() as any;
+            if (record) {
+                const childPayments = await Finance.find({ parentInvoiceId: txId, status: "Settled" }).lean();
+                record.totalPaid = childPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                return NextResponse.json({ success: true, data: [record] });
+            }
+            return NextResponse.json({ success: true, data: [] });
+        }
+
+        // Build Match Filter
+        const matchFilter: any = { isInvoice: { $ne: true } };
+        if (startDate || endDate) {
+            matchFilter.date = {};
+            if (startDate) matchFilter.date.$gte = new Date(startDate);
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                matchFilter.date.$lte = end;
+            }
         }
 
         // Define the aggregation pipeline to calculate totalPaid dynamically
@@ -29,7 +55,7 @@ export async function GET(request: Request) {
                 // - PAY-* records (payments linked to invoices — these ARE the transactions)
                 // - TX-* records (standalone expenses, wages, etc.)
                 // Exclude INV-* invoice documents — those belong in the Invoices section.
-                $match: { isInvoice: { $ne: true } }
+                $match: matchFilter
             },
             {
                 // Join with payments (any record whose parentInvoiceId matches this txId)

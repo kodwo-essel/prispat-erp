@@ -58,7 +58,22 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                 const res = await fetch(`/api/supplies/receipts/${id}`);
                 const json = await res.json();
                 if (json.success) {
-                    setReceipt(json.data);
+                    const receiptData = json.data;
+
+                    // Frontend Fallback: If financeRecord is null but invoiceId exists, fetch it separately
+                    if (!receiptData.financeRecord && receiptData.invoiceId) {
+                        try {
+                            const finRes = await fetch(`/api/finance?txId=${receiptData.invoiceId}`);
+                            const finJson = await finRes.json();
+                            if (finJson.success && finJson.data.length > 0) {
+                                receiptData.financeRecord = finJson.data[0];
+                            }
+                        } catch (fErr) {
+                            console.error("Finance fallback fetch failed:", fErr);
+                        }
+                    }
+
+                    setReceipt(receiptData);
                 }
             } catch (error) {
                 console.error("Failed to fetch receipt:", error);
@@ -140,21 +155,68 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                     {/* Metadata Card */}
                     <div className="bg-white border border-border rounded-sm shadow-sm p-6 overflow-hidden relative">
                         <div className="absolute top-0 right-0 h-1 w-full bg-primary" />
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Vendor / Supplier</span>
-                                <span className="text-sm font-bold text-primary">{receipt.supplier}</span>
+                        <div className="flex flex-col gap-6">
+                            {/* Row 1: Logistics & Primary Shipment Data */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-6 border-b border-dashed border-border">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Vendor / Supplier</span>
+                                    <span className="text-sm font-bold text-primary">{receipt.supplier}</span>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Arrival Timestamp</span>
+                                    <span className="text-sm font-bold text-primary">{new Date(receipt.arrivalDate).toLocaleDateString()}</span>
+                                    <span className="text-[10px] text-secondary tabular-nums">{new Date(receipt.arrivalDate).toLocaleTimeString()}</span>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-black text-secondary uppercase tracking-widest">System Status</span>
+                                    <span className="text-xs font-black uppercase text-secondary bg-muted px-2 py-0.5 rounded-sm w-fit border border-border">{receipt.status}</span>
+                                </div>
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Arrival Timestamp</span>
-                                <span className="text-sm font-bold text-primary">{new Date(receipt.arrivalDate).toLocaleDateString()}</span>
-                                <span className="text-[10px] text-secondary tabular-nums">{new Date(receipt.arrivalDate).toLocaleTimeString()}</span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[9px] font-black text-secondary uppercase tracking-widest">System Status</span>
-                                <span className="text-xs font-black uppercase text-secondary bg-muted px-2 py-0.5 rounded-sm w-fit border border-border">{receipt.status}</span>
-                            </div>
+
+                            {/* Row 2: Financial Settlement Info */}
+                            {receipt.financeRecord && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-2">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Invoice Link</span>
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={`/dashboard/invoices/${receipt.financeRecord._id}`}
+                                                    className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1.5"
+                                                >
+                                                    <FileText size={12} /> {receipt.invoiceId}
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[9px] font-black text-secondary uppercase tracking-widest text-emerald-600">Amount Paid</span>
+                                        <span className="text-2xl font-black text-emerald-600 tabular-nums">₵{(receipt.financeRecord.totalPaid || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[9px] font-black text-secondary uppercase tracking-widest text-red-600">Amount Left</span>
+                                        <span className={`text-2xl font-black tabular-nums ${receipt.financeRecord.amount - (receipt.financeRecord.totalPaid || 0) > 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                                            ₵{(receipt.financeRecord.amount - (receipt.financeRecord.totalPaid || 0)).toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
+
+                        {receipt.financeRecord && receipt.financeRecord.amount - (receipt.financeRecord.totalPaid || 0) > 0 && (
+                            <div className="mt-6 pt-6 border-t border-border flex items-center justify-between bg-emerald-50 -mx-6 px-6 -mb-6 pb-6">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-tight italic">Financial Liability Detected</span>
+                                    <p className="text-[9px] text-emerald-700/80">This procurement shipment has an outstanding balance that requires settlement.</p>
+                                </div>
+                                <Link
+                                    href={`/dashboard/finance/new?invoice=${receipt.financeRecord.txId}&type=Expense&redirect=${encodeURIComponent(`/dashboard/suppliers/supplies/${id}`)}`}
+                                    className="bg-emerald-600 text-white px-8 py-3 rounded-sm text-[11px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 border border-emerald-500"
+                                >
+                                    <DollarSign size={14} /> Pay Now
+                                </Link>
+                            </div>
+                        )}
                     </div>
 
                     {/* Table of Items */}
@@ -224,6 +286,7 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                             Total Batch Valuation Based on Invoiced Rates
                         </p>
                     </div>
+
 
                     <div className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-6">
                         <h3 className="text-xs font-bold uppercase tracking-widest text-primary border-b border-border pb-3">Audit Log</h3>

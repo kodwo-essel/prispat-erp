@@ -47,6 +47,7 @@ export default function DashboardPage() {
     const [activities, setActivities] = useState<any[]>([]);
     const [alerts, setAlerts] = useState<any[]>([]);
     const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
+    const [inventoryTrend, setInventoryTrend] = useState<any[]>([]);
     const [mtdRevenue, setMtdRevenue] = useState<number>(0);
     const [inventorySummary, setInventorySummary] = useState<any>(null);
     const [inventoryByCategory, setInventoryByCategory] = useState<any[]>([]);
@@ -65,6 +66,7 @@ export default function DashboardPage() {
                     setActivities(json.data.activities);
                     setAlerts(json.data.alerts || []);
                     setRevenueTrend(json.data.revenueTrend || []);
+                    setInventoryTrend(json.data.inventoryTrend || []);
                     setMtdRevenue(json.data.mtdRevenue || 0);
                     setInventorySummary(json.data.inventorySummary);
                     setInventoryByCategory(json.data.inventoryByCategory || []);
@@ -86,6 +88,9 @@ export default function DashboardPage() {
         switch (label) {
             case "Active Inventory Items": return <Package size={16} />;
             case "Pending Shipments": return <Truck size={16} />;
+            case "Accounts Receivable": return <TrendingUp size={16} />;
+            case "Accounts Payable": return <TrendingDown size={16} />;
+            case "Net Liquidity": return <DollarSign size={16} />;
             case "Active Suppliers": return <Users size={16} />;
             case "Total Asset Value": return <DollarSign size={16} />;
             default: return <Activity size={16} />;
@@ -152,13 +157,13 @@ export default function DashboardPage() {
                 ))}
             </div>
 
-            {/* Charts Section */}
+            {/* Row 2: Financial Analytics */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 bg-white border border-border rounded-sm p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Settlement Performance</h3>
-                            <p className="text-[10px] text-secondary font-bold uppercase mt-1">Net Revenue Flow (Last 7 Days)</p>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Cash Flow surveillance</h3>
+                            <p className="text-[10px] text-secondary font-bold uppercase mt-1">Revenue vs Operating Expenses (30D)</p>
                         </div>
                         <Activity size={16} className="text-primary opacity-20" />
                     </div>
@@ -170,6 +175,10 @@ export default function DashboardPage() {
                                         <stop offset="5%" stopColor="#002d62" stopOpacity={0.1} />
                                         <stop offset="95%" stopColor="#002d62" stopOpacity={0} />
                                     </linearGradient>
+                                    <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
+                                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                                    </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis
@@ -178,6 +187,7 @@ export default function DashboardPage() {
                                     tickLine={false}
                                     tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
                                     dy={10}
+                                    interval={Math.floor(revenueTrend.length / 6)}
                                 />
                                 <YAxis
                                     axisLine={false}
@@ -195,7 +205,7 @@ export default function DashboardPage() {
                                         fontWeight: 800,
                                         textTransform: 'uppercase'
                                     }}
-                                    itemStyle={{ color: '#9ca3af' }}
+                                    itemStyle={{ fontSize: '10px' }}
                                 />
                                 <Area
                                     type="monotone"
@@ -204,6 +214,16 @@ export default function DashboardPage() {
                                     strokeWidth={3}
                                     fillOpacity={1}
                                     fill="url(#colorRev)"
+                                    name="Revenue"
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="expenses"
+                                    stroke="#ef4444"
+                                    strokeWidth={2}
+                                    fillOpacity={1}
+                                    fill="url(#colorExp)"
+                                    name="Expenses"
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -212,24 +232,112 @@ export default function DashboardPage() {
 
                 <div className="bg-white border border-border rounded-sm p-6 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Package size={120} />
+                        <DollarSign size={120} />
                     </div>
-                    <div className="z-10 text-center">
-                        <div className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary mb-2">Inventory Health</div>
-                        <div className="text-5xl font-black text-[#002d62] mb-2">{inventorySummary?.health || 0}%</div>
+                    <div className="z-10 text-center w-full">
+                        <div className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary mb-2">Net Profitability</div>
+                        <div className={`text-5xl font-black mb-2 ${mtdRevenue - revenueTrend.reduce((acc, t) => acc + (t.expenses || 0), 0) >= 0 ? 'text-[#002d62]' : 'text-red-600'}`}>
+                            ₵{(mtdRevenue - (revenueTrend.reduce((acc, t) => acc + (t.expenses || 0), 0) / (revenueTrend.length || 1)) * 30).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </div>
                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center justify-center gap-2">
-                            <span className="h-1.5 w-1.5 bg-[#002d62] rounded-full animate-pulse" /> Optimal Coverage
+                            <span className="h-1.5 w-1.5 bg-[#002d62] rounded-full animate-pulse" /> Adjusted Forecast
                         </div>
                     </div>
                     <div className="mt-8 grid grid-cols-2 gap-4 w-full border-t border-border pt-6">
                         <div className="text-center">
-                            <div className="text-[10px] font-black text-[#002d62]">₵{mtdRevenue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</div>
-                            <div className="text-[8px] font-bold text-secondary uppercase tracking-tight">MTD Revenue</div>
+                            <div className="text-[10px] font-black text-[#002d62]">₵{inventorySummary?.value?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || '0'}</div>
+                            <div className="text-[8px] font-bold text-secondary uppercase tracking-tight">Total Inventory Value</div>
                         </div>
                         <div className="text-center border-l border-border">
-                            <div className="text-[10px] font-black text-[#002d62]">{inventorySummary?.lowStock || 0}</div>
-                            <div className="text-[8px] font-bold text-secondary uppercase tracking-tight">Low Stock</div>
+                            <div className="text-[10px] font-black text-[#002d62]">{inventorySummary?.health || 0}%</div>
+                            <div className="text-[8px] font-bold text-secondary uppercase tracking-tight">System Health</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Row 3: Inventory Analytics & Trends */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 bg-white border border-border rounded-sm p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#002d62]">Asset Value Ledger</h3>
+                            <p className="text-[10px] text-secondary font-bold uppercase mt-1">30-Day Inventory Liquidity Trend</p>
+                        </div>
+                        <Package size={16} className="text-primary opacity-20" />
+                    </div>
+                    <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={inventoryTrend}>
+                                <defs>
+                                    <linearGradient id="colorInv" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#002d62" stopOpacity={0.1} />
+                                        <stop offset="95%" stopColor="#002d62" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis
+                                    dataKey="date"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 800, fill: '#64748b' }}
+                                    dy={10}
+                                    interval={Math.floor(inventoryTrend.length / 6)}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    hide
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: '#002d62',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        color: '#fff',
+                                        fontSize: '10px',
+                                        fontWeight: 800,
+                                        textTransform: 'uppercase'
+                                    }}
+                                    formatter={(value) => `₵${Number(value).toLocaleString()}`}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="value"
+                                    stroke="#002d62"
+                                    strokeWidth={3}
+                                    fillOpacity={1}
+                                    fill="url(#colorInv)"
+                                    name="Inventory Value"
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="bg-white border border-border rounded-sm p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-[#002d62]">Category Density</h3>
+                        <Activity size={14} className="text-[#002d62] opacity-40" />
+                    </div>
+                    <div className="h-[250px] w-full flex flex-col items-center justify-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={inventoryByCategory}
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {inventoryByCategory.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip contentStyle={{ fontSize: '10px', textTransform: 'uppercase' }} />
+                                <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '8px', fontWeight: 'bold' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
             </div>

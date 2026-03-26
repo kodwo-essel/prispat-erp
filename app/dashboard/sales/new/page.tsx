@@ -12,7 +12,8 @@ import {
     Trash2,
     Loader2,
     Search,
-    ShoppingBag
+    ShoppingBag,
+    Calendar
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AssetSelectorModal from "@/app/dashboard/components/AssetSelectorModal";
@@ -36,6 +37,7 @@ function NewOrderForm() {
     const [customerName, setCustomerName] = useState("");
     const [customerPhone, setCustomerPhone] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("Cash");
+    const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Search States
     const [customerSearch, setCustomerSearch] = useState("");
@@ -164,6 +166,7 @@ function NewOrderForm() {
                     totalAmount,
                     saleType,
                     paymentMethod,
+                    saleDate,
                     recordedBy: userName
                 }),
             });
@@ -220,6 +223,19 @@ function NewOrderForm() {
                                     ? "Institutional delivery with invoice-based settlement (A/R)."
                                     : "Direct shop floor transaction with immediate cash/digital settlement."}
                             </p>
+                        </div>
+
+                        <div className="flex flex-col gap-2 p-4 bg-primary/5 border border-primary/20 rounded-sm mb-2">
+                            <label className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                <Calendar size={12} /> Transaction Date (For Backdated Entry)
+                            </label>
+                            <input
+                                type="date"
+                                value={saleDate}
+                                onChange={(e) => setSaleDate(e.target.value)}
+                                className="w-full bg-white border border-primary/20 px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary transition-colors font-bold"
+                            />
+                            <p className="text-[9px] text-secondary italic">This date will be applied to the order, invoice, and ledger records.</p>
                         </div>
 
                         {saleType === "Cash" ? (

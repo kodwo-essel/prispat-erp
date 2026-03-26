@@ -20,7 +20,8 @@ export async function POST(request: Request) {
         await dbConnect();
         const session = await getSession();
         const body = await request.json();
-        const { customer, items, totalAmount, recordedBy, saleType } = body;
+        const { customer, items, totalAmount, recordedBy, saleType, saleDate } = body;
+        const targetDate = saleDate ? new Date(saleDate) : new Date();
 
         const userName = session?.user?.name || recordedBy || "System Automator";
 
@@ -60,7 +61,9 @@ export async function POST(request: Request) {
             recordedBy: userName,
             description: `Invoice for Order ${orderId}`,
             isInvoice: true,
-            date: new Date()
+            date: targetDate,
+            createdAt: targetDate,
+            updatedAt: targetDate
         });
 
         // Every invoice gets a child payment record.
@@ -79,7 +82,9 @@ export async function POST(request: Request) {
                 description: `Cash payment for Invoice ${invId}`,
                 isInvoice: false,
                 totalPaid: 0,
-                date: new Date()
+                date: targetDate,
+                createdAt: targetDate,
+                updatedAt: targetDate
             });
         }
 
@@ -90,9 +95,11 @@ export async function POST(request: Request) {
             items,
             totalAmount,
             status: isCreditSale ? "Dispatched" : "Received",
-            dispatchDate: new Date(),
+            dispatchDate: targetDate,
             txId: invId,          // reference points to the INV- invoice record
-            saleType: saleType || "Credit"
+            saleType: saleType || "Credit",
+            createdAt: targetDate,
+            updatedAt: targetDate
         });
 
         return NextResponse.json({ success: true, data: newOrder }, { status: 201 });

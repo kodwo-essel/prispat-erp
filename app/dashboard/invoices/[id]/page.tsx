@@ -243,7 +243,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary">Bill To:</span>
                         <div className="flex flex-col">
                             <span className="text-sm font-black text-primary uppercase">{invoice.entity}</span>
-                            <span className="text-[10px] text-secondary mt-1">Institutional Buyer • Managed Account</span>
+                            <span className="text-[10px] text-secondary mt-1 italic">
+                                {invoice.contactPhone || invoice.contactAddress ? "Third-Party Transaction" : "Institutional Buyer • Managed Account"}
+                            </span>
+                            {invoice.contactPhone && (
+                                <span className="text-[10px] text-secondary mt-1 font-bold">Phone: {invoice.contactPhone}</span>
+                            )}
+                            {invoice.contactAddress && (
+                                <span className="text-[10px] text-secondary mt-1">Address: {invoice.contactAddress}</span>
+                            )}
                         </div>
                     </div>
                 </div>

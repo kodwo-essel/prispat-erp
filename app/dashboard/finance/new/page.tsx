@@ -186,11 +186,17 @@ function RecordTransactionForm() {
                                 className="w-full bg-white border border-primary/20 px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary transition-colors"
                             >
                                 <option value="">Direct Entry (No Invoice Link)</option>
-                                {invoices.map(inv => (
-                                    <option key={inv.txId} value={inv.txId}>
-                                        {inv.txId} - {inv.entity} (Bal: ₵{(inv.amount - (inv.totalPaid || 0)).toLocaleString()})
-                                    </option>
-                                ))}
+                                {invoices
+                                    .filter(inv => {
+                                        if (formData.type === "Revenue") return inv.type === "Revenue" || inv.type === "A/R";
+                                        if (formData.type === "Expense") return inv.type === "Expense";
+                                        return true;
+                                    })
+                                    .map(inv => (
+                                        <option key={inv.txId} value={inv.txId}>
+                                            {inv.txId} - {inv.entity} (Bal: ₵{(inv.amount - (inv.totalPaid || 0)).toLocaleString()})
+                                        </option>
+                                    ))}
                             </select>
                             <p className="text-[9px] text-secondary">Linking will automatically update the invoice balance and status.</p>
                         </div>
@@ -214,12 +220,14 @@ function RecordTransactionForm() {
                                 <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Transaction Type</label>
                                 <div className="flex bg-muted p-1 rounded-sm border border-border">
                                     <button
-                                        onClick={() => setFormData({ ...formData, type: "Revenue" })}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, type: "Revenue", parentInvoiceId: "", isInvoice: true })}
                                         className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${formData.type === 'Revenue' ? 'bg-white text-primary shadow-sm rounded-sm' : 'text-secondary hover:text-primary'}`}>
                                         Revenue
                                     </button>
                                     <button
-                                        onClick={() => setFormData({ ...formData, type: "Expense" })}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, type: "Expense", parentInvoiceId: "", isInvoice: true })}
                                         className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${formData.type === 'Expense' ? 'bg-white text-primary shadow-sm rounded-sm' : 'text-secondary hover:text-primary'}`}>
                                         Expense
                                     </button>

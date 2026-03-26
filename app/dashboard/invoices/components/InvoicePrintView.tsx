@@ -71,7 +71,15 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                         </div>
                         <div className="pl-6">
                             <div className="text-lg font-bold text-primary">{invoice.entity || invoice.customerName}</div>
-                            <div className="text-[10px] text-secondary uppercase font-bold tracking-tight">Authorized Client</div>
+                            {invoice.contactPhone || invoice.contactAddress ? (
+                                <div className="text-[10px] text-secondary uppercase font-bold tracking-tight">
+                                    {invoice.contactPhone && <span>Phone: {invoice.contactPhone}</span>}
+                                    {invoice.contactPhone && invoice.contactAddress && <span> | </span>}
+                                    {invoice.contactAddress && <span>{invoice.contactAddress}</span>}
+                                </div>
+                            ) : (
+                                <div className="text-[10px] text-secondary uppercase font-bold tracking-tight">Authorized Client</div>
+                            )}
                         </div>
                     </div>
                     <div className="flex flex-col gap-4 border-l border-slate-200 pl-12">

@@ -59,6 +59,12 @@ const FinanceSchema = new mongoose.Schema(
         description: {
             type: String,
         },
+        contactPhone: {
+            type: String,
+        },
+        contactAddress: {
+            type: String,
+        },
         recordedBy: {
             type: String, // Employee name or ID
             required: true,

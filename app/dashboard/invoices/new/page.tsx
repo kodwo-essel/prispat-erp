@@ -16,7 +16,8 @@ import {
     Search,
     ShoppingBag,
     ShieldCheck,
-    Plus
+    Plus,
+    Building2
 } from "lucide-react";
 
 function NewInvoiceForm() {
@@ -26,23 +27,26 @@ function NewInvoiceForm() {
 
     const [loading, setLoading] = useState(false);
     const [customers, setCustomers] = useState<any[]>([]);
+    const [suppliers, setSuppliers] = useState<any[]>([]);
     const [inventory, setInventory] = useState<any[]>([]);
     const [error, setError] = useState("");
 
     const [formData, setFormData] = useState({
         txId: `INV-${Date.now().toString().slice(-6)}`,
         entity: customerName || "",
-        type: "Revenue",
+        type: "A/R",
         category: "Product Sale",
         amount: 0,
         date: new Date().toISOString().split('T')[0],
-        status: "Unpaid",
-        description: `Electronic Invoice for ${customerName || 'Client'}`,
+        status: "Pending",
+        description: "",
         method: "Bank Transfer",
         recordedBy: "",
         items: [] as any[],
         isInvoice: true,
-        totalPaid: 0
+        totalPaid: 0,
+        contactPhone: "",
+        contactAddress: ""
     });
 
     const [itemSearch, setItemSearch] = useState("");
@@ -51,16 +55,19 @@ function NewInvoiceForm() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [custRes, invRes, authRes] = await Promise.all([
+                const [custRes, supRes, invRes, authRes] = await Promise.all([
                     fetch("/api/customers"),
+                    fetch("/api/suppliers"),
                     fetch("/api/inventory"),
                     fetch("/api/auth/session")
                 ]);
                 const custJson = await custRes.json();
+                const supJson = await supRes.json();
                 const invJson = await invRes.json();
                 const authJson = await authRes.json();
 
                 if (custJson.success) setCustomers(custJson.data);
+                if (supJson.success) setSuppliers(supJson.data);
                 if (invJson.success) setInventory(invJson.data);
                 if (authJson?.user) {
                     setFormData(prev => ({ ...prev, recordedBy: authJson.user.name }));
@@ -165,21 +172,114 @@ function NewInvoiceForm() {
                     <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-6">
                         <div className="text-xs font-bold uppercase tracking-widest border-b border-border pb-4">Client Information</div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Target Institution</label>
-                            <div className="relative">
-                                <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
+                        <div className="flex flex-col gap-4 border-b border-border pb-6">
+                            <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Transaction Nature</label>
+                            <div className="flex bg-muted p-1 rounded-sm border border-border w-fit">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const newNature = "Revenue";
+                                        setFormData({
+                                            ...formData,
+                                            type: formData.status === "Pending" ? "A/R" : "Revenue",
+                                            category: "Product Sale",
+                                            entity: ""
+                                        });
+                                    }}
+                                    className={`px-6 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm transition-all ${formData.type === 'Revenue' || formData.type === 'A/R' ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                                >
+                                    Revenue
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, type: "Expense", category: "Procurement Cost", entity: "" })}
+                                    className={`px-6 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm transition-all ${formData.type === 'Expense' ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                                >
+                                    Expense
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">
+                                    {formData.type === "Revenue" || formData.type === "A/R" ? "Target Customer / Entity" : "Target Supplier / Entity"}
+                                </label>
+                                <div className="relative">
+                                    {formData.type === "Revenue" || formData.type === "A/R" ? <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" /> : <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />}
+                                    <input
+                                        required
+                                        list={formData.type === "Revenue" || formData.type === "A/R" ? "customers-list" : "suppliers-list"}
+                                        value={formData.entity}
+                                        onChange={(e) => setFormData({ ...formData, entity: e.target.value })}
+                                        placeholder={formData.type === "Revenue" || formData.type === "A/R" ? "Enter Customer or Third Party..." : "Enter Supplier or Third Party..."}
+                                        className="w-full bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                                    />
+                                    <datalist id="customers-list">
+                                        {customers.map(c => (
+                                            <option key={c._id} value={c.name} />
+                                        ))}
+                                    </datalist>
+                                    <datalist id="suppliers-list">
+                                        {suppliers.map(s => (
+                                            <option key={s._id} value={s.name} />
+                                        ))}
+                                    </datalist>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Invoice Category</label>
                                 <select
                                     required
-                                    value={formData.entity}
-                                    onChange={(e) => setFormData({ ...formData, entity: e.target.value })}
-                                    className="w-full bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs focus:outline-none focus:border-primary appearance-none"
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    className="w-full bg-muted border border-border px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary transition-colors"
                                 >
-                                    <option value="">Select Customer...</option>
-                                    {customers.map(c => (
-                                        <option key={c._id} value={c.name}>{c.name}</option>
-                                    ))}
+                                    {formData.type === "Revenue" || formData.type === "A/R" ? (
+                                        <>
+                                            <option>Product Sale</option>
+                                            <option>Agro-Input Sales</option>
+                                            <option>Sales Fulfillment</option>
+                                            <option>Consultancy Fee</option>
+                                            <option>Other Revenue</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option>Procurement Cost</option>
+                                            <option>Logistics Fee</option>
+                                            <option>Personnel Payroll</option>
+                                            <option>Utility Bill</option>
+                                            <option>General Expense</option>
+                                        </>
+                                    )}
                                 </select>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-4 border-t border-border pt-6 mt-2">
+                            <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter italic">Third-Party Contact Information (Optional)</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Contact Phone</label>
+                                    <input
+                                        type="text"
+                                        value={formData.contactPhone}
+                                        onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                                        placeholder="e.g. +233 24 000 0000"
+                                        className="w-full bg-muted border border-border px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Contact Address</label>
+                                    <input
+                                        type="text"
+                                        value={formData.contactAddress}
+                                        onChange={(e) => setFormData({ ...formData, contactAddress: e.target.value })}
+                                        placeholder="e.g. Accra, Ghana"
+                                        className="w-full bg-muted border border-border px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -339,16 +439,17 @@ function NewInvoiceForm() {
                                     value={formData.status}
                                     onChange={(e) => {
                                         const newStatus = e.target.value;
+                                        const isRevenue = formData.type === "Revenue" || formData.type === "A/R";
                                         setFormData({
                                             ...formData,
                                             status: newStatus,
-                                            type: newStatus === "Pending" ? "A/R" : "Revenue"
+                                            type: isRevenue ? (newStatus === "Pending" ? "A/R" : "Revenue") : "Expense"
                                         });
                                     }}
                                     className="w-full bg-muted border border-border px-3 py-2 rounded-sm text-xs focus:outline-none focus:border-primary"
                                 >
-                                    <option value="Settled">Settled (Paid)</option>
                                     <option value="Pending">Pending (Invoice)</option>
+                                    <option value="Settled">Settled (Paid)</option>
                                 </select>
                             </div>
                             <div className="flex flex-col gap-2">

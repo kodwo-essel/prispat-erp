@@ -44,7 +44,19 @@ export async function GET(
             });
         }
 
-        return NextResponse.json({ success: true, data: { ...receipt.toObject(), financeRecord } });
+        // Fetch current stock for each item from Inventory to calculate sales
+        const itemsWithStock = await Promise.all(receipt.items.map(async (item: any) => {
+            const inventory = await Inventory.findOne({
+                sku: String(item.sku).trim(),
+                batchId: String(item.batchId).trim()
+            });
+            return {
+                ...item.toObject ? item.toObject() : item,
+                currentStock: inventory ? inventory.stock : item.quantity // Fallback to item.quantity if not found (means 0 sold)
+            };
+        }));
+
+        return NextResponse.json({ success: true, data: { ...receipt.toObject(), items: itemsWithStock, financeRecord } });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }

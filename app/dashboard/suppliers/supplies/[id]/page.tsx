@@ -164,8 +164,8 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <span className="text-[9px] font-black text-secondary uppercase tracking-widest">Arrival Timestamp</span>
-                                    <span className="text-sm font-bold text-primary">{new Date(receipt.arrivalDate).toLocaleDateString()}</span>
-                                    <span className="text-[10px] text-secondary tabular-nums">{new Date(receipt.arrivalDate).toLocaleTimeString()}</span>
+                                    <span className="text-sm font-bold text-primary" suppressHydrationWarning>{new Date(receipt.arrivalDate).toLocaleDateString()}</span>
+                                    <span className="text-[10px] text-secondary tabular-nums" suppressHydrationWarning>{new Date(receipt.arrivalDate).toLocaleTimeString()}</span>
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <span className="text-[9px] font-black text-secondary uppercase tracking-widest">System Status</span>
@@ -191,11 +191,11 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[9px] font-black text-secondary uppercase tracking-widest text-emerald-600">Amount Paid</span>
-                                        <span className="text-2xl font-black text-emerald-600 tabular-nums">₵{(receipt.financeRecord.totalPaid || 0).toLocaleString()}</span>
+                                        <span className="text-2xl font-black text-emerald-600 tabular-nums" suppressHydrationWarning>₵{(receipt.financeRecord.totalPaid || 0).toLocaleString()}</span>
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[9px] font-black text-secondary uppercase tracking-widest text-red-600">Amount Left</span>
-                                        <span className={`text-2xl font-black tabular-nums ${receipt.financeRecord.amount - (receipt.financeRecord.totalPaid || 0) > 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                                        <span className={`text-2xl font-black tabular-nums ${receipt.financeRecord.amount - (receipt.financeRecord.totalPaid || 0) > 0 ? 'text-red-600' : 'text-slate-900'}`} suppressHydrationWarning>
                                             ₵{(receipt.financeRecord.amount - (receipt.financeRecord.totalPaid || 0)).toLocaleString()}
                                         </span>
                                     </div>
@@ -232,33 +232,48 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                                 <tr className="border-b border-border bg-slate-50/50">
                                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Product / SKU</th>
                                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary">Batch/Expiry</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Qty</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Total</th>
+                                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Received</th>
+                                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right bg-orange-50/30">Total Sold (Revenue)</th>
+                                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Supply Value (Cost)</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {receipt.items.map((item: any, idx: number) => (
-                                    <tr key={idx} className="hover:bg-slate-50 transition-colors group">
+                                    <tr key={item._id || idx} className="hover:bg-slate-50 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="font-bold text-primary">{item.name}</div>
                                             <div className="text-[9px] text-secondary font-mono bg-slate-100 w-fit px-1.5 rounded-sm mt-0.5">{item.sku}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-[10px] font-bold text-slate-700">Batch: {item.batchId}</div>
-                                            <div className="text-[9px] text-secondary">Exp: {new Date(item.expiryDate).toLocaleDateString()}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="font-black text-primary tabular-nums">{item.quantity} {item.unit}</div>
-                                            <div className="text-[9px] text-secondary uppercase">@ ₵{(item.supplierPrice || item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="font-black text-primary tabular-nums">₵{(item.quantity * (item.supplierPrice || item.unitPrice)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                            <div className="text-[9px] text-secondary" suppressHydrationWarning>Exp: {new Date(item.expiryDate).toLocaleDateString()}</div>
                                             <Link
                                                 href={`/dashboard/inventory/lookup?sku=${item.sku}&batchId=${item.batchId}`}
                                                 className="text-[9px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
                                             >
                                                 Track Asset <ArrowRight size={8} className="inline ml-1" />
                                             </Link>
+                                        </td>
+                                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                                            <div className="font-black text-primary tabular-nums">{item.quantity} {item.unit}</div>
+                                            <div className="text-[9px] text-secondary uppercase font-bold">Batch Arrival</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right bg-orange-50/30 border-x border-orange-100 min-w-[140px]">
+                                            <div className="font-black text-orange-600 tabular-nums text-sm" suppressHydrationWarning>
+                                                ₵{(Math.max(0, item.quantity - (item.currentStock ?? item.quantity)) * (item.unitPrice || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </div>
+                                            <div className="flex flex-col gap-0.5 mt-1">
+                                                <div className="text-[9px] text-orange-600/60 uppercase font-bold tabular-nums">
+                                                    {Math.max(0, item.quantity - (item.currentStock ?? item.quantity))} {item.unit} Sold
+                                                </div>
+                                                <div className="text-[9px] text-green-600 font-black tabular-nums border-t border-green-100 pt-0.5" suppressHydrationWarning>
+                                                    ₵{(Math.max(0, item.quantity - (item.currentStock ?? item.quantity)) * ((item.unitPrice || 0) - (item.supplierPrice || 0))).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Profit
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                                            <div className="font-black text-primary tabular-nums" suppressHydrationWarning>₵{(item.quantity * (item.supplierPrice || item.unitPrice)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                            <div className="text-[9px] text-secondary uppercase font-bold">Gross Cost</div>
                                         </td>
                                     </tr>
                                 ))}
@@ -280,10 +295,34 @@ export default function SupplyReceiptDetailPage({ params }: { params: Promise<{ 
                     <div className="bg-primary text-white p-8 rounded-sm shadow-lg flex flex-col items-center text-center gap-4 relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
                         <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Financial Settlement</span>
-                        <div className="text-4xl font-black tabular-nums tracking-tighter">₵{receipt.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="text-4xl font-black tabular-nums tracking-tighter" suppressHydrationWarning>₵{receipt.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         <div className="h-px w-12 bg-white/20" />
                         <p className="text-[10px] font-medium text-white/60 leading-relaxed uppercase tracking-widest">
                             Total Batch Valuation Based on Invoiced Rates
+                        </p>
+                    </div>
+
+                    <div className="bg-emerald-600 text-white p-8 rounded-sm shadow-lg flex flex-col items-center text-center gap-4 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Sales Performance</span>
+                        <div className="text-4xl font-black tabular-nums tracking-tighter" suppressHydrationWarning>
+                            ₵{receipt.items.reduce((sum: number, item: any) => sum + (Math.max(0, item.quantity - (item.currentStock ?? item.quantity)) * (item.unitPrice || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        <div className="h-px w-12 bg-white/20" />
+                        <p className="text-[10px] font-medium text-white/60 leading-relaxed uppercase tracking-widest">
+                            Total Gross Revenue Generated from this Supply
+                        </p>
+                    </div>
+
+                    <div className="bg-indigo-700 text-white p-8 rounded-sm shadow-lg flex flex-col items-center text-center gap-4 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Net Profit</span>
+                        <div className="text-4xl font-black tabular-nums tracking-tighter" suppressHydrationWarning>
+                            ₵{receipt.items.reduce((sum: number, item: any) => sum + (Math.max(0, item.quantity - (item.currentStock ?? item.quantity)) * ((item.unitPrice || 0) - (item.supplierPrice || 0))), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        <div className="h-px w-12 bg-white/20" />
+                        <p className="text-[10px] font-medium text-white/60 leading-relaxed uppercase tracking-widest">
+                            Net Profit Realized After Procurement Cost
                         </p>
                     </div>
 

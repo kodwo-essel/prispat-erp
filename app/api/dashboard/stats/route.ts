@@ -151,7 +151,8 @@ export async function GET() {
             {
                 $match: {
                     date: { $gte: thirtyDaysAgo },
-                    status: "Settled"
+                    status: "Settled",
+                    isInvoice: { $ne: true }
                 }
             },
             {

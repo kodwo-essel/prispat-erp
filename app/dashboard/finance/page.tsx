@@ -124,9 +124,9 @@ export default function FinancePage() {
         const revDiff = weeklyRevenue - previousWeekRevenue;
         const revPercent = previousWeekRevenue > 0 ? (revDiff / previousWeekRevenue) * 100 : (weeklyRevenue > 0 ? 100 : 0);
 
-        // Total Expenditure: Sum of all expense-type transactions
+        // Total Expenditure: Sum of all settled expense-type transactions
         const totalExpenditure = transactions
-            .filter(tx => ['Expense', 'Payroll', 'Tax'].includes(String(tx.type).trim()))
+            .filter(tx => tx.status === 'Settled' && ['Expense', 'Payroll', 'Tax'].includes(String(tx.type).trim()))
             .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
         // A/R & A/P

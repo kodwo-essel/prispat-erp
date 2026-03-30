@@ -49,6 +49,23 @@ export async function GET(req: Request) {
                     "financeRecord.totalPaid": { $sum: "$childPayments.amount" }
                 }
             },
+            {
+                $addFields: {
+                    "financeRecord.status": {
+                        $cond: {
+                            if: { $gt: [{ $sum: "$childPayments.amount" }, 0] },
+                            then: {
+                                $cond: {
+                                    if: { $gte: [{ $sum: "$childPayments.amount" }, "$financeRecord.amount"] },
+                                    then: "Settled",
+                                    else: "Partial"
+                                }
+                            },
+                            else: { $ifNull: ["$financeRecord.status", "Unpaid"] }
+                        }
+                    }
+                }
+            },
             { $project: { financeData: 0, childPayments: 0 } }
         ]);
 

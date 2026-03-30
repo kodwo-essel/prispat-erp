@@ -188,6 +188,33 @@ export async function POST(request: Request) {
         }
 
         const transaction = await Finance.create(body);
+
+        // 2. Update parent invoice status if this is a payment
+        if (body.parentInvoiceId && status === "Settled") {
+            const parent = await Finance.findOne({ txId: body.parentInvoiceId });
+            if (parent) {
+                const childPayments = await Finance.find({
+                    parentInvoiceId: body.parentInvoiceId,
+                    status: "Settled"
+                });
+                const totalPaid = childPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+                let newStatus = parent.status;
+                if (totalPaid >= parent.amount) {
+                    newStatus = "Settled";
+                } else if (totalPaid > 0) {
+                    newStatus = "Partial";
+                }
+
+                if (newStatus !== parent.status) {
+                    await Finance.updateOne(
+                        { txId: body.parentInvoiceId },
+                        { $set: { status: newStatus } }
+                    );
+                }
+            }
+        }
+
         return NextResponse.json({ success: true, data: transaction }, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });

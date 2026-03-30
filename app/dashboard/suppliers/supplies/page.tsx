@@ -33,6 +33,7 @@ export default function SupplyRegistryPage() {
     const [editingReceipt, setEditingReceipt] = useState<any>(null);
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState("");
+    const [paymentStatusFilter, setPaymentStatusFilter] = useState("All");
 
     useEffect(() => {
         fetchData();
@@ -87,18 +88,26 @@ export default function SupplyRegistryPage() {
         }
     };
 
-    const filteredReceipts = receipts.filter(r =>
-        r.receiptNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.notes?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredReceipts = receipts.filter(r => {
+        const matchesSearch = r.receiptNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            r.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            r.notes?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const filteredItems = items.filter(s =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.batchId.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+        const matchesPayment = paymentStatusFilter === "All" || r.financeRecord?.status === paymentStatusFilter;
+
+        return matchesSearch && matchesPayment;
+    });
+
+    const filteredItems = items.filter(s => {
+        const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.batchId.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesPayment = paymentStatusFilter === "All" || s.financeRecord?.status === paymentStatusFilter;
+
+        return matchesSearch && matchesPayment;
+    });
 
 
     return (
@@ -138,6 +147,22 @@ export default function SupplyRegistryPage() {
                     </button>
                 </div>
 
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block whitespace-nowrap">Payment Status:</span>
+                    <select
+                        className="bg-white border border-border px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-primary cursor-pointer shadow-sm text-primary"
+                        value={paymentStatusFilter}
+                        onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                    >
+                        <option value="All">All Payments</option>
+                        <option value="Settled">Settled</option>
+                        <option value="Unpaid">Unpaid</option>
+                        <option value="Partial">Partial</option>
+                        <option value="Overdue">Overdue</option>
+                        <option value="Pending">Pending</option>
+                    </select>
+                </div>
+
                 <div className="relative flex-grow bg-white">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
                     <input
@@ -173,7 +198,8 @@ export default function SupplyRegistryPage() {
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Supplier</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Items</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Total Value</th>
-                                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Payment</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Shipment</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Billing</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                                     </>
@@ -184,6 +210,7 @@ export default function SupplyRegistryPage() {
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Supplier</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Batch ID</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Quantity</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Payment</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary">Invoice</th>
                                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Audit</th>
                                     </>
@@ -218,6 +245,18 @@ export default function SupplyRegistryPage() {
                                         <td className="px-6 py-4">
                                             <div className="text-xs font-black text-primary tabular-nums">₵{(r.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                             <div className="text-[10px] text-secondary uppercase">Gross Value</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            {r.financeRecord ? (
+                                                <span className={`text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-tighter border ${r.financeRecord.status === 'Settled' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                    r.financeRecord.status === 'Partial' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                                        'bg-red-50 text-red-700 border-red-200'
+                                                    }`}>
+                                                    {r.financeRecord.status}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">N/A</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight border ${r.status === 'Received' || r.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' :
@@ -288,6 +327,18 @@ export default function SupplyRegistryPage() {
                                         <td className="px-6 py-4">
                                             <div className="text-xs font-black text-slate-900 tabular-nums">+{s.quantity}</div>
                                             <div className="text-[10px] text-secondary">{s.unit}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {s.financeRecord ? (
+                                                <span className={`text-[9px] font-bold px-2.5 py-1 rounded-sm uppercase tracking-tighter border ${s.financeRecord.status === 'Settled' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                    s.financeRecord.status === 'Partial' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                                        'bg-red-50 text-red-700 border-red-200'
+                                                    }`}>
+                                                    {s.financeRecord.status}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">N/A</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             {s.invoiceId ? (

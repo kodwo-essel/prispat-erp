@@ -106,7 +106,7 @@ export default function FinancePage() {
         // Weekly Revenue (Current Mon - Now)
         const weeklyRevenue = transactions.reduce((sum, tx) => {
             const txDate = new Date(tx.date).getTime();
-            if (txDate >= thisMonday.getTime() && tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+            if (txDate >= thisMonday.getTime() && tx.status === 'Settled' && tx.type === 'Revenue') {
                 return sum + (Number(tx.amount) || 0);
             }
             return sum;
@@ -115,7 +115,7 @@ export default function FinancePage() {
         // Previous Week Revenue (Last Mon - Last Sun)
         const previousWeekRevenue = transactions.reduce((sum, tx) => {
             const txDate = new Date(tx.date).getTime();
-            if (txDate >= lastMonday.getTime() && txDate < thisMonday.getTime() && tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+            if (txDate >= lastMonday.getTime() && txDate < thisMonday.getTime() && tx.status === 'Settled' && tx.type === 'Revenue') {
                 return sum + (Number(tx.amount) || 0);
             }
             return sum;
@@ -139,7 +139,7 @@ export default function FinancePage() {
             .reduce((sum, inv) => sum + ((Number(inv.amount) || 0) - (Number(inv.totalPaid) || 0)), 0);
 
         const totalRevenue = transactions.reduce((sum, tx) => {
-            if (tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+            if (tx.status === 'Settled' && tx.type === 'Revenue') {
                 return sum + (Number(tx.amount) || 0);
             }
             return sum;
@@ -153,7 +153,7 @@ export default function FinancePage() {
 
         const todayRevenue = transactions.reduce((sum, tx) => {
             const txDate = new Date(tx.date).getTime();
-            if (txDate >= todayStart.getTime() && txDate <= todayEnd.getTime() && tx.status === 'Settled' && (tx.type === 'Revenue' || tx.parentInvoiceId)) {
+            if (txDate >= todayStart.getTime() && txDate <= todayEnd.getTime() && tx.status === 'Settled' && tx.type === 'Revenue') {
                 return sum + (Number(tx.amount) || 0);
             }
             return sum;

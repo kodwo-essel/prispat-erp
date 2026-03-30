@@ -56,7 +56,25 @@ export async function GET(
             };
         }));
 
-        return NextResponse.json({ success: true, data: { ...receipt.toObject(), items: itemsWithStock, financeRecord } });
+        // Calculate dynamic totalPaid for the finance record before returning
+        let finalFinanceRecord = null;
+        if (financeRecord) {
+            finalFinanceRecord = financeRecord.toObject ? financeRecord.toObject() : { ...financeRecord };
+            const childPayments = await Finance.find({
+                parentInvoiceId: finalFinanceRecord.txId,
+                status: "Settled"
+            }).lean();
+            finalFinanceRecord.totalPaid = childPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+        }
+
+        return NextResponse.json({
+            success: true,
+            data: {
+                ...receipt.toObject(),
+                items: itemsWithStock,
+                financeRecord: finalFinanceRecord
+            }
+        });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }

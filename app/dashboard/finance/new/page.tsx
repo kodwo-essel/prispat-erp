@@ -31,8 +31,9 @@ function RecordTransactionForm() {
         date: new Date().toISOString().split('T')[0],
         description: "",
         parentInvoiceId: "",
-        isInvoice: true,        // default: creating a top-level invoice/transaction
-        method: "Bank Transfer"
+        isInvoice: false,        // default: creating a direct ledger entry (TX)
+        method: "Bank Transfer",
+        status: "Settled"
     });
 
     const [invoices, setInvoices] = useState<any[]>([]);
@@ -103,15 +104,17 @@ function RecordTransactionForm() {
                 parentInvoiceId: txId,
                 isInvoice: false,    // recording a payment against an existing invoice
                 entity: inv.entity,
+                type: inv.type as any,
                 category: inv.category,
                 amount: remaining.toString(),
-                description: `Payment for Invoice ${txId}`
+                description: `Payment for Invoice ${txId}`,
+                status: "Settled"
             });
         } else {
             setFormData({
                 ...formData,
                 parentInvoiceId: "",
-                isInvoice: true,     // back to creating a top-level record
+                isInvoice: false,     // back to creating a top-level record
             });
         }
     };
@@ -165,7 +168,7 @@ function RecordTransactionForm() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                 {/* Entry Form */}
-                <div className="lg:col-span-7 flex flex-col gap-6">
+                <form onSubmit={handleSubmit} className="lg:col-span-7 flex flex-col gap-6">
                     <section className="bg-white border border-border p-6 rounded-sm shadow-sm flex flex-col gap-6">
                         <div className="flex items-center justify-between border-b border-border pb-4 mb-2">
                             <div className="flex items-center gap-2">
@@ -221,13 +224,13 @@ function RecordTransactionForm() {
                                 <div className="flex bg-muted p-1 rounded-sm border border-border">
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, type: "Revenue", parentInvoiceId: "", isInvoice: true })}
+                                        onClick={() => setFormData({ ...formData, type: "Revenue", parentInvoiceId: "", isInvoice: false })}
                                         className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${formData.type === 'Revenue' ? 'bg-white text-primary shadow-sm rounded-sm' : 'text-secondary hover:text-primary'}`}>
                                         Revenue
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, type: "Expense", parentInvoiceId: "", isInvoice: true })}
+                                        onClick={() => setFormData({ ...formData, type: "Expense", parentInvoiceId: "", isInvoice: false })}
                                         className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${formData.type === 'Expense' ? 'bg-white text-primary shadow-sm rounded-sm' : 'text-secondary hover:text-primary'}`}>
                                         Expense
                                     </button>
@@ -286,6 +289,21 @@ function RecordTransactionForm() {
                                 </div>
                             </div>
 
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Transaction Status</label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    className="w-full bg-muted border border-border px-4 py-2.5 rounded-sm text-sm focus:outline-none focus:border-primary transition-colors">
+                                    <option>Settled</option>
+                                    <option>Pending</option>
+                                    <option>Unpaid</option>
+                                    <option>Partial</option>
+                                    <option>Overdue</option>
+                                    <option>Cancelled</option>
+                                </select>
+                            </div>
+
                             <div className="flex flex-col gap-2 md:col-span-2">
                                 <label className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Audit Description</label>
                                 <textarea
@@ -322,7 +340,7 @@ function RecordTransactionForm() {
                             {isLoading ? "Committing..." : "Commit to Finance Engine"}
                         </button>
                     </div>
-                </div>
+                </form>
 
                 {/* Live Receipt Preview */}
                 <div className="lg:col-span-5 flex flex-col gap-4">
@@ -365,7 +383,7 @@ function RecordTransactionForm() {
                                 </div>
 
                                 <div className="bg-slate-50 p-6 flex flex-col items-center justify-center gap-2 mt-4 rounded-sm border border-slate-100">
-                                    <div className="text-[8px] font-black text-secondary uppercase tracking-widest">Total Surcharge (USD)</div>
+                                    <div className="text-[8px] font-black text-secondary uppercase tracking-widest">Total Surcharge (USD) — <span className="underline">{formData.status}</span></div>
                                     <div className={`text-4xl font-black tabular-nums tracking-tighter ${formData.type === 'Revenue' ? 'text-green-600' : 'text-red-600'}`}>
                                         {formData.type === 'Revenue' ? '+' : '-'}${formData.amount || "0.00"}
                                     </div>
@@ -427,4 +445,3 @@ export default function RecordTransactionPage() {
         </Suspense>
     );
 }
-

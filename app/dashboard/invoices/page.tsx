@@ -20,6 +20,7 @@ export default function InvoicesPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [typeFilter, setTypeFilter] = useState<"All" | "Revenue" | "Expense">("All");
+    const [statusFilter, setStatusFilter] = useState("All");
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -47,13 +48,14 @@ export default function InvoicesPage() {
         const matchesSearch = inv.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (inv.txId && inv.txId.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesType = typeFilter === "All" || inv.type === typeFilter;
-        return matchesSearch && matchesType;
+        const matchesStatus = statusFilter === "All" || inv.status === statusFilter;
+        return matchesSearch && matchesType && matchesStatus;
     });
 
     // Reset to page 1 when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, typeFilter]);
+    }, [searchQuery, typeFilter, statusFilter]);
 
     const totalPages = Math.ceil(filteredInvoices.length / pageSize);
     const paginatedInvoices = filteredInvoices.slice(
@@ -84,18 +86,35 @@ export default function InvoicesPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Filter Type:</span>
-                    <div className="flex bg-muted p-1 rounded-sm border border-border">
-                        {(["All", "Revenue", "Expense"] as const).map((type) => (
-                            <button
-                                key={type}
-                                onClick={() => setTypeFilter(type)}
-                                className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
-                            >
-                                {type}
-                            </button>
-                        ))}
+                <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Type:</span>
+                        <div className="flex bg-muted p-1 rounded-sm border border-border">
+                            {(["All", "Revenue", "Expense"] as const).map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setTypeFilter(type)}
+                                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Status:</span>
+                        <div className="flex bg-muted p-1 rounded-sm border border-border">
+                            {["All", "Settled", "Partial", "Pending", "Cancelled"].map((status) => (
+                                <button
+                                    key={status}
+                                    onClick={() => setStatusFilter(status)}
+                                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${statusFilter === status ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                                >
+                                    {status}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>

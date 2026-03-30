@@ -30,6 +30,7 @@ export default function FinancePage() {
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [typeFilter, setTypeFilter] = useState("All");
+    const [statusFilter, setStatusFilter] = useState("All");
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -192,14 +193,15 @@ export default function FinancePage() {
             tx.category.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesType = typeFilter === "All" || tx.type === typeFilter;
+        const matchesStatus = statusFilter === "All" || tx.status === statusFilter;
 
-        return matchesSearch && matchesType;
+        return matchesSearch && matchesType && matchesStatus;
     });
 
     // Reset to page 1 when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, typeFilter]);
+    }, [searchQuery, typeFilter, statusFilter]);
 
     const totalPages = Math.ceil(filteredTransactions.length / pageSize);
     const paginatedTransactions = filteredTransactions.slice(
@@ -312,18 +314,35 @@ export default function FinancePage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Type:</span>
-                    <div className="flex bg-muted p-1 rounded-sm border border-border">
-                        {["All", "Revenue", "Expense", "Payroll", "Tax"].map((type) => (
-                            <button
-                                key={type}
-                                onClick={() => setTypeFilter(type)}
-                                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm transition-all whitespace-nowrap ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
-                            >
-                                {type}
-                            </button>
-                        ))}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Type:</span>
+                        <div className="flex bg-muted p-1 rounded-sm border border-border">
+                            {["All", "Revenue", "Expense", "Payroll", "Tax"].map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setTypeFilter(type)}
+                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm transition-all whitespace-nowrap ${typeFilter === type ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Status:</span>
+                        <div className="flex bg-muted p-1 rounded-sm border border-border">
+                            {["All", "Settled", "Partial", "Pending"].map((status) => (
+                                <button
+                                    key={status}
+                                    onClick={() => setStatusFilter(status)}
+                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-sm transition-all whitespace-nowrap ${statusFilter === status ? "bg-white text-primary shadow-sm border border-border" : "text-secondary hover:text-primary"}`}
+                                >
+                                    {status}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
                 <div className="ml-auto text-[10px] font-bold text-secondary uppercase tracking-widest">

@@ -190,6 +190,7 @@ export default function RecordNewArrivalPage() {
                                         <option>Cases</option>
                                         <option>Cartons</option>
                                         <option>Boxes</option>
+                                        <option>Pieces</option>
                                     </select>
                                 </div>
                             </div>

@@ -240,6 +240,18 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                                     <input name="stock" type="number" defaultValue={item.stock} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary" required />
                                 </div>
                                 <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase text-secondary">Unit</label>
+                                    <select name="unit" defaultValue={item.unit} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary">
+                                        <option>Liters</option>
+                                        <option>Kg</option>
+                                        <option>Bags</option>
+                                        <option>Cases</option>
+                                        <option>Cartons</option>
+                                        <option>Boxes</option>
+                                        <option>Pieces</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase text-secondary">Hazard Class</label>
                                     <select name="hazardClass" defaultValue={item.hazardClass} className="bg-muted border border-border px-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary">
                                         <option>Level 1</option>
@@ -343,7 +355,7 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                         </div>
                     </div>
 
-                    
+
 
                     <section className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
                         <div className="bg-muted px-6 py-4 border-b border-border flex items-center gap-2">

@@ -122,7 +122,15 @@ export default function InvoicePrintView({ invoice, payments = [], onClose }: In
                                 <tr key={i}>
                                     <td className="py-4">
                                         <div className="text-xs font-bold text-primary">{item.name}</div>
-                                        <div className="text-[9px] text-secondary font-medium tracking-widest uppercase">{item.sku}</div>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <div className="text-[8px] text-secondary font-medium tracking-widest uppercase">SKU: {item.sku}</div>
+                                            {item.batchId && (
+                                                <>
+                                                    <span className="h-1 w-1 bg-slate-300 rounded-full"></span>
+                                                    <div className="text-[8px] font-bold text-primary uppercase tracking-widest">Lot: {item.batchId}</div>
+                                                </>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="py-4 text-right text-xs font-bold text-slate-700">{item.quantity}</td>
                                     <td className="py-4 text-right text-xs font-medium text-slate-600 tabular-nums">

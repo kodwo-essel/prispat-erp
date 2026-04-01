@@ -51,8 +51,27 @@ export default function AssetSelectorModal({
         return ["All Categories", ...Array.from(cats)].sort();
     }, [inventory]);
 
+    // Group inventory by name for a "One Product" selection experience
+    const groupedInventory = useMemo(() => {
+        const groups: Record<string, InventoryItem & { allBatches: InventoryItem[] }> = {};
+        
+        inventory.forEach(item => {
+            if (!groups[item.name]) {
+                groups[item.name] = {
+                    ...item,
+                    stock: 0,
+                    allBatches: []
+                };
+            }
+            groups[item.name].stock += (item.stock || 0);
+            groups[item.name].allBatches.push(item);
+        });
+        
+        return Object.values(groups);
+    }, [inventory]);
+
     const filteredItems = useMemo(() => {
-        return inventory.filter(item => {
+        return groupedInventory.filter(item => {
             const matchesSearch =
                 item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -61,7 +80,7 @@ export default function AssetSelectorModal({
 
             return matchesSearch && matchesCategory;
         });
-    }, [inventory, searchQuery, categoryFilter]);
+    }, [groupedInventory, searchQuery, categoryFilter]);
 
     const paginatedItems = useMemo(() => {
         const start = (currentPage - 1) * pageSize;

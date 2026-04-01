@@ -97,10 +97,14 @@ export async function POST(req: Request) {
 
         // 2. Process each item for Inventory and Supply Audit
         for (const item of items) {
+            // 1.5 Smart SKU Adoption: If this name already exists, use its SKU
+            const existingProduct = await Inventory.findOne({ name: item.name });
+            const resolvedSku = existingProduct ? existingProduct.sku : item.sku;
+
             // Log individual Supply event
             await Supply.create({
                 name: item.name,
-                sku: item.sku,
+                sku: resolvedSku,
                 category: item.category,
                 quantity: item.quantity,
                 unit: item.unit,
@@ -115,25 +119,30 @@ export async function POST(req: Request) {
             });
 
             // Update/Create Aggregate Inventory
+            // We match by resolvedSku and batchId (ignoring supplier to avoid duplicate batch rows)
             let inventoryItem = await Inventory.findOne({
-                sku: item.sku,
-                supplier: supplier,
+                sku: resolvedSku,
                 batchId: item.batchId
             });
 
             if (inventoryItem) {
                 // Increment existing stock
-                inventoryItem.stock += Number(item.quantity);
+                const conversionFactor = (inventoryItem.bulkUnit && item.unit.toLowerCase().includes(inventoryItem.bulkUnit.toLowerCase().replace(/s$/, ''))) 
+                    ? (inventoryItem.unitsPerBulk || 1) 
+                    : 1;
+                
+                inventoryItem.stock += Number(item.quantity) * conversionFactor;
                 inventoryItem.unitPrice = item.unitPrice;
                 inventoryItem.supplierPrice = item.supplierPrice;
                 inventoryItem.expiryDate = item.expiryDate;
+                inventoryItem.supplier = supplier; // Update to latest supplier
                 inventoryItem.status = inventoryItem.stock > 0 ? "In Stock" : "Low Inventory";
                 await inventoryItem.save();
             } else {
                 // Create new inventory record
                 await Inventory.create({
                     name: item.name,
-                    sku: item.sku,
+                    sku: resolvedSku,
                     category: item.category,
                     stock: Number(item.quantity),
                     unit: item.unit,

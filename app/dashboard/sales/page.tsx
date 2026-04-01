@@ -155,6 +155,9 @@ export default function SalesPage() {
         setIsDrawerOpen(true);
     };
 
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+
     // Metric Calculations
     const todayISO = new Date().toISOString().split('T')[0];
 
@@ -189,13 +192,19 @@ export default function SalesPage() {
             order.customer.name.toLowerCase().includes(searchQuery.toLowerCase());
         const saleType = order.saleType || "Credit";
         const matchesType = typeFilter === "All" || saleType === typeFilter;
-        return matchesSearch && matchesType;
+
+        // Date Filtering
+        const orderDateStr = new Date(order.dispatchDate || order.createdAt).toISOString().split('T')[0];
+        const matchesStart = !startDate || orderDateStr >= startDate;
+        const matchesEnd = !endDate || orderDateStr <= endDate;
+
+        return matchesSearch && matchesType && matchesStart && matchesEnd;
     });
 
     // Reset to page 1 when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, typeFilter]);
+    }, [searchQuery, typeFilter, startDate, endDate]);
 
     const totalPages = Math.ceil(filteredOrders.length / pageSize);
     const paginatedOrders = filteredOrders.slice(
@@ -220,38 +229,67 @@ export default function SalesPage() {
 
             {/* Metrics Overview (Mini) */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white border border-border p-4 rounded-sm">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Sales Today</div>
+                <div className="bg-white border border-border p-4 rounded-sm shadow-sm">
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Sales Today</div>
                     <div className="text-xl font-bold text-primary">{dispatchesToday}</div>
                 </div>
-                <div className="bg-white border border-border p-4 rounded-sm">
+                <div className="bg-white border border-border p-4 rounded-sm shadow-sm">
                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Sales</div>
                     <div className="text-xl font-bold text-primary">{totalDispatches}</div>
                 </div>
-                <div className="bg-white border border-border p-4 rounded-sm">
+                <div className="bg-white border border-border p-4 rounded-sm shadow-sm">
                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Pending Orders</div>
                     <div className="text-xl font-bold text-amber-600">{pendingOrders}</div>
                 </div>
-                <div className="bg-white border border-border p-4 rounded-sm">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Aggregate Revenue (MTD)</div>
-                    <div className="text-xl font-bold text-primary">₵{mtdRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div className="bg-white border border-border p-4 rounded-sm shadow-sm">
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Revenue (MTD)</div>
+                    <div className="text-xl font-bold text-primary text-right">₵{mtdRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
             </div>
 
             {/* Filters Bar */}
-            <div className="bg-white border border-border p-4 rounded-sm flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+            <div className="bg-white border border-border p-4 rounded-sm flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm">
                 <div className="relative flex-grow max-w-sm w-full">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
                     <input
                         type="text"
-                        placeholder="Search by Order ID or Customer Name..."
+                        placeholder="Search IDs or Customers..."
                         className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block">Filter Mode:</span>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2 bg-muted p-1 rounded-sm border border-border">
+                        <div className="flex items-center gap-2 px-2 border-r border-border mr-1">
+                            <Calendar size={12} className="text-secondary" />
+                            <span className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Period</span>
+                        </div>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="bg-transparent border-none text-[10px] font-bold focus:ring-0 px-1 uppercase"
+                        />
+                        <span className="text-secondary text-[10px] font-bold px-1">/</span>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="bg-transparent border-none text-[10px] font-bold focus:ring-0 px-1 uppercase"
+                        />
+                        {(startDate || endDate) && (
+                            <button
+                                onClick={() => { setStartDate(""); setEndDate(""); }}
+                                className="ml-2 bg-rose-500 text-white p-1 rounded-sm hover:bg-rose-600 transition-colors"
+                                title="Clear Range"
+                            >
+                                <XCircle size={10} />
+                            </button>
+                        )}
+                    </div>
+
                     <div className="flex bg-muted p-1 rounded-sm border border-border">
                         {(["All", "Credit", "Cash"] as const).map((type) => (
                             <button

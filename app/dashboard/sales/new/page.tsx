@@ -80,21 +80,25 @@ function NewOrderForm() {
     // Filtered inventory is now handled inside the AssetSelectorModal or passed as prop
     // We just keep the raw inventory for finding batches in addItem
 
-    const addItem = (item: any) => {
-        const batches = inventory
-            .filter(i => i.sku === item.sku && i.stock > 0)
+    const addItem = (product: any) => {
+        // Find all batches for this product name with stock > 0
+        const availableBatches = inventory
+            .filter(i => i.name === product.name && i.stock > 0)
             .sort((a, b) => new Date(a.arrivalDate).getTime() - new Date(b.arrivalDate).getTime());
 
-        const oldestBatch = batches[0] || item;
+        if (availableBatches.length === 0) {
+            setError(`No available stock found for ${product.name}`);
+            return;
+        }
 
+        const oldestBatch = availableBatches[0];
         const existing = orderItems.find(oi => oi.sku === oldestBatch.sku && oi.batchId === oldestBatch.batchId);
+        
         if (existing) {
-            setOrderItems(orderItems.map(oi =>
-                (oi.sku === oldestBatch.sku && oi.batchId === oldestBatch.batchId)
-                    ? { ...oi, quantity: oi.quantity + 1, total: (oi.quantity + 1) * oi.unitPrice }
-                    : oi
-            ));
+            // If already in list, triggering a re-allocation for that name
+            updateQuantity(oldestBatch.name, existing.quantity + 1);
         } else {
+            // Add primary batch with qty 1
             setOrderItems([...orderItems, {
                 sku: oldestBatch.sku,
                 name: oldestBatch.name,
@@ -108,21 +112,52 @@ function NewOrderForm() {
         setShowAssetModal(false);
     };
 
-    const removeItem = (sku: string, batchId: string) => {
-        setOrderItems(orderItems.filter(oi => !(oi.sku === sku && oi.batchId === batchId)));
+    const removeItem = (name: string) => {
+        setOrderItems(orderItems.filter(oi => oi.name !== name));
     };
 
-    const updateQuantity = (sku: string, batchId: string, qty: number) => {
-        if (qty < 1) return;
-        const invItem = inventory.find(i => i.sku === sku && i.batchId === batchId);
-        if (invItem && qty > invItem.stock) {
-            setError(`Cannot exceed available stock (${invItem.stock}) for batch ${batchId}`);
+    const updateQuantity = (name: string, totalQty: number) => {
+        if (totalQty < 1) return;
+        
+        // 1. Get all batches for this product name
+        const productBatches = inventory
+            .filter(i => i.name === name && i.stock > 0)
+            .sort((a, b) => new Date(a.arrivalDate).getTime() - new Date(b.arrivalDate).getTime());
+
+        const totalAvailable = productBatches.reduce((sum, b) => sum + (b.stock || 0), 0);
+        
+        if (totalQty > totalAvailable) {
+            setError(`Insufficient total stock for ${name}. Maximum available: ${totalAvailable}`);
             return;
         }
         setError("");
-        setOrderItems(orderItems.map(oi =>
-            (oi.sku === sku && oi.batchId === batchId) ? { ...oi, quantity: qty, total: qty * oi.unitPrice } : oi
-        ));
+
+        // 2. FIFO Allocation
+        let remainingToFill = totalQty;
+        const newAllocations: any[] = [];
+
+        for (const batch of productBatches) {
+            if (remainingToFill <= 0) break;
+
+            const take = Math.min(batch.stock, remainingToFill);
+            newAllocations.push({
+                sku: batch.sku,
+                name: batch.name,
+                batchId: batch.batchId,
+                arrivalDate: batch.arrivalDate,
+                quantity: take,
+                unitPrice: batch.unitPrice || 0,
+                total: take * (batch.unitPrice || 0)
+            });
+            remainingToFill -= take;
+        }
+
+        // 3. Update the global order items list
+        // Remove all old lines for this product and insert new allocations
+        setOrderItems(prev => [
+            ...prev.filter(oi => oi.name !== name),
+            ...newAllocations
+        ]);
     };
 
     const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
@@ -370,44 +405,53 @@ function NewOrderForm() {
                                     <thead>
                                         <tr className="border-b border-muted">
                                             <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary">Item Details</th>
-                                            <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary text-right">Batch ID</th>
-                                            <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary text-right">Qty</th>
-                                            <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary text-right">Unit Price</th>
-                                            <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary text-right">Subtotal</th>
+                                            <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary text-right px-4">Allocation Breakdown (FIFO)</th>
+                                            <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary text-right">Total Qty</th>
+                                            <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary text-right">Net Value</th>
                                             <th className="py-3 text-[9px] font-bold uppercase tracking-widest text-secondary text-right"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-muted">
-                                        {orderItems.map((item) => (
-                                            <tr key={`${item.sku}-${item.batchId}`} className="group">
+                                        {Object.values(orderItems.reduce((acc: any, item: any) => {
+                                            if (!acc[item.name]) acc[item.name] = { name: item.name, sku: item.sku, totalQty: 0, totalValue: 0, batches: [] };
+                                            acc[item.name].totalQty += (Number(item.quantity) || 0);
+                                            acc[item.name].totalValue += (Number(item.total) || 0);
+                                            acc[item.name].batches.push(item);
+                                            return acc;
+                                        }, {})).map((group: any) => (
+                                            <tr key={group.name} className="group align-top">
                                                 <td className="py-4">
-                                                    <div className="text-[10px] font-bold text-primary">{item.name}</div>
-                                                    <div className="text-[9px] text-secondary tracking-widest font-medium uppercase">{item.sku}</div>
+                                                    <div className="text-[10px] font-bold text-primary">{group.name}</div>
+                                                    <div className="text-[9px] text-secondary tracking-widest font-medium uppercase">{group.sku}</div>
                                                 </td>
-                                                <td className="py-4 text-right">
-                                                    <code className="text-[10px] font-mono bg-slate-50 border border-border px-1.5 py-0.5 rounded-sm">
-                                                        {item.batchId}
-                                                    </code>
+                                                <td className="py-4 px-4 text-right">
+                                                    <div className="flex flex-col gap-1 items-end">
+                                                        {group.batches.map((b: any) => (
+                                                            <div key={b.batchId} className="flex items-center gap-2 text-[10px]">
+                                                                <span className="text-secondary opacity-60">Batch</span>
+                                                                <code className="bg-slate-50 border border-border px-1 py-0.5 rounded-sm font-mono text-[9px]">{b.batchId}</code>
+                                                                <span className="font-bold text-primary">{b.quantity}u</span>
+                                                                <span className="text-secondary">@ ₵{b.unitPrice}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </td>
                                                 <td className="py-4 text-right">
                                                     <input
                                                         type="number"
                                                         min="1"
-                                                        value={item.quantity}
-                                                        onChange={(e) => updateQuantity(item.sku, item.batchId, parseInt(e.target.value))}
+                                                        value={String(group.totalQty || 1)}
+                                                        onChange={(e) => updateQuantity(group.name, parseInt(e.target.value) || 0)}
                                                         className="w-16 bg-muted border border-border px-2 py-1 rounded-sm text-[10px] text-right font-bold focus:outline-none focus:border-primary"
                                                     />
                                                 </td>
-                                                <td className="py-4 text-xs font-bold text-slate-700 text-right tabular-nums">
-                                                    ₵{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </td>
                                                 <td className="py-4 text-xs font-black text-slate-900 text-right tabular-nums">
-                                                    ₵{item.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    ₵{group.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="py-4 text-right">
                                                     <button
                                                         type="button"
-                                                        onClick={() => removeItem(item.sku, item.batchId)}
+                                                        onClick={() => removeItem(group.name)}
                                                         className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-50 rounded-sm"
                                                     >
                                                         <Trash2 size={12} />

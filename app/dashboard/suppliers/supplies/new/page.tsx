@@ -30,6 +30,7 @@ interface ReceiptItem {
     batchId: string;
     expiryDate: string;
     hazardClass: string;
+    isExistingProduct?: boolean;
 }
 
 export default function NewSupplyReceiptPage() {
@@ -51,28 +52,32 @@ export default function NewSupplyReceiptPage() {
     const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
 
     const generateSKU = (name: string, unit: string, supplier: string) => {
-        const namePart = (name || "PROD").slice(0, 4).toUpperCase().padEnd(4, 'X');
-        const unitPart = (unit || "U").slice(0, 1).toUpperCase();
-        const supplierPart = (supplier || "SUP").slice(0, 3).toUpperCase().padEnd(3, 'X');
-        const randPart = Math.floor(1000 + Math.random() * 9000);
-        return `${namePart}-${unitPart}-${supplierPart}-${randPart}`;
+        const cleanName = (name || "").trim();
+        const cleanUnit = (unit || "").trim();
+        const cleanSup = (supplier || "").trim();
+
+        const namePart = (cleanName || "PROD").slice(0, 4).toUpperCase().padEnd(4, 'X');
+        const unitPart = (cleanUnit || "U").slice(0, 1).toUpperCase();
+        const supplierPart = (cleanSup || "SUP").slice(0, 3).toUpperCase().padEnd(3, 'X');
+        
+        // Use a deterministic seed based on characters to keep it stable while typing
+        const seedValue = cleanName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const stablePart = (1000 + (seedValue % 9000)).toString();
+        
+        return `${namePart}-${unitPart}-${supplierPart}-${stablePart}`;
     };
 
     // Auto-generate SKUs when name, unit or supplier changes
     useEffect(() => {
         const newItems = formData.items.map(item => {
-            if (!item.name) return item;
+            const trimmedName = item.name.trim();
+            if (!trimmedName || item.isExistingProduct) return item;
 
-            // Extract segments to check if SKU is out of sync
-            const namePart = item.name.slice(0, 4).toUpperCase().padEnd(4, 'X');
-            const unitPart = item.unit.slice(0, 1).toUpperCase();
-            const supplierPart = (formData.supplier || "SUP").slice(0, 3).toUpperCase().padEnd(3, 'X');
-            const currentPrefix = `${namePart}-${unitPart}-${supplierPart}`;
-
-            // If SKU is missing or prefix doesn't match the current details
-            if (!item.sku || !item.sku.startsWith(currentPrefix)) {
-                const autoSku = generateSKU(item.name, item.unit, formData.supplier);
-                return { ...item, sku: autoSku };
+            const newSku = generateSKU(trimmedName, item.unit, formData.supplier);
+            
+            // Only update SKU if it actually changed based on core attributes
+            if (item.sku !== newSku) {
+                return { ...item, sku: newSku };
             }
             return item;
         });
@@ -114,7 +119,8 @@ export default function NewSupplyReceiptPage() {
             supplierPrice: 0,
             batchId: "",
             expiryDate: "",
-            hazardClass: "None"
+            hazardClass: "None",
+            isExistingProduct: false
         };
         setFormData({ ...formData, items: [...formData.items, newItem] });
     };
@@ -130,6 +136,7 @@ export default function NewSupplyReceiptPage() {
             unitPrice: item.unitPrice || 0,
             supplierPrice: item.supplierPrice || 0,
             hazardClass: item.hazardClass || "None",
+            isExistingProduct: true
         };
         setFormData({ ...formData, items: newItems });
         setShowAssetModal(false);
@@ -329,17 +336,6 @@ export default function NewSupplyReceiptPage() {
                                                 className="w-full bg-slate-100 border border-border px-3 py-1.5 rounded-sm text-[10px] focus:outline-none focus:ring-0 cursor-not-allowed text-secondary font-mono"
                                                 placeholder="AUTO SKU"
                                             />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const newSku = generateSKU(item.name, item.unit, formData.supplier);
-                                                    updateItem(index, 'sku', newSku);
-                                                }}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
-                                                title="Regenerate SKU"
-                                            >
-                                                <RefreshCw size={10} />
-                                            </button>
                                         </div>
                                     </div>
                                     <div className="md:col-span-2 flex flex-col gap-1.5">

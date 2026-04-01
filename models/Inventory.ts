@@ -52,6 +52,13 @@ const InventorySchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        unitsPerBulk: {
+            type: Number,
+            default: 1,
+        },
+        bulkUnit: {
+            type: String,
+        },
     },
     {
         timestamps: true,

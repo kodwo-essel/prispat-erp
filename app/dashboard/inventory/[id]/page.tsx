@@ -29,6 +29,7 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
     const router = useRouter();
     const { id } = use(params);
     const [item, setItem] = useState<any>(null);
+    const [allBatches, setAllBatches] = useState<any[]>([]); 
     const [activities, setActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -40,10 +41,17 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
     // Analytics State
     const [stats, setStats] = useState({ inbound: 0, sold: 0 });
 
+    const calculateHealthIndex = (stock: number) => {
+        if (stock >= 100) return 95;
+        if (stock >= 25) return 75;
+        if (stock >= 10) return 40;
+        return 10;
+    };
+
     useEffect(() => {
         const fetchItemData = async () => {
             try {
-                // Fetch item specs
+                // 1. Fetch the specific item being viewed
                 const res = await fetch(`/api/inventory/${id}`);
                 const json = await res.json();
 
@@ -51,7 +59,17 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                     const itemData = json.data;
                     setItem(itemData);
 
-                    // Fetch analytics data
+                    // 2. Fetch ALL inventory to find sibling batches with the same SKU
+                    const invRes = await fetch("/api/inventory");
+                    const invJson = await invRes.json();
+                    
+                    let siblings: any[] = [];
+                    if (invJson.success) {
+                        siblings = invJson.data.filter((i: any) => i.sku === itemData.sku);
+                        setAllBatches(siblings);
+                    }
+
+                    // 3. Fetch analytics (Orders, Supplies, Finance)
                     const [finRes, supRes, ordRes, allSupRes] = await Promise.all([
                         fetch("/api/finance"),
                         fetch("/api/supplies"),
@@ -76,12 +94,12 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
 
                     if (supJson.success && ordJson.success) {
                         const inbound = supJson.data
-                            .filter((s: any) => s.sku === itemData.sku && s.batchId === itemData.batchId)
+                            .filter((s: any) => s.sku === itemData.sku)
                             .reduce((sum: number, s: any) => sum + (Number(s.quantity) || 0), 0);
 
                         const sold = ordJson.data.reduce((sum: number, order: any) => {
-                            const orderItem = order.items.find((i: any) => i.sku === itemData.sku && i.batchId === itemData.batchId);
-                            return sum + (orderItem ? orderItem.quantity : 0);
+                            const orderItems = order.items.filter((i: any) => i.sku === itemData.sku);
+                            return sum + orderItems.reduce((acc: number, curr: any) => acc + (curr.quantity || 0), 0);
                         }, 0);
 
                         setStats({ inbound, sold });
@@ -133,21 +151,18 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
             if (json.success) {
                 setItem(json.data);
                 setIsEditModalOpen(false);
+                // Refresh siblings
+                const invRes = await fetch("/api/inventory");
+                const invJson = await invRes.json();
+                if (invJson.success) {
+                    setAllBatches(invJson.data.filter((i: any) => i.sku === json.data.sku));
+                }
             }
         } catch (error) {
             console.error("Update failed:", error);
         } finally {
             setUpdateLoading(false);
         }
-    };
-
-    const calculateHealthIndex = () => {
-        if (!item) return 0;
-        const stockLevel = item.stock;
-        if (stockLevel >= 100) return 95;
-        if (stockLevel >= 25) return 75;
-        if (stockLevel >= 10) return 40;
-        return 10;
     };
 
     if (loading) {
@@ -168,7 +183,8 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
         );
     }
 
-    const healthIndex = calculateHealthIndex();
+    const totalCurrentStock = allBatches.reduce((sum, b) => sum + (b.stock || 0), 0);
+    const healthIndex = calculateHealthIndex(totalCurrentStock);
 
     return (
         <div className="flex flex-col gap-6">
@@ -180,7 +196,7 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                     </Link>
                     <div className="flex items-center gap-4">
                         <h1 className="text-3xl font-bold tracking-tight text-primary">{item.name}</h1>
-                        <span className="text-xs bg-muted border border-border px-3 py-1 rounded-sm text-secondary font-bold tabular-nums">ID: {item._id}</span>
+                        <span className="text-xs bg-muted border border-border px-3 py-1 rounded-sm text-secondary font-bold tabular-nums tracking-widest uppercase">SKU: {item.sku}</span>
                     </div>
                 </div>
                 <div className="flex gap-3">
@@ -305,42 +321,96 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                 {/* Left Section: Core Stats & Specs */}
                 <div className="lg:col-span-2 flex flex-col gap-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white border border-border p-5 rounded-sm shadow-sm relative overflow-hidden group">
-                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Available Inventory</div>
-                            <div className={`text-2xl font-bold tabular-nums ${item.stock < 10 ? 'text-red-600' : item.stock < 25 ? 'text-orange-600' : 'text-primary'}`}>
-                                {item.stock} <span className="text-sm font-medium">{item.unit}</span>
+                        <div className="bg-white border border-border p-5 rounded-sm shadow-sm relative overflow-hidden group border-t-4 border-t-primary">
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Combined Registry Stock</div>
+                            <div className={`text-2xl font-black tabular-nums ${totalCurrentStock < 10 ? 'text-red-600' : totalCurrentStock < 25 ? 'text-orange-600' : 'text-primary'}`}>
+                                {totalCurrentStock} <span className="text-sm font-medium">{item.unit}</span>
                             </div>
                             <div className="mt-2 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className={`h-full transition-all duration-500 ${item.stock < 10 ? 'bg-red-500' : item.stock < 25 ? 'bg-orange-500' : 'bg-green-500'}`} style={{ width: `${Math.min((item.stock / (stats.inbound || 1)) * 100, 100)}%` }} />
+                                <div className={`h-full transition-all duration-500 ${totalCurrentStock < 10 ? 'bg-red-500' : totalCurrentStock < 25 ? 'bg-orange-500' : 'bg-green-500'}`} style={{ width: `${Math.min((totalCurrentStock / (stats.inbound || 1)) * 100, 100)}%` }} />
                             </div>
                             <div className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
-                                {((item.stock / (stats.inbound || 1)) * 100).toFixed(0)}% of total arrivals remaining
+                                Across {allBatches.length} verified batches
                             </div>
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
-                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Hazard Ranking</div>
-                            <div className="text-2xl font-bold text-blue-600 uppercase tabular-nums">{item.hazardClass}</div>
-                            <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1">
-                                <ShieldCheck size={12} /> Compliance Verified
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Batch Count</div>
+                            <div className="text-2xl font-bold text-blue-600 uppercase tabular-nums">{allBatches.length} ACTIVE</div>
+                            <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1 uppercase tracking-widest">
+                                <ShieldCheck size={12} /> Independent Lots
                             </div>
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
-                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Operational Status</div>
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">System Health</div>
                             <div className="flex items-center mt-1">
-                                <span className={`text-[9px] font-bold px-3 py-0.5 rounded-full border uppercase tracking-widest ${item.stock === 0 ? 'bg-red-50 text-red-700 border-red-200' :
-                                    item.stock < 25 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                <span className={`text-[9px] font-bold px-3 py-0.5 rounded-full border uppercase tracking-widest ${totalCurrentStock === 0 ? 'bg-red-50 text-red-700 border-red-200' :
+                                    totalCurrentStock < 25 ? 'bg-amber-50 text-amber-700 border-amber-200' :
                                         'bg-green-50 text-green-700 border-green-200'
                                     }`}>
-                                    {item.stock === 0 ? 'OUT' :
-                                        item.stock < 25 ? 'LOW' :
-                                            'IN'}
+                                    {totalCurrentStock === 0 ? 'CRITICAL' :
+                                        totalCurrentStock < 25 ? 'WARNING' :
+                                            'OPTIMAL'}
                                 </span>
                             </div>
                             <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-2">
-                                <Clock size={12} /> Expiry: {new Date(item.expiryDate).toLocaleDateString()}
+                                <BarChart3 size={12} /> Aggregate Performance
                             </div>
                         </div>
                     </div>
+
+                    {/* Batch Level Inventory Table */}
+                    <section className="bg-white border border-border rounded-sm shadow-sm overflow-hidden flex flex-col">
+                        <div className="bg-muted px-6 py-4 border-b border-border flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Plus size={16} className="text-primary" />
+                                <h3 className="text-xs font-bold uppercase tracking-widest">Batch-Level Inventory Tracking</h3>
+                            </div>
+                            <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">Precise Lot Management</span>
+                        </div>
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 border-b border-border">
+                                <tr className="text-[10px] font-bold text-secondary uppercase tracking-widest">
+                                    <th className="px-6 py-3 text-left">Batch ID</th>
+                                    <th className="px-6 py-3 text-left">Supplier Origin</th>
+                                    <th className="px-6 py-3 text-left">Stock</th>
+                                    <th className="px-6 py-3 text-right">Supplier Price</th>
+                                    <th className="px-6 py-3 text-right">Selling Price</th>
+                                    <th className="px-6 py-3 text-left">Expiry</th>
+                                    <th className="px-6 py-3 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {allBatches.map((batch) => (
+                                    <tr key={batch._id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="text-[11px] font-mono font-bold text-primary">{batch.batchId}</div>
+                                            <div className="text-[8px] text-slate-400 mt-0.5 uppercase">Registered Lot</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-left">
+                                            <div className="text-[10px] font-bold text-secondary uppercase tracking-tight">{batch.supplier}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-left">
+                                            <div className="text-[11px] font-bold text-slate-900 tabular-nums">{batch.stock} {batch.unit}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-[11px] font-bold text-orange-600 tabular-nums font-mono">
+                                            ₵{batch.supplierPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-[11px] font-bold text-primary tabular-nums font-mono">
+                                            ₵{batch.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                                        </td>
+                                        <td className="px-6 py-4 text-left text-[10px] font-bold text-secondary">
+                                            {batch.expiryDate ? new Date(batch.expiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-[0.1em] ${batch.stock === 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                                                {batch.stock > 0 ? "Active" : "Depleted"}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </section>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm border-l-4 border-l-blue-500">
@@ -355,50 +425,55 @@ export default function ItemManagementPage({ params }: { params: Promise<{ id: s
                         </div>
                     </div>
 
-
-
                     <section className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
-                        <div className="bg-muted px-6 py-4 border-b border-border flex items-center gap-2">
-                            <FlaskConical size={16} className="text-primary" />
-                            <h3 className="text-xs font-bold uppercase tracking-widest">Technical Specifications</h3>
+                        <div className="bg-muted px-6 py-4 border-b border-border flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <FlaskConical size={16} className="text-primary" />
+                                <h3 className="text-xs font-bold uppercase tracking-widest">Master Product Identity</h3>
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border border-primary/20">
+                                {allBatches.length} Active Lots tracked
+                            </div>
                         </div>
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="flex flex-col gap-4">
                                 <div className="grid grid-cols-2 text-xs">
-                                    <span className="text-secondary font-medium">Category:</span>
-                                    <span className="text-primary font-bold">{item.category}</span>
+                                    <span className="text-secondary font-bold uppercase tracking-tighter">Commercial Category</span>
+                                    <span className="text-primary font-black uppercase">{item.category}</span>
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
-                                    <span className="text-secondary font-medium">SKU:</span>
-                                    <span className="text-primary font-bold">{item.sku}</span>
+                                    <span className="text-secondary font-bold uppercase tracking-tighter">Unified Master SKU</span>
+                                    <span className="font-mono font-bold text-slate-700">{item.sku}</span>
                                 </div>
-                                <div className="grid grid-cols-2 text-xs">
-                                    <span className="text-secondary font-medium">Batch ID:</span>
-                                    <span className="text-primary font-bold">{item.batchId}</span>
+                                <div className="grid grid-cols-2 text-xs border-t border-dashed border-border pt-4 mt-2">
+                                    <span className="text-secondary font-bold uppercase tracking-tighter text-[10px]">Combined Registry Stock</span>
+                                    <span className="text-lg font-black text-primary tabular-nums">{totalCurrentStock} <span className="text-[10px] opacity-60 uppercase">{item.unit}</span></span>
                                 </div>
                             </div>
                             <div className="flex flex-col gap-4 border-l border-border pl-8">
                                 <div className="grid grid-cols-2 text-xs">
-                                    <span className="text-secondary font-medium">Verified Supplier:</span>
-                                    <span className="text-primary font-bold underline cursor-pointer">{item.supplier}</span>
+                                    <span className="text-secondary font-bold uppercase tracking-tighter">Standard Measurement</span>
+                                    <span className="text-primary font-bold uppercase">{item.unit}</span>
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
-                                    <span className="text-secondary font-medium">Selling Price:</span>
-                                    <span className="text-primary font-bold tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span className="text-secondary font-bold uppercase tracking-tighter">Current Market Price</span>
+                                    <span className="text-primary font-black tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="grid grid-cols-2 text-xs">
-                                    <span className="text-secondary font-medium">Supplier Price:</span>
-                                    <span className="text-primary font-bold tabular-nums">
-                                        {item.supplierPrice && item.supplierPrice > 0
-                                            ? `₵${item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                            : '-'}
+                                    <span className="text-secondary font-bold uppercase tracking-tighter">Base Cost Anchor</span>
+                                    <span className="text-slate-600 font-bold tabular-nums">₵{item.supplierPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</span>
+                                </div>
+                                <div className="grid grid-cols-2 text-xs border-t border-dashed border-border pt-4 mt-2">
+                                    <span className="text-secondary font-bold uppercase tracking-tighter text-[10px]">Hazard Classification</span>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest w-fit px-2 py-0.5 rounded-sm border ${item.hazardClass === 'Extreme' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                                        {item.hazardClass}
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-2 text-xs">
-                                    <span className="text-secondary font-medium">National Registry:</span>
-                                    <span className="text-primary font-bold flex items-center gap-1">REG-{item.sku?.split('-')?.pop() || 'N/A'} <ExternalLink size={10} /></span>
-                                </div>
                             </div>
+                        </div>
+                        <div className="bg-slate-50 px-6 py-3 border-t border-border flex items-center justify-center gap-2">
+                            <ShieldCheck size={12} className="text-green-600" />
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Verified Master Record in Agriculture National Registry</span>
                         </div>
                     </section>
 

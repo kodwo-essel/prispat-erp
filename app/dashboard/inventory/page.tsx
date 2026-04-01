@@ -29,21 +29,19 @@ export default function InventoryPage() {
     const pageSize = 10;
 
     const handleExport = () => {
-        const exportData = filteredInventory.map(item => ({
+        const exportData = displayInventory.map((item: any) => ({
             SKU: item.sku,
             Name: item.name,
             Category: item.category,
-            Stock: item.stock,
+            "Total Stock": item.stock,
             Unit: item.unit,
             Hazard: item.hazardClass || "None",
-            Status: item.status,
-            BatchID: item.batchId,
-            ExpiryDate: item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A",
-            Supplier: item.supplier,
-            "Supplier Price": item.supplierPrice || 0,
-            "Selling Price": item.unitPrice || 0
+            Status: item.stock === 0 ? 'OUT' : item.stock < 25 ? 'LOW' : 'IN',
+            Batches: item.baseItems?.length || 1,
+            "Base SKU": item.sku,
+            "Market Price": item.unitPrice || 0
         }));
-        exportToCSV(exportData, `Inventory_Manifest_${new Date().toISOString().split('T')[0]}.csv`);
+        exportToCSV(exportData, `Unified_Inventory_Manifest_${new Date().toISOString().split('T')[0]}.csv`);
     };
 
     useEffect(() => {
@@ -67,20 +65,41 @@ export default function InventoryPage() {
         fetchData();
     }, []);
 
-    const filteredInventory = inventory.filter(item => {
+    // 1. Initial search filtering (Name, SKU, Chemical)
+    const searchFiltered = inventory.filter(item => {
         const matchesSearch =
             item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (item.chemical && item.chemical.toLowerCase().includes(searchQuery.toLowerCase()));
+        return matchesSearch;
+    });
 
-        const matchesCategory = categoryFilter === "All Categories" || item.category === categoryFilter;
-        const currentStatus = item.stock === 0 ? "OUT" :
-            item.stock < 25 ? "LOW" :
+    // 2. Grouping Logic for "One Product, Multiple Batches"
+    // We group by 'name' first to get the unified commercial identity
+    const groupedInventory = searchFiltered.reduce((acc: any, item: any) => {
+        const productKey = item.name;
+        if (!acc[productKey]) {
+            acc[productKey] = {
+                ...item,
+                stock: 0,
+                baseItems: []
+            };
+        }
+        acc[productKey].stock += (Number(item.stock) || 0);
+        acc[productKey].baseItems.push(item);
+        return acc;
+    }, {});
+
+    // 3. Final categorical and status filtering applied to the UNIFIED products
+    const displayInventory = Object.values(groupedInventory).filter((product: any) => {
+        const matchesCategory = categoryFilter === "All Categories" || product.category === categoryFilter;
+        
+        const currentStatus = product.stock === 0 ? "OUT" :
+            product.stock < 25 ? "LOW" :
                 "IN";
-
         const matchesStatus = statusFilter === "All" || currentStatus === statusFilter;
 
-        return matchesSearch && matchesCategory && matchesStatus;
+        return matchesCategory && matchesStatus;
     });
 
     // Reset to page 1 when filters change
@@ -88,16 +107,16 @@ export default function InventoryPage() {
         setCurrentPage(1);
     }, [searchQuery, categoryFilter, statusFilter]);
 
-    const totalPages = Math.ceil(filteredInventory.length / pageSize);
-    const paginatedInventory = filteredInventory.slice(
+    const totalPages = Math.ceil(displayInventory.length / pageSize);
+    const paginatedInventory = displayInventory.slice(
         (currentPage - 1) * pageSize,
         currentPage * pageSize
     );
 
-    const getSoldQuantity = (sku: string, batchId: string) => {
+    const getSoldQuantityForProduct = (productName: string) => {
         return orders.reduce((total, order) => {
-            const item = order.items.find((i: any) => i.sku === sku && i.batchId === batchId);
-            return total + (item ? item.quantity : 0);
+            const items = order.items.filter((i: any) => i.name === productName);
+            return total + items.reduce((sum: number, i: any) => sum + (i.quantity || 0), 0);
         }, 0);
     };
 
@@ -126,14 +145,14 @@ export default function InventoryPage() {
             </div>
 
             {/* Filters Bar */}
-            <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between gap-4">
+            <div className="bg-white border border-border p-4 rounded-sm flex items-center justify-between gap-4 shadow-sm">
                 <div className="flex items-center gap-4 flex-grow">
                     <div className="relative flex-grow max-w-sm">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
                         <input
                             type="text"
                             placeholder="Search by SKU, Name or Chemical..."
-                            className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary"
+                            className="bg-muted border border-border pl-10 pr-4 py-2 rounded-sm text-xs w-full focus:outline-none focus:border-primary border-slate-300"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -166,7 +185,7 @@ export default function InventoryPage() {
                         </div>
                     </div>
                 </div>
-                <div className="text-xs text-secondary font-medium">Showing {filteredInventory.length} records</div>
+                <div className="text-xs text-secondary font-medium">Showing {displayInventory.length} products tracking multiple batches</div>
             </div>
 
             {/* Inventory Table */}
@@ -181,71 +200,55 @@ export default function InventoryPage() {
                         <thead>
                             <tr className="bg-muted border-b border-border">
                                 <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">#</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">SKU / Batch</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Product Name</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Supplier</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Stock</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Sold</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Supplier Price</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Product SKU</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Product / Brand Name</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left text-center">Batches</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Total Stock</th>
+                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Total Sold</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Selling Price</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Expiry</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Status</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {paginatedInventory.map((item, index) => (
-                                <tr key={item._id} className="hover:bg-slate-50 transition-colors">
+                            {paginatedInventory.map((item: any, index) => (
+                                <tr key={item.name} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-4 py-4">
                                         <div className="flex items-center justify-center">
                                             <span className="text-[10px] font-bold text-slate-400 tabular-nums">{(currentPage - 1) * pageSize + index + 1}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-[10px] font-semibold text-secondary tabular-nums tracking-tight">{item.sku}</div>
-                                        <div className="text-[8px] font-mono text-slate-400 mt-0.5 uppercase">{item.batchId}</div>
+                                        <div className="text-[10px] font-bold text-secondary tabular-nums tracking-tight">{item.sku}</div>
+                                        <div className="text-[8px] font-bold text-primary mt-0.5 uppercase">Master Product Code</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-xs font-semibold text-primary">{item.name}</div>
+                                        <div className="text-xs font-black text-slate-900">{item.name}</div>
                                         <div className="text-[9px] text-secondary mt-0.5 uppercase tracking-tighter">{item.category} • {item.hazardClass || 'Safe'}</div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-[10px] font-medium text-secondary uppercase tracking-tight">
-                                            {item.supplier}
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-[10px] font-bold border border-blue-100">
+                                            {item.baseItems.length}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className={`text-[11px] font-bold tabular-nums ${item.stock < 10 ? 'text-red-600' :
+                                        <div className={`text-[11px] font-black tabular-nums ${item.stock < 10 ? 'text-red-600' :
                                             item.stock < 25 ? 'text-orange-600' :
                                                 'text-green-600'
                                             }`}>
                                             {item.stock}
                                         </div>
-                                        <div className="text-[9px] text-slate-400 font-medium uppercase tracking-tighter">{item.unit}</div>
+                                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">{item.unit}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-[11px] font-bold text-orange-600 tabular-nums">
-                                            {getSoldQuantity(item.sku, item.batchId)}
+                                            {getSoldQuantityForProduct(item.name)}
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-[11px] font-bold text-blue-600 tabular-nums">
-                                            {item.supplierPrice && item.supplierPrice > 0
-                                                ? `₵${item.supplierPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                                : '-'}
-                                        </div>
+                                        <div className="text-[8px] text-secondary uppercase font-bold tracking-widest">Aggregate Velocity</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-[11px] font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</div>
-                                        <div className="text-[8px] text-slate-400 font-medium uppercase tracking-tighter">per {item.unit.replace(/s$/, '')}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-[10px] font-bold text-secondary tabular-nums uppercase">
-                                            {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
-                                        </div>
-                                        {item.expiryDate && new Date(item.expiryDate) < new Date() && (
-                                            <div className="text-[8px] font-bold text-red-500 uppercase">Expired</div>
-                                        )}
+                                        <div className="text-[8px] text-slate-400 font-medium uppercase tracking-tighter">Current Base Price</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
@@ -261,7 +264,7 @@ export default function InventoryPage() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <Link href={`/dashboard/inventory/${item._id}`} className="inline-flex items-center justify-end gap-1 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
-                                            Manage <ArrowRight size={10} />
+                                            Manage Product <ArrowRight size={10} />
                                         </Link>
                                     </td>
                                 </tr>
@@ -274,7 +277,7 @@ export default function InventoryPage() {
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={setCurrentPage}
-                    totalRecords={filteredInventory.length}
+                    totalRecords={displayInventory.length}
                     pageSize={pageSize}
                 />
             </div>

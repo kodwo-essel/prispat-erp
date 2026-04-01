@@ -282,7 +282,7 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Section: Core Details */}
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
                             <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Reliability Index</div>
                             <div className="text-2xl font-bold text-primary tabular-nums">{supplier.reliability || '100%'}</div>
@@ -297,6 +297,15 @@ export default function SupplierManagementPage({ params }: { params: Promise<{ i
                             </div>
                             <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1">
                                 <ShieldCheck size={12} /> Compliance Guaranteed
+                            </div>
+                        </div>
+                        <div className="bg-white border border-border p-5 rounded-sm shadow-sm">
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Total Amount Paid</div>
+                            <div className="text-2xl font-black text-emerald-600 tabular-nums">
+                                ₵{supplyReceipts.reduce((acc, curr) => acc + (curr.financeRecord?.totalPaid || 0), 0).toLocaleString()}
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-secondary font-medium mt-1 uppercase tracking-tighter">
+                                <CreditCard size={12} /> Settlement History
                             </div>
                         </div>
                         <div className="bg-white border border-border p-5 rounded-sm shadow-sm">

@@ -34,6 +34,8 @@ export default function SupplyRegistryPage() {
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState("");
     const [paymentStatusFilter, setPaymentStatusFilter] = useState("All");
+    const [supplierFilter, setSupplierFilter] = useState("All");
+    const [allSuppliers, setAllSuppliers] = useState<any[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -42,16 +44,19 @@ export default function SupplyRegistryPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [recRes, itemRes] = await Promise.all([
+            const [recRes, itemRes, supRes] = await Promise.all([
                 fetch("/api/supplies/receipts"),
-                fetch("/api/supplies")
+                fetch("/api/supplies"),
+                fetch("/api/suppliers")
             ]);
 
             const recJson = await recRes.json();
             const itemJson = await itemRes.json();
+            const supJson = await supRes.json();
 
             if (recJson.success) setReceipts(recJson.data);
             if (itemJson.success) setItems(itemJson.data);
+            if (supJson.success) setAllSuppliers(supJson.data);
         } catch (error) {
             console.error("Failed to fetch supply data:", error);
         } finally {
@@ -94,8 +99,9 @@ export default function SupplyRegistryPage() {
             r.notes?.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesPayment = paymentStatusFilter === "All" || r.financeRecord?.status === paymentStatusFilter;
+        const matchesSupplier = supplierFilter === "All" || r.supplier === supplierFilter;
 
-        return matchesSearch && matchesPayment;
+        return matchesSearch && matchesPayment && matchesSupplier;
     });
 
     const filteredItems = items.filter(s => {
@@ -105,8 +111,9 @@ export default function SupplyRegistryPage() {
             s.batchId.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesPayment = paymentStatusFilter === "All" || s.financeRecord?.status === paymentStatusFilter;
+        const matchesSupplier = supplierFilter === "All" || s.supplier === supplierFilter;
 
-        return matchesSearch && matchesPayment;
+        return matchesSearch && matchesPayment && matchesSupplier;
     });
 
 
@@ -148,18 +155,32 @@ export default function SupplyRegistryPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block whitespace-nowrap">Payment Status:</span>
+                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block whitespace-nowrap">Payment:</span>
                     <select
                         className="bg-white border border-border px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-primary cursor-pointer shadow-sm text-primary"
                         value={paymentStatusFilter}
                         onChange={(e) => setPaymentStatusFilter(e.target.value)}
                     >
-                        <option value="All">All Payments</option>
+                        <option value="All">All Statuses</option>
                         <option value="Settled">Settled</option>
                         <option value="Unpaid">Unpaid</option>
                         <option value="Partial">Partial</option>
                         <option value="Overdue">Overdue</option>
                         <option value="Pending">Pending</option>
+                    </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest hidden lg:block whitespace-nowrap">Supplier:</span>
+                    <select
+                        className="bg-white border border-border px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-primary cursor-pointer shadow-sm text-primary max-w-[150px]"
+                        value={supplierFilter}
+                        onChange={(e) => setSupplierFilter(e.target.value)}
+                    >
+                        <option value="All">All Suppliers</option>
+                        {allSuppliers.map(s => (
+                            <option key={s._id} value={s.name}>{s.name}</option>
+                        ))}
                     </select>
                 </div>
 

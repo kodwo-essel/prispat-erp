@@ -189,6 +189,27 @@ export async function POST(request: Request) {
 
         const transaction = await Finance.create(body);
 
+        // 3. Automated Payment Generation for Settled Invoices
+        // If an invoice is marked as "Settled" upon creation, we must create a 
+        // linked payment record to balance the entry in the ledger.
+        if (transaction.isInvoice === true && transaction.status === "Settled" && !transaction.parentInvoiceId) {
+            await Finance.create({
+                txId: `PAY-${Date.now().toString().slice(-8)}`,
+                parentInvoiceId: transaction.txId,
+                entity: transaction.entity,
+                type: transaction.type,
+                amount: transaction.amount,
+                status: "Settled",
+                date: transaction.date || new Date(),
+                category: `${transaction.category} Payment`,
+                description: `SYSTEM AUTOMATION: Full settlement for invoice ${transaction.txId}`,
+                recordedBy: "System Automator",
+                isInvoice: false,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+        }
+
         // 2. Update parent invoice status if this is a payment
         if (body.parentInvoiceId && status === "Settled") {
             const parent = await Finance.findOne({ txId: body.parentInvoiceId });

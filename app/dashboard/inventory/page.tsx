@@ -202,7 +202,6 @@ export default function InventoryPage() {
                                 <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-center">#</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Product SKU</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Product / Brand Name</th>
-                                <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left text-center">Batches</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Total Stock</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Total Sold</th>
                                 <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-secondary text-left">Selling Price</th>
@@ -220,16 +219,11 @@ export default function InventoryPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-[10px] font-bold text-secondary tabular-nums tracking-tight">{item.sku}</div>
-                                        <div className="text-[8px] font-bold text-primary mt-0.5 uppercase">Master Product Code</div>
+
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs font-black text-slate-900">{item.name}</div>
                                         <div className="text-[9px] text-secondary mt-0.5 uppercase tracking-tighter">{item.category} • {item.hazardClass || 'Safe'}</div>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-[10px] font-bold border border-blue-100">
-                                            {item.baseItems.length}
-                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className={`text-[11px] font-black tabular-nums ${item.stock < 10 ? 'text-red-600' :
@@ -244,11 +238,11 @@ export default function InventoryPage() {
                                         <div className="text-[11px] font-bold text-orange-600 tabular-nums">
                                             {getSoldQuantityForProduct(item.name)}
                                         </div>
-                                        <div className="text-[8px] text-secondary uppercase font-bold tracking-widest">Aggregate Velocity</div>
+
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-[11px] font-bold text-primary tabular-nums">₵{item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</div>
-                                        <div className="text-[8px] text-slate-400 font-medium uppercase tracking-tighter">Current Base Price</div>
+
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">

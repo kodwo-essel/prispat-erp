@@ -37,6 +37,9 @@ export default function SupplyRegistryPage() {
     const [supplierFilter, setSupplierFilter] = useState("All");
     const [allSuppliers, setAllSuppliers] = useState<any[]>([]);
 
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -101,7 +104,12 @@ export default function SupplyRegistryPage() {
         const matchesPayment = paymentStatusFilter === "All" || r.financeRecord?.status === paymentStatusFilter;
         const matchesSupplier = supplierFilter === "All" || r.supplier === supplierFilter;
 
-        return matchesSearch && matchesPayment && matchesSupplier;
+        // Date Filtering
+        const arrivalStr = new Date(r.arrivalDate).toISOString().split('T')[0];
+        const matchesStart = !startDate || arrivalStr >= startDate;
+        const matchesEnd = !endDate || arrivalStr <= endDate;
+
+        return matchesSearch && matchesPayment && matchesSupplier && matchesStart && matchesEnd;
     });
 
     const filteredItems = items.filter(s => {
@@ -113,7 +121,12 @@ export default function SupplyRegistryPage() {
         const matchesPayment = paymentStatusFilter === "All" || s.financeRecord?.status === paymentStatusFilter;
         const matchesSupplier = supplierFilter === "All" || s.supplier === supplierFilter;
 
-        return matchesSearch && matchesPayment && matchesSupplier;
+        // Date Filtering
+        const arrivalStr = new Date(s.arrivalDate).toISOString().split('T')[0];
+        const matchesStart = !startDate || arrivalStr >= startDate;
+        const matchesEnd = !endDate || arrivalStr <= endDate;
+
+        return matchesSearch && matchesPayment && matchesSupplier && matchesStart && matchesEnd;
     });
 
 
@@ -184,6 +197,35 @@ export default function SupplyRegistryPage() {
                     </select>
                 </div>
 
+                <div className="flex items-center gap-2 bg-muted p-1 rounded-sm border border-border">
+                    <div className="flex items-center gap-2 px-2 border-r border-border mr-1">
+                        <Calendar size={12} className="text-secondary" />
+                        <span className="text-[9px] font-bold text-secondary uppercase tracking-tighter">Period</span>
+                    </div>
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="bg-transparent border-none text-[10px] font-bold focus:ring-0 px-1 uppercase"
+                    />
+                    <span className="text-secondary text-[10px] font-bold px-1">/</span>
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="bg-transparent border-none text-[10px] font-bold focus:ring-0 px-1 uppercase"
+                    />
+                    {(startDate || endDate) && (
+                        <button
+                            onClick={() => { setStartDate(""); setEndDate(""); }}
+                            className="ml-2 bg-rose-500 text-white p-1 rounded-sm hover:bg-rose-600 transition-colors"
+                            title="Clear Range"
+                        >
+                            <X size={10} />
+                        </button>
+                    )}
+                </div>
+
                 <div className="relative flex-grow bg-white">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
                     <input
@@ -244,7 +286,7 @@ export default function SupplyRegistryPage() {
                                     <tr key={r._id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="text-xs font-bold text-primary font-mono">{r.receiptNumber}</div>
-                                            <div className="text-[10px] text-secondary mt-0.5 uppercase tracking-tighter">Reference ID</div>
+
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
@@ -255,7 +297,7 @@ export default function SupplyRegistryPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-xs font-semibold text-slate-600">{r.supplier}</div>
-                                            <div className="text-[10px] text-secondary uppercase tracking-widest">Authorized Vendor</div>
+
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-xs font-bold text-slate-900 tabular-nums">{r.items.length} Products</div>
@@ -265,7 +307,7 @@ export default function SupplyRegistryPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-xs font-black text-primary tabular-nums">₵{(r.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                            <div className="text-[10px] text-secondary uppercase">Gross Value</div>
+
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             {r.financeRecord ? (

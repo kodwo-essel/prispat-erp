@@ -19,7 +19,9 @@ import {
     ShoppingBag,
     History,
     FileText,
-    BarChart3
+    BarChart3,
+    MessageSquare,
+    Phone
 } from "lucide-react";
 import { hasPermission } from "@/lib/permissions";
 
@@ -34,6 +36,7 @@ const navItems = [
     { href: "/dashboard/finance", label: "Finance", icon: CircleDollarSign, permission: "VIEW_FINANCE" },
     { href: "/dashboard/invoices", label: "Invoices", icon: FileText, permission: "VIEW_FINANCE" },
     { href: "/dashboard/reports", label: "Reports", icon: BarChart3, permission: "VIEW_FINANCE" },
+    { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare, permission: "VIEW_CUSTOMERS" },
     { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon, permission: "MANAGE_SETTINGS" },
 ];
 
@@ -70,18 +73,6 @@ export default function Sidebar() {
         };
         fetchData();
     }, []);
-
-    const handleSignOut = async () => {
-        try {
-            const res = await fetch("/api/auth/logout", { method: "POST" });
-            const data = await res.json();
-            if (data.success) {
-                router.push("/login");
-            }
-        } catch (error) {
-            console.error("Logout failed:", error);
-        }
-    };
 
     return (
         <aside
@@ -154,37 +145,6 @@ export default function Sidebar() {
                     })}
             </nav>
 
-            {/* User Area */}
-            <div className={`p-4 border-t border-white/10 flex flex-col gap-4 bg-black/10`}>
-                {loading ? (
-                    <div className="flex items-center justify-center p-2">
-                        <Loader2 size={16} className="animate-spin opacity-40" />
-                    </div>
-                ) : (
-                    <Link
-                        href="/dashboard/profile"
-                        className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} hover:opacity-80 transition-opacity`}
-                    >
-                        <div className="h-8 w-8 rounded-full bg-slate-800 border border-white/20 shrink-0 flex items-center justify-center text-[10px] font-bold shadow-lg">
-                            {user?.name?.split(" ").map((n: string) => n[0]).join("") || "--"}
-                        </div>
-                        {!isCollapsed && (
-                            <div className="overflow-hidden text-left">
-                                <div className="text-[10px] font-bold text-white truncate uppercase tracking-tight">{user?.name || "Unauthorized"}</div>
-                                <div className="text-[8px] text-white/50 truncate uppercase font-medium">{user?.role || "Restricted Access"}</div>
-                            </div>
-                        )}
-                    </Link>
-                )}
-                {!isCollapsed && (
-                    <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors mb-2"
-                    >
-                        <LogOut size={12} /> Sign Out
-                    </button>
-                )}
-            </div>
         </aside>
     );
 }

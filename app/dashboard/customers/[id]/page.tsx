@@ -21,7 +21,9 @@ import {
     Loader2 as Loader
 } from "lucide-react";
 import ConfirmationModal from "@/app/dashboard/components/ConfirmationModal";
+import FeedbackModal from "../../feedback/components/FeedbackModal";
 import { useRouter } from "next/navigation";
+import { Star } from "lucide-react";
 
 export default function CustomerManagementPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -32,7 +34,25 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
     const [updateLoading, setUpdateLoading] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+    const [customerFeedback, setCustomerFeedback] = useState<any[]>([]);
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
     const router = useRouter();
+
+    const fetchFeedback = async () => {
+        setFeedbackLoading(true);
+        try {
+            const res = await fetch(`/api/feedback?customerId=${id}`);
+            const json = await res.json();
+            if (json.success) {
+                setCustomerFeedback(json.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch feedback:", error);
+        } finally {
+            setFeedbackLoading(false);
+        }
+    };
 
     const handleDelete = async () => {
         setDeleteLoading(true);
@@ -79,6 +99,7 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
         };
 
         fetchCustomerData();
+        fetchFeedback();
     }, [id]);
 
     const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -352,6 +373,54 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
                         </div>
                     </div>
 
+                    <div className="bg-white border border-border rounded-sm shadow-sm overflow-hidden">
+                        <div className="bg-muted px-6 py-4 border-b border-border flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Star size={16} className="text-amber-500" />
+                                <h3 className="text-xs font-bold uppercase tracking-widest">Formal Feedback</h3>
+                            </div>
+                            <span className="text-[10px] font-bold text-secondary uppercase">{customerFeedback.length} Reports</span>
+                        </div>
+                        <div className="p-6 flex flex-col gap-4">
+                            {feedbackLoading ? (
+                                <div className="flex justify-center py-4">
+                                    <Loader size={16} className="animate-spin text-primary" />
+                                </div>
+                            ) : customerFeedback.length > 0 ? (
+                                customerFeedback.slice(0, 3).map((item: any) => (
+                                    <div key={item._id} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-sm uppercase ${
+                                                item.type === 'Complaint' ? 'bg-red-50 text-red-600' : 
+                                                item.type === 'Compliment' ? 'bg-green-50 text-green-600' : 
+                                                'bg-slate-50 text-slate-600'
+                                            }`}>
+                                                {item.type}
+                                            </span>
+                                            <div className="flex">
+                                                {[1, 2, 3, 4, 5].map(s => (
+                                                    <Star key={s} size={10} className={s <= item.rating ? "fill-amber-400 text-amber-400" : "text-slate-100"} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <p className="text-[11px] text-slate-600 leading-relaxed font-medium line-clamp-2">{item.comment}</p>
+                                        <div className="text-[9px] text-secondary mt-1 tabular-nums">
+                                            {new Date(item.date).toLocaleDateString()} • Recorded by @{item.recordedBy}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-[10px] text-secondary text-center py-4 uppercase font-bold tracking-widest">No formal feedback recorded</p>
+                            )}
+                            <button 
+                                onClick={() => setIsFeedbackModalOpen(true)}
+                                className="flex items-center gap-2 text-[10px] font-bold text-primary hover:underline uppercase tracking-widest mt-2"
+                            >
+                                <Plus size={12} /> Record Formal Feedback
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="bg-primary text-white p-6 rounded-sm shadow-md">
                         <h3 className="text-xs font-bold uppercase tracking-[0.2em] opacity-80 mb-6">Commander's Actions</h3>
                         <div className="flex flex-col gap-3">
@@ -369,6 +438,13 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
                                 Adjust Credit Authorization
                                 <ShieldCheck size={14} className="opacity-40 group-hover:opacity-100" />
                             </button>
+                            <button
+                                onClick={() => setIsFeedbackModalOpen(true)}
+                                className="flex items-center justify-between w-full bg-white/10 hover:bg-white/20 p-3 rounded-sm text-xs font-bold transition-all group"
+                            >
+                                Record Customer Feedback
+                                <MessageSquare size={14} className="opacity-40 group-hover:opacity-100" />
+                            </button>
                             <div className="h-px bg-white/10 my-2" />
                             <button
                                 onClick={() => setIsDeleteModalOpen(true)}
@@ -380,6 +456,13 @@ export default function CustomerManagementPage({ params }: { params: Promise<{ i
                     </div>
                 </div>
             </div>
+
+            <FeedbackModal 
+                isOpen={isFeedbackModalOpen}
+                onClose={() => setIsFeedbackModalOpen(false)}
+                onSuccess={fetchFeedback}
+                preSelectedCustomer={{ id, name: customer.name }}
+            />
         </div>
     );
 }
